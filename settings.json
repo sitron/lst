@@ -1,0 +1,20 @@
+{
+    "projects" : [
+        {
+            "name" : "nice project",
+            "sprints" : {
+                "index" : 1,
+                "zebra" : {
+                    "client_id" : 1222,
+                    "activity_id" : null,
+                    "users" : [1,2,6],
+                    "start_date" : "07/09/2012",
+                    "end_date" : "09/09/2012"
+                },
+                "jira" : {
+                    "url" : "http://jira.liip.ch/"
+                }
+            }
+        }
+    ]
+}
