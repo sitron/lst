@@ -1,5 +1,7 @@
 import json
 import argparse
+import urllib, urllib2, urlparse, cookielib
+from pprint import pprint
 
 """scrum nanny, helps you keep your sprint commitment safe"""
 def init():
@@ -11,7 +13,137 @@ def init():
     config_parser = ConfigParser(args.project, args.sprint_index)
     settings = config_parser.load_config('settings.json')
 
+    secret = SecretParser('secret.json')
+
     project = config_parser.parse(settings)
+
+    zebra = ZebraRemote(secret.get_zebra('url'), secret.get_zebra('username'), secret.get_zebra('password'))
+    zebra.get_data(project)
+
+class Remote(object):
+    def __init__(self, base_url):
+        self.base_url = base_url
+
+    def _get_request(self, url, body = None, headers = {}):
+        return urllib2.Request('%s/%s' % (self.base_url, url), body, headers)
+
+    def _request(self, url, body = None, headers = {}):
+        request = self._get_request(url, body, headers)
+        opener = urllib2.build_opener()
+        response = opener.open(request)
+        return response
+
+    def login(self):
+        pass
+
+    def get_data(self, project):
+        pass
+
+class ZebraRemote(Remote):
+    def __init__(self, base_url, username, password):
+        super(ZebraRemote, self).__init__(base_url)
+
+        self.cookiejar = cookielib.CookieJar()
+        self.logged_in = False
+        self.username = username
+        self.password = password
+
+    def _get_request(self, url, body = None, headers = {}):
+        if 'User-Agent' not in headers:
+            headers['User-Agent'] = 'ScrumNanny Zebra Client';
+        return super(ZebraRemote, self)._get_request(url, body, headers)
+
+    def _request(self, url, body = None, headers = {}):
+        request = self._get_request(url, body, headers)
+        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cookiejar))
+
+        try:
+            response = opener.open(request)
+        except urllib2.URLError:
+            raise Exception('Unable to connect to Zebra. Check your connection status and try again.')
+
+        self.cookiejar.extract_cookies(response, request)
+
+        return response
+
+    def _login(self):
+        if self.logged_in:
+            return
+
+        login_url = '/login/user/%s.json' % self.username
+        parameters = urllib.urlencode({
+            'username': self.username,
+            'password': self.password,
+        })
+
+        response = self._request(login_url, parameters)
+        response_body = response.read()
+
+        if not response.info().getheader('Content-Type').startswith('application/json'):
+            self.logged_in = False
+            raise Exception('Unable to login')
+        else:
+            self.logged_in = True
+
+    def get_data(self, project):
+        report_url = 'timesheet/report/.json?option_selector='
+
+        users = project.get_sprint().get_zebra_data('users')
+        client_id = project.get_sprint().get_zebra_data('client_id')
+        activities = project.get_sprint().get_zebra_data('activities')
+        start_date = project.get_sprint().get_zebra_data('start_date')
+        end_date = project.get_sprint().get_zebra_data('end_date')
+
+        for user in users:
+            report_url += '&users[]=' + `user`
+
+        report_url += '&projects[]=' + `client_id`
+        report_url += '&activities[]=' + str(activities)
+        report_url += '&start=' + str(start_date)
+        report_url += '&end=' + str(end_date)
+
+        self._login()
+
+        response = self._request(report_url)
+        response_body = response.read()
+
+        response_json = json.loads(response_body)
+        entries = response_json['command']['reports']['report']
+        print 'Will now parse %d entries found in Zebra' % len(entries)
+
+        self.parse_entries(entries)
+
+    def parse_entries(self, entries):
+        entries_per_date = {}
+        for entry in entries:
+            if entry['tid'] == '':
+                continue
+            e = self.parse_entry(entry)
+            if entry['date'] in entries_per_date:
+                entries_per_date[entry['date']]['entries'].append(e)
+                entries_per_date[entry['date']]['total_time'] += e['time']
+            else:
+                o = {'entries': [e], 'total_time': e['time']}
+                entries_per_date[entry['date']] = o
+        pprint(entries_per_date)
+
+    def parse_entry(self, entry):
+        return {'username': str(entry['username']), 'time': float(entry['time'])}
+
+
+class SecretParser:
+    def __init__(self, url):
+        json_file = open(url)
+        settings = json.load(json_file)
+        json_file.close()
+        self.zebra_data = settings['zebra']
+        self.jira_data = settings['jira']
+
+    def get_zebra(self, key):
+        return self.zebra_data[key]
+
+    def get_jira(self, key):
+        return self.jira_data[key]
 
 class ConfigParser:
     def __init__(self, user_project, user_index):
