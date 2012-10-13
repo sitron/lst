@@ -1,6 +1,7 @@
 import json
 import argparse
 import urllib, urllib2, urlparse, cookielib
+import xml.etree.ElementTree as ET
 from pprint import pprint
 
 """scrum nanny, helps you keep your sprint commitment safe"""
@@ -19,6 +20,9 @@ def init():
 
     zebra = ZebraRemote(secret.get_zebra('url'), secret.get_zebra('username'), secret.get_zebra('password'))
     zebra_entries = zebra.get_data(project)
+
+    jira = JiraRemote(secret.get_jira('url'), secret.get_jira('username'), secret.get_jira('password'))
+    jira_entries = jira.get_data(project)
 
 class ZebraEntries(dict):
     def __init__(self):
@@ -47,6 +51,101 @@ class Remote(object):
 
     def get_data(self, project):
         pass
+
+class JiraRemote(Remote):
+    def __init__(self, base_url, username, password):
+        super(JiraRemote, self).__init__(base_url)
+
+        self.username = username
+        self.password = password
+
+    def _get_request(self, url, body = None, headers = {}):
+        if 'User-Agent' not in headers:
+            headers['User-Agent'] = 'ScrumNanny Zebra Client';
+        return super(JiraRemote, self)._get_request(url, body, headers)
+
+    def _request(self, url, body = None, headers = {}):
+        request = self._get_request(url, body, headers)
+        opener = urllib2.build_opener()
+
+        try:
+            response = opener.open(request)
+        except urllib2.URLError:
+            raise Exception('Unable to connect to Jira. Check your connection status and try again.')
+
+        return response
+
+    def login(self):
+        pass
+
+    def get_data(self, project):
+        url = project.get_sprint().get_jira_data('url')
+
+        url += '&os_username=' + str(self.username)
+        url += '&os_password=' + str(self.password)
+
+        response = self._request(url)
+        response_body = response.read()
+
+        response_xml = ET.fromstring(response_body)
+        stories = response_xml[0].findall('item')
+
+        jira_entries = JiraEntries()
+        for s in stories:
+            story = JiraEntry()
+            story.id = s.find('key').text
+            story.status = int(s.find('status').get('id'))
+            try:
+                story.business_value = float(s.find('./customfields/customfield/[@id="customfield_10064"]/customfieldvalues/customfieldvalue').text)
+            except AttributeError:
+                print 'Story ' + story.id + ' has no business value defined'
+            try:
+                story.story_points = float(s.find('./customfields/customfield/[@id="customfield_10040"]/customfieldvalues/customfieldvalue').text)
+            except AttributeError:
+                print 'Story ' + story.id + ' has no story points defined'
+            jira_entries.append(story)
+        return jira_entries
+
+class JiraEntry:
+    def __init__(self):
+        self.story_points = 0
+        self.business_value = 0
+        self.id = None
+        self.status = None
+
+    def is_over(self):
+        # 6: PO review, 10008: closed
+        return self.status == 6 or self.status == 10008
+
+class JiraEntries(list):
+    def __init__(self):
+        list.__init__([])
+        self.total_story_points = 0
+        self.total_business_value = 0
+        self.achieved_story_points = 0
+        self.achieved_business_value = 0
+
+    def get_total_story_points(self):
+        for s in self:
+            self.total_story_points += s.story_points
+        return self.total_story_points
+
+    def get_achieved_story_points(self):
+        for s in self:
+            if s.is_over():
+                self.achieved_story_points += s.story_points
+        return self.achieved_story_points
+
+    def get_total_business_value(self):
+        for s in self:
+            self.total_business_value += s.business_value
+        return self.total_business_value
+
+    def get_achieved_business_value(self):
+        for s in self:
+            if s.is_over():
+                self.achieved_business_value += s.business_value
+        return self.achieved_business_value
 
 class ZebraRemote(Remote):
     def __init__(self, base_url, username, password):
