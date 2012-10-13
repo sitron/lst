@@ -18,7 +18,16 @@ def init():
     project = config_parser.parse(settings)
 
     zebra = ZebraRemote(secret.get_zebra('url'), secret.get_zebra('username'), secret.get_zebra('password'))
-    zebra.get_data(project)
+    zebra_entries = zebra.get_data(project)
+
+class ZebraEntries(dict):
+    def __init__(self):
+        self.ordered_dates = None
+
+    def get_ordered_dates(self):
+        if self.ordered_dates is None:
+            self.ordered_dates = sorted(set(self.keys()))
+        return self.ordered_dates
 
 class Remote(object):
     def __init__(self, base_url):
@@ -111,10 +120,10 @@ class ZebraRemote(Remote):
         entries = response_json['command']['reports']['report']
         print 'Will now parse %d entries found in Zebra' % len(entries)
 
-        self.parse_entries(entries)
+        return self.parse_entries(entries)
 
     def parse_entries(self, entries):
-        entries_per_date = {}
+        entries_per_date = ZebraEntries()
         for entry in entries:
             if entry['tid'] == '':
                 continue
@@ -125,7 +134,7 @@ class ZebraRemote(Remote):
             else:
                 o = {'entries': [e], 'total_time': e['time']}
                 entries_per_date[entry['date']] = o
-        pprint(entries_per_date)
+        return entries_per_date
 
     def parse_entry(self, entry):
         return {'username': str(entry['username']), 'time': float(entry['time'])}
