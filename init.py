@@ -2,7 +2,9 @@ import json
 import argparse
 import urllib, urllib2, urlparse, cookielib
 import xml.etree.ElementTree as ET
+import dateutil.parser
 from pprint import pprint
+from datetime import datetime
 
 """scrum nanny, helps you keep your sprint commitment safe"""
 def init():
@@ -23,6 +25,7 @@ def init():
 
     jira = JiraRemote(secret.get_jira('url'), secret.get_jira('username'), secret.get_jira('password'))
     jira_entries = jira.get_data(project)
+    pprint(jira_entries.get_achievement_by_day())
 
 class ZebraEntries(dict):
     def __init__(self):
@@ -103,8 +106,28 @@ class JiraRemote(Remote):
                 story.story_points = float(s.find('./customfields/customfield/[@id="customfield_10040"]/customfieldvalues/customfieldvalue').text)
             except AttributeError:
                 print 'Story ' + story.id + ' has no story points defined'
+            if story.is_over():
+                try:
+                    story.close_date = self.get_story_close_date(story.id)
+                except AttributeError:
+                    print 'Story ' + story.id + ' is discarded as it is closed, but never had the status For PO review'
+                    continue
             jira_entries.append(story)
         return jira_entries
+
+    def get_story_close_date(self, id):
+        url = "/activity?maxResults=10&issues=activity+IS+issue%3Atransition&streams=issue-key+IS+"
+        url += str(id)
+        url += '&os_username=' + str(self.username)
+        url += '&os_password=' + str(self.password)
+
+        response = self._request(url)
+        response_body = response.read()
+
+        response_xml = ET.fromstring(response_body)
+        xmlns = {"atom": "http://www.w3.org/2005/Atom"}
+        close_date = response_xml.find("./atom:entry/atom:category/[@term='For PO Review']/../atom:published", namespaces=xmlns).text
+        return dateutil.parser.parse(close_date)
 
 class JiraEntry:
     def __init__(self):
@@ -112,10 +135,14 @@ class JiraEntry:
         self.business_value = 0
         self.id = None
         self.status = None
+        self.close_date = None
 
     def is_over(self):
         # 6: PO review, 10008: closed
         return self.status == 6 or self.status == 10008
+
+    def get_close_day(self):
+        return self.close_date.strftime('%Y-%m-%d')
 
 class JiraEntries(list):
     def __init__(self):
@@ -124,6 +151,22 @@ class JiraEntries(list):
         self.total_business_value = 0
         self.achieved_story_points = 0
         self.achieved_business_value = 0
+        self.achieved_by_date = {}
+
+    def close_story_filter(self, x):
+        return x.is_over() and x.close_date is not None
+
+    def get_achievement_by_day(self):
+        if len(self.achieved_by_date) == 0:
+            for story in filter(self.close_story_filter, self):
+                day = story.get_close_day()
+                if day in self.achieved_by_date:
+                    self.achieved_by_date[day]['sp'] += story.story_points
+                    self.achieved_by_date[day]['bv'] += story.business_value
+                else:
+                    o = {'sp': story.story_points, 'bv': story.business_value}
+                    self.achieved_by_date[day] = o
+        return self.achieved_by_date
 
     def get_total_story_points(self):
         for s in self:
