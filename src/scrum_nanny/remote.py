@@ -1,40 +1,13 @@
 import json
-import argparse
 import urllib, urllib2, urlparse, cookielib
 import xml.etree.ElementTree as ET
 import dateutil.parser
-from pprint import pprint
-from datetime import datetime
 
-"""scrum nanny, helps you keep your sprint commitment safe"""
-def init():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("project", help="project's name, as stated in your config")
-    parser.add_argument("-i", "--sprint-index", help="sprint index, as stated in your config", type=unicode)
-    args = parser.parse_args()
-
-    config_parser = ConfigParser(args.project, args.sprint_index)
-    settings = config_parser.load_config('settings.json')
-
-    secret = SecretParser('secret.json')
-
-    project = config_parser.parse(settings)
-
-    zebra = ZebraRemote(secret.get_zebra('url'), secret.get_zebra('username'), secret.get_zebra('password'))
-    zebra_entries = zebra.get_data(project)
-
-    jira = JiraRemote(secret.get_jira('url'), secret.get_jira('username'), secret.get_jira('password'))
-    jira_entries = jira.get_data(project)
-    pprint(jira_entries.get_achievement_by_day())
-
-class ZebraEntries(dict):
-    def __init__(self):
-        self.ordered_dates = None
-
-    def get_ordered_dates(self):
-        if self.ordered_dates is None:
-            self.ordered_dates = sorted(set(self.keys()))
-        return self.ordered_dates
+from models import Project
+from models import Sprint
+from models import JiraEntries
+from models import ZebraEntries
+from models import JiraEntry
 
 class Remote(object):
     def __init__(self, base_url):
@@ -130,72 +103,6 @@ class JiraRemote(Remote):
         close_date = response_xml.find("./atom:entry/atom:category/[@term='For PO Review']/../atom:published", namespaces=xmlns).text
         return dateutil.parser.parse(close_date)
 
-class JiraEntry:
-    def __init__(self):
-        self.story_points = 0
-        self.business_value = 0
-        self.id = None
-        self.status = None
-        self.close_date = None
-        self.is_nice = False
-
-    def is_over(self):
-        # 6: PO review, 10008: closed
-        return self.status == 6 or self.status == 10008
-
-    def get_close_day(self):
-        return self.close_date.strftime('%Y-%m-%d')
-
-class JiraEntries(list):
-    def __init__(self):
-        list.__init__([])
-        self.total_story_points = 0
-        self.total_business_value = 0
-        self.achieved_story_points = 0
-        self.achieved_business_value = 0
-        self.achieved_by_date = {}
-
-    def close_story_filter(self, x):
-        return x.is_over() and x.close_date is not None
-
-    def get_achievement_by_day(self):
-        if len(self.achieved_by_date) == 0:
-            for story in filter(self.close_story_filter, self):
-                day = story.get_close_day()
-                if day in self.achieved_by_date:
-                    self.achieved_by_date[day]['sp'] += story.story_points
-                    self.achieved_by_date[day]['bv'] += story.business_value
-                else:
-                    o = {'sp': story.story_points, 'bv': story.business_value}
-                    self.achieved_by_date[day] = o
-        return self.achieved_by_date
-
-    def get_total_story_points(self):
-        for s in self:
-            if s.is_nice:
-                continue
-            self.total_story_points += s.story_points
-        return self.total_story_points
-
-    def get_achieved_story_points(self):
-        for s in self:
-            if s.is_over():
-                self.achieved_story_points += s.story_points
-        return self.achieved_story_points
-
-    def get_total_business_value(self):
-        for s in self:
-            if s.is_nice:
-                continue
-            self.total_business_value += s.business_value
-        return self.total_business_value
-
-    def get_achieved_business_value(self):
-        for s in self:
-            if s.is_over():
-                self.achieved_business_value += s.business_value
-        return self.achieved_business_value
-
 class ZebraRemote(Remote):
     def __init__(self, base_url, username, password):
         super(ZebraRemote, self).__init__(base_url)
@@ -287,110 +194,4 @@ class ZebraRemote(Remote):
     def parse_entry(self, entry):
         return {'username': str(entry['username']), 'time': float(entry['time'])}
 
-
-class SecretParser:
-    def __init__(self, url):
-        json_file = open(url)
-        settings = json.load(json_file)
-        json_file.close()
-        self.zebra_data = settings['zebra']
-        self.jira_data = settings['jira']
-
-    def get_zebra(self, key):
-        return self.zebra_data[key]
-
-    def get_jira(self, key):
-        return self.jira_data[key]
-
-class ConfigParser:
-    def __init__(self, user_project, user_index):
-        self.u_project = user_project
-        self.u_index = user_index
-
-    def load_config(self, url):
-        json_file = open(url)
-        settings = json.load(json_file)
-        json_file.close()
-        return settings
-
-    def parse(self, jsonData):
-        # check if the project specified exists
-        for proj in jsonData['projects']:
-            if proj['name'] == self.u_project:
-                project = Project()
-                project.set_name(proj['name'])
-                projectData = proj
-                break
-        try:
-            print "Project %s found in config" % (project.get_name())
-        except:
-            print "Project %s not found. Make sure it's defined in your settings file" % (userProject)
-            return
-
-        # if a sprint index is specified check that it exists
-        if self.u_index is not None:
-            try:
-                projectData['sprints']
-            except:
-                print "There is no sprint defined in your config for the project %s" % (project.get_name())
-                return
-
-            for spr in projectData['sprints']:
-                if unicode(spr['index']) == self.u_index:
-                    break
-        else:
-            print "No sprint index specified, taking last defined per default"
-            spr = projectData['sprints'][len(projectData['sprints']) - 1]
-
-        try:
-            sprint = Sprint()
-            sprint.set_index(unicode(spr['index']))
-            sprint.set_jira_data(spr['jira'])
-            sprint.set_zebra_data(spr['zebra'])
-            project.set_sprint(sprint)
-            print "Sprint %s found in config" % (sprint.get_index())
-#            print project.get_sprint().get_jira_data('url')
-#            print project.get_sprint().get_zebra_data('client_id')
-        except:
-            print "Either the sprint you specified was not found or there was no sprint defined in your config"
-            return
-
-        return project
-
-
-
-class Project:
-    def get_name(self):
-        return self.name
-
-    def set_name(self, name):
-        self.name = name
-
-    def set_sprint(self, sprint):
-        self.sprint = sprint
-
-    def get_sprint(self):
-        return self.sprint
-
-class Sprint:
-    def get_index(self):
-        return self.index
-
-    def set_index(self, index):
-        self.index = index
-
-    def set_jira_data(self, data):
-        self.jira_data = data
-
-    def get_jira_data(self, key):
-        return self.jira_data[key]
-
-    def set_zebra_data(self, data):
-        self.zebra_data = data
-
-    def get_zebra_data(self, key):
-        return self.zebra_data[key]
-
-if __name__ == '__main__':
-    init()
 
