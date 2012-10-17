@@ -97,15 +97,16 @@ class JiraRemote(Remote):
         for s in stories:
             story = JiraEntry()
             story.id = s.find('key').text
+            story.is_nice = s.find('title').text.find('(NICE)') != -1
             story.status = int(s.find('status').get('id'))
             try:
                 story.business_value = float(s.find('./customfields/customfield/[@id="customfield_10064"]/customfieldvalues/customfieldvalue').text)
             except AttributeError:
-                print 'Story ' + story.id + ' has no business value defined'
+                print 'Story ' + story.id + ' has no business value defined, 0 taken as default'
             try:
                 story.story_points = float(s.find('./customfields/customfield/[@id="customfield_10040"]/customfieldvalues/customfieldvalue').text)
             except AttributeError:
-                print 'Story ' + story.id + ' has no story points defined'
+                print 'Story ' + story.id + ' has no story points defined, 0 taken as default'
             if story.is_over():
                 try:
                     story.close_date = self.get_story_close_date(story.id)
@@ -136,6 +137,7 @@ class JiraEntry:
         self.id = None
         self.status = None
         self.close_date = None
+        self.is_nice = False
 
     def is_over(self):
         # 6: PO review, 10008: closed
@@ -170,6 +172,8 @@ class JiraEntries(list):
 
     def get_total_story_points(self):
         for s in self:
+            if s.is_nice:
+                continue
             self.total_story_points += s.story_points
         return self.total_story_points
 
@@ -181,6 +185,8 @@ class JiraEntries(list):
 
     def get_total_business_value(self):
         for s in self:
+            if s.is_nice:
+                continue
             self.total_business_value += s.business_value
         return self.total_business_value
 
