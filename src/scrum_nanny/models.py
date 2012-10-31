@@ -1,4 +1,9 @@
-class ZebraEntries(dict):
+class ZebraEntry:
+    def __init__(self):
+        self.username = None
+        self.time = 0
+
+class ZebraDays(dict):
     def __init__(self):
         self.ordered_dates = None
 
@@ -6,6 +11,11 @@ class ZebraEntries(dict):
         if self.ordered_dates is None:
             self.ordered_dates = sorted(set(self.keys()))
         return self.ordered_dates
+
+class ZebraDay:
+    time = 0
+    entries = list()
+    day = '' # readable day (2012-07-31)
 
 class JiraEntry:
     def __init__(self):

@@ -6,8 +6,10 @@ import dateutil.parser
 from models import Project
 from models import Sprint
 from models import JiraEntries
-from models import ZebraEntries
 from models import JiraEntry
+from models import ZebraDays
+from models import ZebraDay
+from models import ZebraEntry
 
 class Remote(object):
     def __init__(self, base_url):
@@ -37,7 +39,7 @@ class JiraRemote(Remote):
 
     def _get_request(self, url, body = None, headers = {}):
         if 'User-Agent' not in headers:
-            headers['User-Agent'] = 'ScrumNanny Zebra Client';
+            headers['User-Agent'] = 'ScrumNanny Jira Client';
         return super(JiraRemote, self)._get_request(url, body, headers)
 
     def _request(self, url, body = None, headers = {}):
@@ -178,20 +180,28 @@ class ZebraRemote(Remote):
         return self.parse_entries(entries)
 
     def parse_entries(self, entries):
-        entries_per_date = ZebraEntries()
+        zebra_days = ZebraDays()
         for entry in entries:
+            # zebra last entries are totals, and dont have a tid
             if entry['tid'] == '':
                 continue
-            e = self.parse_entry(entry)
-            if entry['date'] in entries_per_date:
-                entries_per_date[entry['date']]['entries'].append(e)
-                entries_per_date[entry['date']]['total_time'] += e['time']
+            date = dateutil.parser.parse(entry['date']).strftime('%Y-%m-%d')
+            zebra_entry = self.parse_entry(entry)
+            if date in zebra_days:
+                zebra_days[date].entries.append(zebra_entry)
+                zebra_days[date].time += zebra_entry.time
             else:
-                o = {'entries': [e], 'total_time': e['time']}
-                entries_per_date[entry['date']] = o
-        return entries_per_date
+                day = ZebraDay()
+                day.time = zebra_entry.time
+                day.day = date
+                day.entries.append(zebra_entry)
+                zebra_days[date] = day
+        return zebra_days
 
     def parse_entry(self, entry):
-        return {'username': str(entry['username']), 'time': float(entry['time'])}
+        zebra_entry = ZebraEntry()
+        zebra_entry.username = str(entry['username'])
+        zebra_entry.time = float(entry['time'])
+        return zebra_entry
 
 

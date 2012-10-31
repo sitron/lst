@@ -23,7 +23,7 @@ def main():
 
     print 'Start fetching Zebra'
     zebra = ZebraRemote(secret.get_zebra('url'), secret.get_zebra('username'), secret.get_zebra('password'))
-    zebra_entries = zebra.get_data(project)
+    zebra_days = zebra.get_data(project)
     print 'End Zebra'
 
     print 'Start fetching Jira'
