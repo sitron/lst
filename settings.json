@@ -5,6 +5,7 @@
             "sprints" : [
                 {
                     "index" : 1,
+                    "commited_man_days" : 12,
                     "zebra" : {
                         "client_id" : 1396,
                         "activities" : "*",
