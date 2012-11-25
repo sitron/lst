@@ -1,93 +1,34 @@
 var that = this;
-function mapToData() {
-    console.log('map');
-    console.log(data);
 
-    data.unshift({'storyPoints': 0, 'manDays': 0, 'date': '0.0'});
+function mapToData() {
+    data.unshift({'storyPoints': 0, 'manDays': 0, 'date': '0'});
     var key = function(d) {return d.manDays};
     var dataToDates = function(d) {return d.date};
     var dates = data.map(dataToDates);
-    var maxManDays = d3.max(data, function(d) {return d.manDays});
-    var maxStoryPoints = d3.max(data, function(d) {return d.storyPoints});
-    var max = d3.max([maxManDays, maxStoryPoints]);
-    console.log(max);
     var height = 400;
-    var width = 400;
-    var yManDays = d3.scale.linear()
-        .domain([0, maxManDays])
-        .range([height, '0']);
-    var yStoryPoints = d3.scale.linear()
-        .domain([0, maxStoryPoints])
-        .range([height, '0']);
+    var width = 800;
 
-    var x = d3.scale.ordinal()
+    var xScale = d3.scale.ordinal()
         .domain(dates)
         .rangePoints([0, width]);
 
-    var yticker = d3.scale.linear()
-        .domain([0, data.length])
-        .range([width, '0']);
-
-    var chart = d3.select('body').append('svg')
+    var chart = d3.select('#graph').append('svg')
         .attr('class', 'chart')
-        .attr('width', 500)
-        .attr('height', 500)
+        .attr('width', width + 100)
+        .attr('height', height + 100)
         .append('g')
         .attr('transform', 'translate(40, 20)');
 
-    var manDaysGraph = chart.append('svg:g')
-        .attr('class', 'man-days-graph');
-    var storyPointsGraph = chart.append('svg:g')
-        .attr('class', 'story-points-graph');
-
-    // man days graph
-    manDaysGraph.append('path')
-        .datum(data)
-        .attr('class', 'chart-line man-days')
-        .attr('d', d3.svg.line()
-            .x(function(d) { return x(d.date); })
-            .y(function(d) { return yManDays(d.manDays || 0); })
-        );
-
-    manDaysGraph.selectAll('.point')
-        .data(data)
-        .enter().append('svg:circle')
-        .attr('class', 'point')
-        .attr('r', 4)
-        .attr('cx', function(d) {return x(d.date);})
-        .attr('cy', function(d) {return yManDays(d.manDays || 0);});
-
-    // story points graph
-    storyPointsGraph.append('path')
-        .datum(data)
-        .attr('class', 'chart-line story-points')
-        .attr('d', d3.svg.line()
-            .x(function(d) { return x(d.date); })
-            .y(function(d) { return yStoryPoints(d.storyPoints || 0); })
-        );
-
-    storyPointsGraph.selectAll('.point')
-        .data(data)
-        .enter().append('svg:circle')
-        .attr('class', 'point')
-        .attr('r', 4)
-        .attr('cx', function(d) {return x(d.date);})
-        .attr('cy', function(d) {return yStoryPoints(d.storyPoints || 0);});
-
     // axis
     var xAxis = d3.svg.axis()
-        .scale(x)
+        .scale(xScale)
+        .tickFormat(function(d) {
+            if (d == 0) return d;
+            var date = new Date(d);
+            var format = d3.time.format('%a-%d-%m');
+            return format(date);
+        })
         .orient('bottom');
-
-    var yAxisManDays = d3.svg.axis()
-        .scale(yManDays)
-        .orient('left');
-    var yAxisStoryPoints = d3.svg.axis()
-        .scale(yStoryPoints)
-        .orient('right');
-    var yAxisBusinessValue = d3.svg.axis()
-        .scale(yStoryPoints)
-        .orient('left');
 
     var axisContainer = chart.append('g')
         .attr('class', 'axis-container');
@@ -97,65 +38,131 @@ function mapToData() {
         .attr('transform', 'translate(0, ' + height + ')')
         .call(xAxis);
 
-    axisContainer.append('g')
-        .attr('class', 'axis man-days')
-        .attr('transform', 'translate(0, 0)')
-        .call(yAxisManDays);
 
-    axisContainer.append('g')
-        .attr('class', 'axis story-points')
-        .attr('transform', 'translate(' + (width + 30) + ', 0)')
-        .call(yAxisStoryPoints);
+    // add graphs
+    var result = data[data.length - 1];
+    var biggestRatio =
+        Math.max(
+            Math.max(
+                (result.manDays / commitedValues.manDays),
+                (result.storyPoints / commitedValues.storyPoints)
+            ),
+            (result.businessValue / commitedValues.businessValue)
+        );
 
-    axisContainer.append('g')
-        .attr('class', 'axis business-value')
-        .attr('transform', 'translate(' + (width + 30) + ', 0)')
-        .call(yAxisBusinessValue);
+    addGraph(
+        data,
+        'manDays',
+        'man-days',
+        chart,
+        'left',
+        axisContainer,
+        height,
+        xScale,
+        0,
+        commitedValues,
+        biggestRatio);
+    addGraph(
+        data,
+        'storyPoints',
+        'story-points',
+        chart,
+        'left',
+        axisContainer,
+        height,
+        xScale,
+        width,
+        commitedValues,
+        biggestRatio);
+    addGraph(
+        data,
+        'businessValue',
+        'business-value',
+        chart,
+        'right',
+        axisContainer,
+        height,
+        xScale,
+        width,
+        commitedValues,
+        biggestRatio);
 }
 
-// data = data
-// name = man-days
-// chart = chart
-// orientation = left
-// axisContainer
-function addGraph(data, name, chart, orientation, axisContainer) {
-    var maxManDays = d3.max(data, function(d) {return d.manDays});
+/**
+ * Add a new graph
+ *
+ * @param {Array}    data (contains all data, for all graphs).
+ * @param {String}   prop data property to use for graph population.
+ * @param {String}   name graph name (used for css classes).
+ * @param {Svg}      chart svg container for chart.
+ * @param {String}   orientation axis labels orientation.
+ * @param {Svg}      axisContainer svg container for axis.
+ * @param {Integer}  height of the graph (to create scale).
+ * @param {Function} xScale mapping on x axis.
+ * @param {Number}   position x position of the axis.
+ * @param {Object}  object commited values.
+ * @param {Number}   biggestRatio ratio of the most successful axe
+ *                   (only important if sprint result > 100%).
+ */
+function addGraph(
+        data,
+        prop,
+        name,
+        chart,
+        orientation,
+        axisContainer,
+        height,
+        xScale,
+        position,
+        commitedValues,
+        biggestRatio) {
 
-    var yManDays = d3.scale.linear()
-        .domain([0, maxManDays])
+    var max = biggestRatio > 1 ? biggestRatio * commitedValues[prop] : commitedValues[prop];
+
+    var yScale = d3.scale.linear()
+        .domain([0, max])
         .range([height, '0']);
 
-    var manDaysGraph = chart.append('svg:g')
+    var graph = chart.append('svg:g')
         .attr('class', name + '-graph');
 
-    manDaysGraph.append('path')
+    graph.append('path')
         .datum(data)
         .attr('class', 'chart-line ' + name)
         .attr('d', d3.svg.line()
-            .x(function(d) { return x(d.date); })
-            .y(function(d) { return yManDays(d.manDays || 0); })
+            .x(function(d) { return xScale(d.date); })
+            .y(function(d) { return yScale(d[prop] || 0); })
         );
 
-    manDaysGraph.selectAll('.point')
+    graph.selectAll('.point')
         .data(data)
         .enter().append('svg:circle')
         .attr('class', 'point')
         .attr('r', 4)
-        .attr('cx', function(d) {return x(d.date);})
-        .attr('cy', function(d) {return yManDays(d.manDays || 0);});
+        .attr('cx', function(d) {return xScale(d.date);})
+        .attr('cy', function(d) {return yScale(d[prop] || 0);});
 
-    var yAxisManDays = d3.svg.axis()
-        .scale(yManDays)
+    var yAxis = d3.svg.axis()
+        .scale(yScale)
         .orient(orientation);
 
     axisContainer.append('g')
         .attr('class', 'axis ' + name)
-        .attr('transform', 'translate(0, 0)')
-        .call(yAxisManDays);
+        .attr('transform', 'translate(' + position + ', 0)')
+        .call(yAxis);
 }
 
 $(function() {
     that.mapToData();
+
+    var last = data[data.length - 1];
+    $('#graph-results .man-days').text(
+        Math.round((last.manDays / commitedValues.manDays) * 100) + '%');
+    $('#graph-results .story-points').text(
+        Math.round((last.storyPoints / commitedValues.storyPoints) * 100) + '%');
+    $('#graph-results .business-value').text(
+        Math.round((last.businessValue / commitedValues.businessValue) * 100) + '%');
+
     $('#story-points-toggle').click(function() {
         var storyPointGraph = $('.story-points-graph'),
             storyPointAxis = $('.axis.story-points');

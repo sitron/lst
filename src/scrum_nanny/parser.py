@@ -61,6 +61,7 @@ class ConfigParser:
             sprint.set_index(unicode(spr['index']))
             sprint.set_jira_data(spr['jira'])
             sprint.set_zebra_data(spr['zebra'])
+            sprint.commited_man_days = unicode(spr['commited_man_days'])
             project.set_sprint(sprint)
             print "Sprint %s found in config" % (sprint.get_index())
 #            print project.get_sprint().get_jira_data('url')

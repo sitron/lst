@@ -1,0 +1,51 @@
+.chart rect {
+    stroke: white;
+    fill: blue;
+}
+.chart .chart-line {
+    fill: none;
+    stroke-width: 2px;
+}
+.chart .man-days-graph .chart-line {
+    stroke: black;
+}
+.chart .man-days-graph .point {
+    fill: black
+}
+.chart .story-points-graph .chart-line {
+    stroke: blue;
+}
+.chart .story-points-graph .point {
+    fill: blue
+}
+.chart .business-value-graph .chart-line {
+    stroke: red;
+}
+.chart .business-value-graph .point {
+    fill: red
+}
+.chart .bar-text {
+    fill: white;
+}
+.chart .axis path,
+.chart .axis line {
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+}
+.chart .axis text {
+    font-size: 11px;
+}
+.chart .axis.story-points text {
+    fill: blue;
+}
+.chart .axis.business-value text {
+    fill: red;
+}
+.chart text {
+    font-family: sans-serif;
+}
+#graph-interactive-data {
+    z-index: 10;
+}
+

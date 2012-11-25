@@ -57,7 +57,7 @@ class JiraEntries(list):
                     self.achieved_by_date[day] = o
         return self.achieved_by_date
 
-    def get_total_story_points(self):
+    def get_commited_story_points(self):
         for s in self:
             if s.is_nice:
                 continue
@@ -70,7 +70,7 @@ class JiraEntries(list):
                 self.achieved_story_points += s.story_points
         return self.achieved_story_points
 
-    def get_total_business_value(self):
+    def get_commited_business_value(self):
         for s in self:
             if s.is_nice:
                 continue
@@ -97,6 +97,8 @@ class Project:
         return self.sprint
 
 class Sprint:
+    commited_man_days = 0
+
     def get_index(self):
         return self.index
 
@@ -115,3 +117,30 @@ class Sprint:
     def get_zebra_data(self, key):
         return self.zebra_data[key]
 
+class GraphEntries(dict):
+    ''' keeps all the graph entries '''
+    def get_ordered_data(self):
+        data = list()
+        cumulated_bv = 0
+        cumulated_sp = 0
+        cumulated_time = 0
+        for key in sorted(self.iterkeys()):
+            value = self[key]
+            value.date = key
+            cumulated_bv += value.business_value
+            cumulated_sp += value.story_points
+            cumulated_time += value.time
+            value.business_value = cumulated_bv
+            value.story_points = cumulated_sp
+            value.time = cumulated_time / 8
+            data.append(value.to_json())
+        return data
+
+class GraphEntry:
+    date = None
+    business_value = 0
+    story_points = 0
+    time = 0
+
+    def to_json(self):
+        return {'date': self.date, 'businessValue': self.business_value, 'storyPoints': self.story_points, 'manDays': self.time}

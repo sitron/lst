@@ -185,8 +185,13 @@ class ZebraRemote(Remote):
             # zebra last entries are totals, and dont have a tid
             if entry['tid'] == '':
                 continue
+            # get a readable date to use as dict key
             date = dateutil.parser.parse(entry['date']).strftime('%Y-%m-%d')
+
+            # parse zebra entry
             zebra_entry = self.parse_entry(entry)
+
+            # add/update zebra entries
             if date in zebra_days:
                 zebra_days[date].entries.append(zebra_entry)
                 zebra_days[date].time += zebra_entry.time
