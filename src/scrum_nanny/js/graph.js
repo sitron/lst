@@ -8,8 +8,25 @@ function mapToData() {
     var height = 400;
     var width = 800;
 
+    var maxDate = new Date(d3.max(dates));
+    var endDate = new Date(sprint.endDate);
+    var dateFormat = d3.time.format('%a %d');
+    var dateLongFormat = d3.time.format('%Y-%m-%d');
+
+    // to show a nicer graph we draw the day till the end of the sprint
+    // not only achieved ones
+    var allDates = dates.slice(0);
+    if (maxDate < endDate) {
+        while (maxDate < endDate) {
+            maxDate.setDate(maxDate.getDate() + 1);
+            if (maxDate.getDay() != 6 && maxDate.getDay() != 0) {
+                allDates.push(dateLongFormat(maxDate));
+            }
+        }
+    }
+
     var xScale = d3.scale.ordinal()
-        .domain(dates)
+        .domain(allDates)
         .rangePoints([0, width]);
 
     var chart = d3.select('#graph').append('svg')
@@ -25,8 +42,7 @@ function mapToData() {
         .tickFormat(function(d) {
             if (d == 0) return d;
             var date = new Date(d);
-            var format = d3.time.format('%a-%d-%m');
-            return format(date);
+            return dateFormat(date);
         })
         .orient('bottom');
 

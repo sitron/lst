@@ -57,6 +57,10 @@ def main():
     commited_values['businessValue'] = jira_entries.get_commited_business_value()
     commited_values['manDays'] = project.sprint.commited_man_days
 
+    sprint_data = {}
+    sprint_data['startDate'] = project.sprint.get_zebra_data('start_date')
+    sprint_data['endDate'] = project.sprint.get_zebra_data('end_date')
+
     # write the graph
     print 'Retrieving base graph'
     try:
@@ -75,7 +79,7 @@ def main():
        # data_output.close()
         graph_output_file = 'graphs/' + slugify(project.get_name()) + '-' + project.get_sprint().get_index() + '-' + datetime.now().strftime("%Y%m%d") +'.html'
         graph_output = open(graph_output_file, 'w')
-        graph_output.write(template.safe_substitute(base_path='../', data=json.dumps(data), commited_values=json.dumps(commited_values)))
+        graph_output.write(template.safe_substitute(base_path='../', data=json.dumps(data), commited_values=json.dumps(commited_values), sprint=json.dumps(sprint_data)))
         graph_output.close()
         print 'Check your new graph at ' + graph_output_file
     except Exception as e:
