@@ -11,6 +11,7 @@ from parser import ConfigParser
 from parser import SecretParser
 from remote import ZebraRemote
 from remote import JiraRemote
+from models import JiraEntry
 from models import GraphEntry
 from models import GraphEntries
 
@@ -41,6 +42,7 @@ def main():
     print 'End Zebra'
 
     print 'Start fetching Jira'
+    JiraEntry.closed_status =  set(project.get_closed_status_codes())
     jira = JiraRemote(secret.get_jira('url'), secret.get_jira('username'), secret.get_jira('password'))
     jira_entries = jira.get_data(project)
     print 'End Jira'

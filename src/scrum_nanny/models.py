@@ -18,6 +18,9 @@ class ZebraDay:
     day = '' # readable day (2012-07-31)
 
 class JiraEntry:
+    # status codes considered as closed
+    closed_status = set()
+
     def __init__(self):
         self.story_points = 0
         self.business_value = 0
@@ -27,8 +30,7 @@ class JiraEntry:
         self.is_nice = False
 
     def is_over(self):
-        # 6: PO review, 10008: closed
-        return self.status == 6 or self.status == 10008
+        return self.status in JiraEntry.closed_status
 
     def get_close_day(self):
         return self.close_date.strftime('%Y-%m-%d')
@@ -95,6 +97,9 @@ class Project:
 
     def get_sprint(self):
         return self.sprint
+
+    def get_closed_status_codes(self):
+        return self.sprint.get_jira_data('closed_status_codes')
 
 class Sprint:
     commited_man_days = 0

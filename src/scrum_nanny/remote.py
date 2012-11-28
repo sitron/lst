@@ -57,8 +57,10 @@ class JiraRemote(Remote):
         pass
 
     def get_data(self, project):
-        url = project.get_sprint().get_jira_data('url')
+        jira_project_name = project.sprint.get_jira_data('project_name')
+        jira_sprint_name = project.sprint.get_jira_data('sprint_name')
 
+        url = "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=project+%3D+'" + jira_project_name + "'+and+fixVersion+%3D+'" + jira_sprint_name + "'&tempMax=1000"
         url += '&os_username=' + str(self.username)
         url += '&os_password=' + str(self.password)
 
@@ -68,11 +70,14 @@ class JiraRemote(Remote):
         response_xml = ET.fromstring(response_body)
         stories = response_xml[0].findall('item')
 
+        nice_identifier = project.sprint.get_jira_data('nice_identifier')
+        closed_status = project.sprint.get_jira_data('closed_status')
+
         jira_entries = JiraEntries()
         for s in stories:
             story = JiraEntry()
             story.id = s.find('key').text
-            story.is_nice = s.find('title').text.find('(NICE)') != -1
+            story.is_nice = s.find('title').text.find(nice_identifier) != -1
             story.status = int(s.find('status').get('id'))
             try:
                 story.business_value = float(s.find('./customfields/customfield/[@id="customfield_10064"]/customfieldvalues/customfieldvalue').text)
@@ -84,14 +89,14 @@ class JiraRemote(Remote):
                 print 'Story ' + story.id + ' has no story points defined, 0 taken as default'
             if story.is_over():
                 try:
-                    story.close_date = self.get_story_close_date(story.id)
+                    story.close_date = self.get_story_close_date(story.id, closed_status)
                 except AttributeError:
-                    print 'Story ' + story.id + ' is discarded as it is closed, but never had the status For PO review'
+                    print 'Story ' + story.id + ' is discarded as it is closed, but never had the status ' + closed_status
                     continue
             jira_entries.append(story)
         return jira_entries
 
-    def get_story_close_date(self, id):
+    def get_story_close_date(self, id, closed_status):
         url = "/activity?maxResults=10&issues=activity+IS+issue%3Atransition&streams=issue-key+IS+"
         url += str(id)
         url += '&os_username=' + str(self.username)
@@ -102,7 +107,7 @@ class JiraRemote(Remote):
 
         response_xml = ET.fromstring(response_body)
         xmlns = {"atom": "http://www.w3.org/2005/Atom"}
-        close_date = response_xml.find("./atom:entry/atom:category/[@term='For PO Review']/../atom:published", namespaces=xmlns).text
+        close_date = response_xml.find("./atom:entry/atom:category/[@term='" + closed_status + "']/../atom:published", namespaces=xmlns).text
         return dateutil.parser.parse(close_date)
 
 class ZebraRemote(Remote):
