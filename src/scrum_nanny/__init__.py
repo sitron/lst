@@ -5,6 +5,7 @@ from pprint import pprint
 from datetime import datetime
 import unicodedata
 import re
+import os
 
 from parser import ConfigParser
 from parser import SecretParser
@@ -15,15 +16,21 @@ from models import GraphEntries
 
 """scrum nanny, helps you keep your sprint commitment safe"""
 def main():
+    SETTINGS_PATH = os.path.expanduser('~/.scrum-nanny.json')
+    SECRET_PATH = os.path.expanduser('~/.scrum-nanny-secret.json')
+
+    # read command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("project", help="project's name, as stated in your config")
     parser.add_argument("-i", "--sprint-index", help="sprint index, as stated in your config", type=unicode)
     args = parser.parse_args()
 
+    # read config
     config_parser = ConfigParser(args.project, args.sprint_index)
-    settings = config_parser.load_config('settings.json')
+    settings = config_parser.load_config(SETTINGS_PATH)
 
-    secret = SecretParser('secret.json')
+    # read usernames and passwords for jira/zebra
+    secret = SecretParser(SECRET_PATH)
 
     print 'Reading config'
     project = config_parser.parse(settings)
