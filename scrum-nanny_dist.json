@@ -1,0 +1,27 @@
+{
+    "projects" : [
+        {
+            "name" : "any_name_here_just_for_organization_purpose",
+            "sprints" : [
+                {
+                    "index" : 3,
+                    "commited_man_days" : 37,
+                    "zebra" : {
+                        "client_id" : 1111,
+                        "activities" : "*",
+                        "users" : [1,2,3],
+                        "start_date" : "2012-11-19",
+                        "end_date" : "2012-12-10"
+                    },
+                    "jira" : {
+                        "project_name" : "My+Project+Name+As+Written+In+Jira",
+                        "sprint_name" : "Fix+version+Name+As+Written+In+Jira",
+                        "nice_identifier" : "(NICE)",
+                        "closed_status" : "For PO Review",
+                        "closed_status_codes" : [6, 10008]
+                    }
+                }
+            ]
+        }
+    ]
+}
