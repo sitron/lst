@@ -85,10 +85,11 @@ def main():
        # data_output.write(json.dumps(data))
        # data_output.close()
         graph_output_file = 'graphs/' + slugify(project.get_name()) + '-' + project.get_sprint().get_index() + '-' + datetime.now().strftime("%Y%m%d") +'.html'
+        graph_output_file_absolute = os.path.abspath(graph_output_file)
         graph_output = open(graph_output_file, 'w')
         graph_output.write(template.safe_substitute(base_path='../', data=json.dumps(data), commited_values=json.dumps(commited_values), sprint=json.dumps(sprint_data)))
         graph_output.close()
-        print 'Check your new graph at ' + graph_output_file
+        print 'Check your new graph at ' + graph_output_file_absolute
     except Exception as e:
         print 'Problem with the generation of the graph file', e
 
