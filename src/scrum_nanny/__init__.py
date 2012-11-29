@@ -17,8 +17,8 @@ from models import GraphEntries
 
 """scrum nanny, helps you keep your sprint commitment safe"""
 def main():
-    SETTINGS_PATH = os.path.expanduser('~/.scrum-nanny.json')
-    SECRET_PATH = os.path.expanduser('~/.scrum-nanny-secret.json')
+    SETTINGS_PATH = os.path.expanduser('~/.scrum-nanny.yml')
+    SECRET_PATH = os.path.expanduser('~/.scrum-nanny-secret.yml')
 
     # read command line arguments
     parser = argparse.ArgumentParser()
@@ -67,8 +67,8 @@ def main():
     commited_values['manDays'] = project.sprint.commited_man_days
 
     sprint_data = {}
-    sprint_data['startDate'] = project.sprint.get_zebra_data('start_date')
-    sprint_data['endDate'] = project.sprint.get_zebra_data('end_date')
+    sprint_data['startDate'] = project.sprint.get_zebra_data('start_date').strftime('%Y-%m-%d')
+    sprint_data['endDate'] = project.sprint.get_zebra_data('end_date').strftime('%Y-%m-%d')
 
     # write the graph
     print 'Retrieving base graph'
