@@ -165,11 +165,19 @@ class ZebraRemote(Remote):
         start_date = project.get_sprint().get_zebra_data('start_date')
         end_date = project.get_sprint().get_zebra_data('end_date')
 
-        for user in users:
-            report_url += '&users[]=' + `user`
+        if type(users) == list:
+            for user in users:
+                report_url += '&users[]=' + `user`
+        else:
+            report_url += '&users[]=' + str(users)
+
+        if type(activities) == list:
+            for activity in activities:
+                report_url += '&activities[]=' + `activity`
+        else:
+            report_url += '&activities[]=' + str(activities)
 
         report_url += '&projects[]=' + `client_id`
-        report_url += '&activities[]=' + str(activities)
         report_url += '&start=' + str(start_date)
         report_url += '&end=' + str(end_date)
 
