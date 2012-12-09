@@ -188,9 +188,16 @@ class ZebraRemote(Remote):
 
         response_json = json.loads(response_body)
         entries = response_json['command']['reports']['report']
-        print 'Will now parse %d entries found in Zebra' % len(entries)
 
-        return self.parse_entries(entries)
+        # parse response
+        print 'Will now parse %d entries found in Zebra' % len(entries)
+        zebra_result = self.parse_entries(entries)
+
+        # check for forced zebra values
+        for (key,value) in zebra_result.iteritems():
+            value.time = project.sprint.get_forced_data(key, value.time)
+
+        return zebra_result
 
     def parse_entries(self, entries):
         zebra_days = ZebraDays()

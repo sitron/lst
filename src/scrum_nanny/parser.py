@@ -1,6 +1,8 @@
 import yaml
 from models import Project
 from models import Sprint
+import datetime
+import dateutil
 
 class SecretParser:
     def __init__(self, url):
@@ -71,11 +73,42 @@ class ConfigParser:
             sprint.set_jira_data(s['jira'])
             sprint.set_zebra_data(s['zebra'])
             sprint.commited_man_days = unicode(s['commited_man_days'])
+            sprint.forced = self.parse_forced(s['zebra']['force'])
             project.set_sprint(sprint)
             print "Sprint %s found in config" % (sprint.get_index())
         except:
             print "Either the sprint you specified was not found or there was no sprint defined in your config"
-            return
 
         return project
+
+    def parse_forced(self, force):
+        dates = dict()
+        forced = dict()
+        for f in force:
+            static = f['static']
+            dates = self.parse_date(static['date'])
+            time = static['time']
+            for d in dates:
+                forced[d.strftime("%Y-%m-%d")] = time
+        return forced
+
+    def parse_date(self, date):
+        if type(date) == datetime.date:
+            return [date]
+
+        # it's a date delta str as start/end
+        b = list()
+        a = date.split('/')
+        if len(a) != 2:
+            raise SyntaxError( "A date delta should be specified as a string (date1/date2), given: %s" % (date))
+
+        start = dateutil.parser.parse(a[0])
+        end = dateutil.parser.parse(a[1])
+        if start > end:
+            raise SyntaxError( "The first date in a delta should be smaller than the second one, given: %s" % (date))
+
+        dateDelta = end - start
+        for i in range(dateDelta.days + 1):
+            b.append(start + datetime.timedelta(days = i))
+        return b
 

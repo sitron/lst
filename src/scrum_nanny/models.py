@@ -102,7 +102,9 @@ class Project:
         return self.sprint.get_jira_data('closed_status_codes')
 
 class Sprint:
-    commited_man_days = 0
+    def __init__(self):
+        self.forced = dict()
+        self.commited_man_days = 0
 
     def get_index(self):
         return self.index
@@ -121,6 +123,12 @@ class Sprint:
 
     def get_zebra_data(self, key):
         return self.zebra_data[key]
+
+    def get_forced_data(self, date, default):
+        forced = self.forced.get(date, default)
+        if type(forced) == str:
+            return default + float(forced)
+        return forced
 
 class GraphEntries(dict):
     ''' keeps all the graph entries '''
