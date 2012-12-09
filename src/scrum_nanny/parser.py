@@ -42,16 +42,14 @@ class ConfigParser:
         try:
             print "Project %s found in config" % (project.get_name())
         except:
-            print "Project %s not found. Make sure it's defined in your settings file" % (self.u_project)
-            return
+            raise SyntaxError("Project %s not found. Make sure it's defined in your settings file" % (self.u_project))
 
         # if a sprint index is specified check that it exists
         if self.u_index is not None:
             try:
                 projectData['sprints']
             except:
-                print "There is no sprint defined in your config for the project %s" % (project.get_name())
-                return
+                raise SyntaxError("There is no sprint defined in your config for the project %s" % (project.get_name()))
 
             found = 0
             for spr in projectData['sprints']:
@@ -60,24 +58,20 @@ class ConfigParser:
                     found = 1
                     break
             if found == 0:
-                print "There is no sprint with the index %s defined in your config for the project %s" % (self.u_index, project.get_name())
-                return
+                raise SyntaxError("There is no sprint with the index %s defined in your config for the project %s" % (self.u_index, project.get_name()))
         else:
             print "No sprint index specified, taking last defined per default"
             spr = projectData['sprints'][len(projectData['sprints']) - 1]
             s = spr['sprint']
 
-        try:
-            sprint = Sprint()
-            sprint.set_index(unicode(s['index']))
-            sprint.set_jira_data(s['jira'])
-            sprint.set_zebra_data(s['zebra'])
-            sprint.commited_man_days = unicode(s['commited_man_days'])
-            sprint.forced = self.parse_forced(s['zebra']['force'])
-            project.set_sprint(sprint)
-            print "Sprint %s found in config" % (sprint.get_index())
-        except:
-            print "Either the sprint you specified was not found or there was no sprint defined in your config"
+        sprint = Sprint()
+        sprint.set_index(unicode(s['index']))
+        sprint.set_jira_data(s['jira'])
+        sprint.set_zebra_data(s['zebra'])
+        sprint.commited_man_days = unicode(s['commited_man_days'])
+        sprint.forced = self.parse_forced(s['zebra']['force'])
+        project.set_sprint(sprint)
+        print "Sprint %s found in config" % (sprint.get_index())
 
         return project
 
