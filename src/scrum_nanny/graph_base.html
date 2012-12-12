@@ -3,10 +3,28 @@
         <link rel="stylesheet" href="${base_path}src/scrum_nanny/css/graph.css" />
     </head>
     <body style="margin:0; padding:0">
-        <div id="graph-results">
-            <div>Man/Days: <span class="man-days"></span></div>
-            <div>Story points: <span class="story-points"></span></div>
-            <div>Business value: <span class="business-value"></span></div>
+        <div id="top">
+            <div id="graph-results">
+                <div class="man-days">
+                    <div>Man Days</div>
+                    <div class="value"></div>
+                    <div class="chart"></div>
+                </div>
+                <div class="story-points">
+                    <div>Story points</div>
+                    <div class="value"></div>
+                    <div class="chart"></div>
+                </div>
+                <div class="business-value">
+                    <div>Business value</div>
+                    <div class="value"></div>
+                    <div class="chart"></div>
+                </div>
+                <div class="velocity">
+                    <div>Velocity</div>
+                    <div class="value"></div>
+                </div>
+            </div>
         </div>
         <div id="graph"></div>
         <script type="text/javascript">

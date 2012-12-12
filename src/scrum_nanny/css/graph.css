@@ -48,4 +48,35 @@
 #graph-interactive-data {
     z-index: 10;
 }
+#top {
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+#graph-results .man-days .chart path.slice-0 {
+    fill: #333;
+}
+#graph-results .story-points .chart path.slice-0 {
+    fill: blue;
+}
+#graph-results .business-value .chart path.slice-0 {
+    fill: red;
+}
+#graph-results {
+    margin-left: 30px;
+    margin-top: 10px;
+}
+#graph-results > div {
+    float: left;
+    margin-left: 50px;
+    text-align: center;
+    font-size: 20px;
+}
+#graph-results > div:first-child {
+    margin-left: 0px;
+}
+#graph-results .man-days .chart path.slice-1,
+#graph-results .story-points .chart path.slice-1,
+#graph-results .business-value .chart path.slice-1 {
+    fill: #f1f1f1;
+}
 

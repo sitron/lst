@@ -1,21 +1,28 @@
 var that = this;
 
-function mapToData() {
+function drawChart() {
     data.unshift({'storyPoints': 0, 'manDays': 0, 'date': '0'});
-    var key = function(d) {return d.manDays};
-    var dataToDates = function(d) {return d.date};
-    var dates = data.map(dataToDates);
-    var height = 400;
-    var width = 800;
+    var key = function(d) {return d.manDays},
+        dataToDates = function(d) {return d.date},
+        dates = data.map(dataToDates),
+        height = 800,
+        width = 800,
+        maxDate = new Date(d3.max(dates)),
+        endDate = new Date(sprint.endDate),
+        dateFormat = d3.time.format('%a %d'),
+        dateLongFormat = d3.time.format('%Y-%m-%d');
 
-    var maxDate = new Date(d3.max(dates));
-    var endDate = new Date(sprint.endDate);
-    var dateFormat = d3.time.format('%a %d');
-    var dateLongFormat = d3.time.format('%Y-%m-%d');
+    var allDates,
+        xScale,
+        chart,
+        xAxis,
+        axisContainer,
+        result,
+        biggestRatio;
 
     // to show a nicer graph we draw the day till the end of the sprint
     // not only achieved ones
-    var allDates = dates.slice(0);
+    allDates = dates.slice(0);
     if (maxDate < endDate) {
         while (maxDate < endDate) {
             maxDate.setDate(maxDate.getDate() + 1);
@@ -25,11 +32,11 @@ function mapToData() {
         }
     }
 
-    var xScale = d3.scale.ordinal()
+    xScale = d3.scale.ordinal()
         .domain(allDates)
         .rangePoints([0, width]);
 
-    var chart = d3.select('#graph').append('svg')
+    chart = d3.select('#graph').append('svg')
         .attr('class', 'chart')
         .attr('width', width + 100)
         .attr('height', height + 100)
@@ -37,7 +44,7 @@ function mapToData() {
         .attr('transform', 'translate(40, 20)');
 
     // axis
-    var xAxis = d3.svg.axis()
+    xAxis = d3.svg.axis()
         .scale(xScale)
         .tickFormat(function(d) {
             if (d == 0) return d;
@@ -46,7 +53,7 @@ function mapToData() {
         })
         .orient('bottom');
 
-    var axisContainer = chart.append('g')
+    axisContainer = chart.append('g')
         .attr('class', 'axis-container');
 
     axisContainer.append('g')
@@ -56,8 +63,8 @@ function mapToData() {
 
 
     // add graphs
-    var result = data[data.length - 1];
-    var biggestRatio =
+    result = data[data.length - 1];
+    biggestRatio =
         Math.max(
             Math.max(
                 (result.manDays / commitedValues.manDays),
@@ -133,13 +140,17 @@ function addGraph(
         commitedValues,
         biggestRatio) {
 
-    var max = biggestRatio > 1 ? biggestRatio * commitedValues[prop] : commitedValues[prop];
+    var max = biggestRatio > 1 ?
+        biggestRatio * commitedValues[prop] : commitedValues[prop],
+        yScale,
+        graph,
+        yAxis;
 
-    var yScale = d3.scale.linear()
+    yScale = d3.scale.linear()
         .domain([0, max])
         .range([height, '0']);
 
-    var graph = chart.append('svg:g')
+    graph = chart.append('svg:g')
         .attr('class', name + '-graph');
 
     graph.append('path')
@@ -158,7 +169,7 @@ function addGraph(
         .attr('cx', function(d) {return xScale(d.date);})
         .attr('cy', function(d) {return yScale(d[prop] || 0);});
 
-    var yAxis = d3.svg.axis()
+    yAxis = d3.svg.axis()
         .scale(yScale)
         .orient(orientation);
 
@@ -168,16 +179,74 @@ function addGraph(
         .call(yAxis);
 }
 
-$(function() {
-    that.mapToData();
+function addPieChart(result, category) {
+    var dim = 150,
+        data,
+        vis,
+        arc,
+        pie,
+        arcs;
 
-    var last = data[data.length - 1];
-    $('#graph-results .man-days').text(
-        Math.round((last.manDays / commitedValues.manDays) * 100) + '%');
-    $('#graph-results .story-points').text(
-        Math.round((last.storyPoints / commitedValues.storyPoints) * 100) + '%');
-    $('#graph-results .business-value').text(
-        Math.round((last.businessValue / commitedValues.businessValue) * 100) + '%');
+        data = [Math.min(100, result), Math.max(0, (100 - result))];
+
+        $('#graph-results ' + category + ' .value').text(result + ' %');
+
+        vis = d3.select('#graph-results ' + category + ' .chart')
+            .append('svg:svg')
+            .data([data])
+                .attr('width', dim)
+                .attr('height', dim)
+            .append('svg:g')
+                .attr('transform',
+                        'translate(' + (dim / 2) + ',' + (dim / 2) + ')'
+                );
+
+        arc = d3.svg.arc()
+            .outerRadius(dim / 2);
+
+        pie = d3.layout.pie()
+            .sort(null) // to not sort pie slices by asc values (default)
+            .value(function(d) { return d; });
+
+        arcs = vis.selectAll('g.slice')
+            .data(pie)
+            .enter()
+                .append('svg:g')
+                    .attr('class', 'slice');
+
+            arcs.append('svg:path')
+                .attr('class', function(d, i) {return 'slice-' + i;})
+                .attr('d', arc);
+}
+
+$(function() {
+    that.drawChart();
+
+    var last,
+        mdResult,
+        spResult,
+        bvResult;
+
+    last = data[data.length - 1];
+    mdResult = Math.round(
+        (last.manDays / commitedValues.manDays) * 100
+    );
+    spResult = Math.round(
+        (last.storyPoints / commitedValues.storyPoints) * 100
+    );
+    bvResult = Math.round(
+        (last.businessValue / commitedValues.businessValue) * 100
+    );
+    that.addPieChart(mdResult, '.man-days');
+    that.addPieChart(spResult, '.story-points');
+    that.addPieChart(bvResult, '.business-value');
+
+    $('#graph-results .velocity .value').text(
+        Math.round(spResult / mdResult).toFixed(2) +
+        ' / ' +
+        Math.round(commitedValues.storyPoints / commitedValues.manDays)
+            .toFixed(2)
+    );
 
     $('#story-points-toggle').click(function() {
         var storyPointGraph = $('.story-points-graph'),
