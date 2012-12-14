@@ -15,10 +15,10 @@ from models import JiraEntry
 from models import GraphEntry
 from models import GraphEntries
 
-"""scrum nanny, helps you keep your sprint commitment safe"""
+"""LST, helps keep your sprint commitment safe"""
 def main():
-    SETTINGS_PATH = os.path.expanduser('~/.scrum-nanny.yml')
-    SECRET_PATH = os.path.expanduser('~/.scrum-nanny-secret.yml')
+    SETTINGS_PATH = os.path.expanduser('~/.lst.yml')
+    SECRET_PATH = os.path.expanduser('~/.lst-secret.yml')
 
     # read command line arguments
     parser = argparse.ArgumentParser()
@@ -73,7 +73,7 @@ def main():
     # write the graph
     print 'Retrieving base graph'
     try:
-        graph_file = open('src/scrum_nanny/graph_base.html')
+        graph_file = open('src/lst/graph_base.html')
         graph_str = graph_file.read()
         template = Template(graph_str)
         graph_file.close()

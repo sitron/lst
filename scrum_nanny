@@ -1,4 +1,0 @@
-#!/usr/bin/env python
-import scrum_nanny
-
-scrum_nanny.main()
