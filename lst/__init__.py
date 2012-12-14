@@ -73,7 +73,7 @@ def main():
     # write the graph
     print 'Retrieving base graph'
     try:
-        graph_file = open('src/lst/graph_base.html')
+        graph_file = open('lst/graph_base.html')
         graph_str = graph_file.read()
         template = Template(graph_str)
         graph_file.close()

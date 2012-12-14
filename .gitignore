@@ -1,1 +1,5 @@
 secret.json
+*.pyc
+build/*
+dist/*
+MANIFEST
