@@ -12,6 +12,7 @@ class SecretParser:
 
         self.zebra_data = settings['zebra']
         self.jira_data = settings['jira']
+        self.output_dir = settings['output_dir']
 
     def get_zebra(self, key):
         return self.zebra_data[key]
@@ -19,60 +20,46 @@ class SecretParser:
     def get_jira(self, key):
         return self.jira_data[key]
 
+    def get_output_dir(self):
+        if self.output_dir[-1] != '/':
+            return self.output_dir + '/'
+        return self.output_dir
+
 class ConfigParser:
-    def __init__(self, user_project, user_index):
-        self.u_project = user_project
-        self.u_index = user_index
+    def __init__(self):
+        self.data = None
 
     def load_config(self, url):
         data_file = open(url)
-        settings = yaml.load(data_file)
+        self.data = yaml.load(data_file)
         data_file.close()
-        return settings
 
-    def parse(self, data):
-        # check if the project specified exists
-        for proj in data['projects']:
-            p = proj['project']
-            if p['name'] == self.u_project:
-                project = Project()
-                project.set_name(unicode(p['name']))
-                projectData = p
-                break
-        try:
-            print "Project %s found in config" % (project.get_name())
-        except:
-            raise SyntaxError("Project %s not found. Make sure it's defined in your settings file" % (self.u_project))
+    def parse_project(self, data):
+        project = Project()
+        project.name = unicode(data['name'])
+        project.raw = data
+        return project
 
-        # if a sprint index is specified check that it exists
-        if self.u_index is not None:
-            try:
-                projectData['sprints']
-            except:
-                raise SyntaxError("There is no sprint defined in your config for the project %s" % (project.get_name()))
-
-            found = 0
-            for spr in projectData['sprints']:
-                s = spr['sprint']
-                if unicode(s['index']) == self.u_index:
-                    found = 1
-                    break
-            if found == 0:
-                raise SyntaxError("There is no sprint with the index %s defined in your config for the project %s" % (self.u_index, project.get_name()))
-        else:
-            print "No sprint index specified, taking last defined per default"
-            spr = projectData['sprints'][len(projectData['sprints']) - 1]
-            s = spr['sprint']
-
+    def parse_sprint(self, data):
         sprint = Sprint()
-        sprint.set_index(unicode(s['index']))
-        sprint.set_jira_data(s['jira'])
-        sprint.set_zebra_data(s['zebra'])
-        sprint.commited_man_days = unicode(s['commited_man_days'])
-        sprint.forced = self.parse_forced(s['zebra']['force'])
-        project.set_sprint(sprint)
-        print "Sprint %s found in config" % (sprint.get_index())
+        sprint.index = unicode(data['index'])
+        sprint.jira_data = data['jira']
+        sprint.zebra_data = data['zebra']
+        sprint.commited_man_days = unicode(data['commited_man_days'])
+        sprint.forced = self.parse_forced(data['zebra']['force'])
+        return sprint
 
+    def get_project(self, name):
+        project = None
+        for proj in self.data['projects']:
+            p = proj['project']
+            if p['name'] == name:
+                project = self.parse_project(p)
+                for spr in p['sprints']:
+                    s = spr['sprint']
+                    sprint = self.parse_sprint(s)
+                    project.sprints[sprint.index] = sprint
+                break
         return project
 
     def parse_forced(self, force):

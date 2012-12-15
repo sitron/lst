@@ -1,3 +1,8 @@
+class AppContainer(object):
+    config = None
+    secret = None
+    pass
+
 class ZebraEntry:
     def __init__(self):
         self.username = None
@@ -86,49 +91,53 @@ class JiraEntries(list):
         return self.achieved_business_value
 
 class Project:
-    def get_name(self):
-        return self.name
+    def __init__(self):
+        self.name = ''
+        self.sprints = dict()
+        self.raw = None
 
-    def set_name(self, name):
-        self.name = name
+    def get_sprint(self, index, use_unique = False):
+        sprint = self.sprints.get(index)
+        if sprint is not None:
+            return sprint
+        if use_unique == True and self.nb_sprints() == 1:
+            return self.get_first_sprint()
+        else:
+            return None
 
-    def set_sprint(self, sprint):
-        self.sprint = sprint
+    def get_first_sprint(self):
+        items = self.sprints.values()
+        return items[0]
 
-    def get_sprint(self):
-        return self.sprint
+    def has_sprints(self):
+        return len(self.sprints) > 0
 
-    def get_closed_status_codes(self):
-        return self.sprint.get_jira_data('closed_status_codes')
+    def nb_sprints(self):
+        return len(self.sprints)
 
 class Sprint:
     def __init__(self):
         self.forced = dict()
         self.commited_man_days = 0
+        self.index = 0
+        self.jira_data = None
+        self.zebra_data = None
+        self.raw = None
 
-    def get_index(self):
-        return self.index
-
-    def set_index(self, index):
-        self.index = index
-
-    def set_jira_data(self, data):
-        self.jira_data = data
-
-    def get_jira_data(self, key):
-        return self.jira_data[key]
-
-    def set_zebra_data(self, data):
-        self.zebra_data = data
-
-    def get_zebra_data(self, key):
-        return self.zebra_data[key]
+    def get_closed_status_codes(self):
+        return self.get_jira_data('closed_status_codes')
 
     def get_forced_data(self, date, default):
         forced = self.forced.get(date, default)
         if type(forced) == str:
             return default + float(forced)
         return forced
+
+    def get_zebra_data(self, key):
+        return self.zebra_data.get(key)
+
+    def get_jira_data(self, key):
+        return self.jira_data.get(key)
 
 class GraphEntries(dict):
     ''' keeps all the graph entries '''

@@ -27,7 +27,7 @@ class Remote(object):
     def login(self):
         pass
 
-    def get_data(self, project):
+    def get_data(self, url):
         pass
 
 class JiraRemote(Remote):
@@ -39,7 +39,7 @@ class JiraRemote(Remote):
 
     def _get_request(self, url, body = None, headers = {}):
         if 'User-Agent' not in headers:
-            headers['User-Agent'] = 'ScrumNanny Jira Client';
+            headers['User-Agent'] = 'LST Jira Client';
         return super(JiraRemote, self)._get_request(url, body, headers)
 
     def _request(self, url, body = None, headers = {}):
@@ -56,13 +56,12 @@ class JiraRemote(Remote):
     def login(self):
         pass
 
-    def get_data(self, project):
-        jira_project_name = project.sprint.get_jira_data('project_name')
-        jira_sprint_name = project.sprint.get_jira_data('sprint_name')
-
-        url = "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=project+%3D+'" + jira_project_name + "'+and+fixVersion+%3D+'" + jira_sprint_name + "'&tempMax=1000"
-        url += '&os_username=' + str(self.username)
-        url += '&os_password=' + str(self.password)
+    def get_data(self, url, nice_identifier = None, post_processor = None):
+        url = '%s&os_username=%s&os_password=%s' % (
+            url,
+            str(self.username),
+            str(self.password)
+        )
 
         response = self._request(url)
         response_body = response.read()
@@ -70,14 +69,12 @@ class JiraRemote(Remote):
         response_xml = ET.fromstring(response_body)
         stories = response_xml[0].findall('item')
 
-        nice_identifier = project.sprint.get_jira_data('nice_identifier')
-        closed_status = project.sprint.get_jira_data('closed_status')
-
         jira_entries = JiraEntries()
         for s in stories:
             story = JiraEntry()
             story.id = s.find('key').text
-            story.is_nice = s.find('title').text.find(nice_identifier) != -1
+            if nice_identifier is not None:
+                story.is_nice = s.find('title').text.find(nice_identifier) != -1
             story.status = int(s.find('status').get('id'))
             try:
                 story.business_value = float(s.find('./customfields/customfield/[@id="customfield_10064"]/customfieldvalues/customfieldvalue').text)
@@ -87,13 +84,12 @@ class JiraRemote(Remote):
                 story.story_points = float(s.find('./customfields/customfield/[@id="customfield_10040"]/customfieldvalues/customfieldvalue').text)
             except AttributeError:
                 print 'Story ' + story.id + ' has no story points defined, 0 taken as default'
-            if story.is_over():
-                try:
-                    story.close_date = self.get_story_close_date(story.id, closed_status)
-                except AttributeError:
-                    print 'Story ' + story.id + ' is discarded as it is closed, but never had the status ' + closed_status
-                    continue
-            jira_entries.append(story)
+            if post_processor is not None:
+                story = post_processor.post_process(story)
+
+            if story is not None:
+                jira_entries.append(story)
+
         return jira_entries
 
     def get_story_close_date(self, id, closed_status):
@@ -121,7 +117,7 @@ class ZebraRemote(Remote):
 
     def _get_request(self, url, body = None, headers = {}):
         if 'User-Agent' not in headers:
-            headers['User-Agent'] = 'ScrumNanny Zebra Client';
+            headers['User-Agent'] = 'LST Zebra Client';
         return super(ZebraRemote, self)._get_request(url, body, headers)
 
     def _request(self, url, body = None, headers = {}):
@@ -156,34 +152,10 @@ class ZebraRemote(Remote):
         else:
             self.logged_in = True
 
-    def get_data(self, project):
-        report_url = 'timesheet/report/.json?option_selector='
-
-        users = project.get_sprint().get_zebra_data('users')
-        client_id = project.get_sprint().get_zebra_data('client_id')
-        activities = project.get_sprint().get_zebra_data('activities')
-        start_date = project.get_sprint().get_zebra_data('start_date')
-        end_date = project.get_sprint().get_zebra_data('end_date')
-
-        if type(users) == list:
-            for user in users:
-                report_url += '&users[]=' + `user`
-        else:
-            report_url += '&users[]=' + str(users)
-
-        if type(activities) == list:
-            for activity in activities:
-                report_url += '&activities[]=' + `activity`
-        else:
-            report_url += '&activities[]=' + str(activities)
-
-        report_url += '&projects[]=' + `client_id`
-        report_url += '&start=' + str(start_date)
-        report_url += '&end=' + str(end_date)
-
+    def get_data(self, url):
         self._login()
 
-        response = self._request(report_url)
+        response = self._request(url)
         response_body = response.read()
 
         response_json = json.loads(response_body)
@@ -192,10 +164,6 @@ class ZebraRemote(Remote):
         # parse response
         print 'Will now parse %d entries found in Zebra' % len(entries)
         zebra_result = self.parse_entries(entries)
-
-        # check for forced zebra values
-        for (key,value) in zebra_result.iteritems():
-            value.time = project.sprint.get_forced_data(key, value.time)
 
         return zebra_result
 
@@ -228,5 +196,4 @@ class ZebraRemote(Remote):
         zebra_entry.username = str(entry['username'])
         zebra_entry.time = float(entry['time'])
         return zebra_entry
-
 

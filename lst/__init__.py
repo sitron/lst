@@ -4,41 +4,45 @@ import os
 from parser import ConfigParser
 from parser import SecretParser
 from commands import SprintGraphCommand
-
+from models import AppContainer
 
 """LST, helps keep your sprint commitment safe"""
-def main():
-    SETTINGS_PATH = os.path.expanduser('~/.lst.yml')
-    SECRET_PATH = os.path.expanduser('~/.lst-secret.yml')
+class Lst(object):
+    def __init__(self):
+        usage = """Usage: lst command
 
-    # read command line arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument("project", help="project's name, as stated in your config")
-    parser.add_argument("-i", "--sprint-index", help="sprint index, as stated in your config", type=unicode)
-    args = parser.parse_args()
+        Available commands:
+        sprint-graph \t\tprints a burn up chart for a given sprint
 
-    # read config
-    config_parser = ConfigParser(args.project, args.sprint_index)
-    settings = config_parser.load_config(SETTINGS_PATH)
+        """
 
-    # todo move this to command
-    print 'Reading config'
-    project = config_parser.parse(settings)
+        SETTINGS_PATH = os.path.expanduser('~/.lst.yml')
+        SECRET_PATH = os.path.expanduser('~/.lst-secret.yml')
 
-    # read usernames and passwords for jira/zebra
-    secret = SecretParser(SECRET_PATH)
+        # define arguments and options
+        parser = argparse.ArgumentParser()
+        parser.add_argument("command", help="command to execute")
 
-    app_container = AppContainer()
-    app_container.settings = settings
-    app_container.secret = secret
-    app_container.project = project
+        parser.add_argument("-p", "--project", help="project's name, as stated in your config")
+        parser.add_argument("-s", "--sprint-index", help="sprint index, as stated in your config", type=unicode)
 
-    action = SprintGraphCommand(app_container)
-    action.run(args.project, args.sprint_index)
+        # read command line arguments
+        args = parser.parse_args()
 
-class AppContainer(object):
-    pass
+        # read config
+        print 'Reading config'
+        config = ConfigParser()
+        config.load_config(SETTINGS_PATH)
+
+        # read usernames and passwords for jira/zebra
+        secret = SecretParser(SECRET_PATH)
+
+        AppContainer.config = config
+        AppContainer.secret = secret
+
+        action = SprintGraphCommand()
+        action.run(args.project, args.sprint_index)
 
 if __name__ == '__main__':
-    main()
+    lst = Lst()
 

@@ -1,21 +1,17 @@
-import json
-import os
-from string import Template
-from pprint import pprint
-from datetime import datetime
-import unicodedata
-import re
-
 from remote import ZebraRemote
 from remote import JiraRemote
 from models import JiraEntry
+from models import JiraEntries
 from models import GraphEntry
 from models import GraphEntries
+from models import AppContainer
+from output import SprintBurnUpOutput
+from processors import SprintBurnUpJiraProcessor
 
 class BaseCommand:
-    def __init__(self, app_container):
-        self.app_container = app_container
-        self.secret = app_container.secret
+    def __init__(self):
+        self.secret = AppContainer.secret
+        self.config = AppContainer.config
 
     def run(self):
         pass
@@ -28,22 +24,55 @@ class SprintGraphCommand(BaseCommand):
     """
 
     def run(self, project_id, sprint_index = None):
+        project = self.config.get_project(project_id)
+        try:
+            print "Project %s found in config" % (project.name)
+        except:
+            raise SyntaxError("Project %s not found. Make sure it's defined in your settings file" % (project_id))
+
+        if project.has_sprints() == False:
+            raise SyntaxError("There is no sprint defined in your config for the project %s" % (project.name))
+
+        sprint = self.config.get_project(project_id).get_sprint(sprint_index, True)
+        try:
+            if sprint.index == sprint_index:
+                print "Sprint %s found in config" % (sprint.index)
+            else:
+                print "No sprint with index %s found in config, taking %s as default" % (sprint_index, sprint.index)
+
+        except:
+            if sprint_index is None:
+                raise SyntaxError("You have more than 1 sprint for the project %s. Please use the -s option to specify the one you'd like to use" % (project.name))
+            else:
+                raise SyntaxError("There is no sprint with the index %s defined in your config for the project %s" % (sprint_index, project.name))
+
         print 'Start fetching Zebra'
+
         zebra = ZebraRemote(self.secret.get_zebra('url'), self.secret.get_zebra('username'), self.secret.get_zebra('password'))
 
-        # todo: get project from config based on project_id
-        project = self.app_container.project
+        report_url = self._get_zebra_url_for_sprint_burnup(sprint)
+        zebra_days = zebra.get_data(report_url)
 
-        # todo: get sprint from config based on sprint_index
-        sprint = project.sprint
+        # check for forced zebra values
+        for (key,value) in zebra_days.iteritems():
+            value.time = sprint.get_forced_data(key, value.time)
 
-        zebra_days = zebra.get_data(project)
         print 'End Zebra'
 
         print 'Start fetching Jira'
-        JiraEntry.closed_status = set(project.get_closed_status_codes())
+
+        JiraEntry.closed_status = set(sprint.get_closed_status_codes())
         jira = JiraRemote(self.secret.get_jira('url'), self.secret.get_jira('username'), self.secret.get_jira('password'))
-        jira_entries = jira.get_data(project)
+
+        jira_url = self._get_jira_url_for_sprint_burnup(sprint)
+        nice_identifier = sprint.get_jira_data('nice_identifier')
+        closed_status = sprint.get_jira_data('closed_status')
+
+        # define jira post processor
+        post_processor = SprintBurnUpJiraProcessor(closed_status, jira)
+
+        jira_entries = jira.get_data(jira_url, nice_identifier, post_processor)
+
         print 'End Jira'
 
         print 'Mixing retrieved values'
@@ -70,35 +99,37 @@ class SprintGraphCommand(BaseCommand):
         sprint_data['endDate'] = sprint.get_zebra_data('end_date').strftime('%Y-%m-%d')
 
         # write the graph
-        print 'Retrieving base graph'
-        try:
-            graph_file = open('lst/graph_base.html')
-            graph_str = graph_file.read()
-            template = Template(graph_str)
-            graph_file.close()
-        except Exception as e:
-            print 'Couldnt find the base graph file', e
+        print 'Starting output'
+        output = SprintBurnUpOutput(AppContainer.secret.get_output_dir())
+        output.output(project.name, sprint.index, data, commited_values, sprint_data)
 
-        print 'Writing graph'
-        try:
-           # use this to debug
-           # data_output = open('graphs/data.json', 'w')
-           # data_output.write(json.dumps(data))
-           # data_output.close()
-            graph_output_file = 'graphs/' + Helper.slugify(project.get_name()) + '-' + project.get_sprint().get_index() + '-' + datetime.now().strftime("%Y%m%d") +'.html'
-            graph_output_file_absolute = os.path.abspath(graph_output_file)
-            graph_output = open(graph_output_file, 'w')
-            graph_output.write(template.safe_substitute(base_path='../', data=json.dumps(data), commited_values=json.dumps(commited_values), sprint=json.dumps(sprint_data)))
-            graph_output.close()
-            print 'Check your new graph at ' + graph_output_file_absolute
-        except Exception as e:
-            print 'Problem with the generation of the graph file', e
+    def _get_zebra_url_for_sprint_burnup(self, sprint):
+        report_url = 'timesheet/report/.json?option_selector='
 
-class Helper(object):
-    @staticmethod
-    def slugify(s):
-        slug = unicodedata.normalize('NFKD', s)
-        slug = slug.encode('ascii', 'ignore').lower()
-        slug = re.sub(r'[^a-z0-9]+', '-', slug).strip('-')
-        slug = re.sub(r'[-]+', '-', slug)
-        return slug
+        users = sprint.get_zebra_data('users')
+        client_id = sprint.get_zebra_data('client_id')
+        activities = sprint.get_zebra_data('activities')
+        start_date = sprint.get_zebra_data('start_date')
+        end_date = sprint.get_zebra_data('end_date')
+
+        if type(users) == list:
+            for user in users:
+                report_url += '&users[]=' + `user`
+        else:
+            report_url += '&users[]=' + str(users)
+
+        if type(activities) == list:
+            for activity in activities:
+                report_url += '&activities[]=' + `activity`
+        else:
+            report_url += '&activities[]=' + str(activities)
+
+        report_url += '&projects[]=' + `client_id`
+        report_url += '&start=' + str(start_date)
+        report_url += '&end=' + str(end_date)
+
+        return report_url
+
+    def _get_jira_url_for_sprint_burnup(self, sprint):
+        return "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=project+%3D+'" + sprint.get_jira_data('project_name') + "'+and+fixVersion+%3D+'" + sprint.get_jira_data('sprint_name') + "'&tempMax=1000"
+
