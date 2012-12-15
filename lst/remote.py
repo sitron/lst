@@ -93,7 +93,7 @@ class JiraRemote(Remote):
         return jira_entries
 
     def get_story_close_date(self, id, closed_status):
-        url = "/activity?maxResults=10&issues=activity+IS+issue%3Atransition&streams=issue-key+IS+"
+        url = "/activity?maxResults=20&streams=issue-key+IS+"
         url += str(id)
         url += '&os_username=' + str(self.username)
         url += '&os_password=' + str(self.password)
