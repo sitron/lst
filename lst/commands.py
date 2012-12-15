@@ -66,7 +66,7 @@ class SprintGraphCommand(BaseCommand):
 
         jira_url = self._get_jira_url_for_sprint_burnup(sprint)
         nice_identifier = sprint.get_jira_data('nice_identifier')
-        closed_status = sprint.get_jira_data('closed_status')
+        closed_status = sprint.get_closed_status_name()
 
         # define jira post processor
         post_processor = SprintBurnUpJiraProcessor(closed_status, jira)
