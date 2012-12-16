@@ -242,9 +242,9 @@ $(function() {
     that.addPieChart(bvResult, '.business-value');
 
     $('#graph-results .velocity .value').text(
-        Math.round(spResult / mdResult).toFixed(2) +
+        (spResult / mdResult).toFixed(2) +
         ' / ' +
-        Math.round(commitedValues.storyPoints / commitedValues.manDays)
+        (commitedValues.storyPoints / commitedValues.manDays)
             .toFixed(2)
     );
 
