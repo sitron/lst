@@ -56,7 +56,7 @@ class JiraRemote(Remote):
     def login(self):
         pass
 
-    def get_data(self, url, nice_identifier = None, post_processor = None):
+    def get_data(self, url, nice_identifier = None, ignored = None, post_processor = None):
         url = '%s&os_username=%s&os_password=%s' % (
             url,
             str(self.username),
@@ -76,6 +76,9 @@ class JiraRemote(Remote):
             if nice_identifier is not None:
                 story.is_nice = s.find('title').text.find(nice_identifier) != -1
             story.status = int(s.find('status').get('id'))
+            if ignored is not None:
+                story.is_ignored = story.id in ignored
+                print 'checking if story %s is ignored: %s' % (story.id, story.is_ignored)
             try:
                 story.business_value = float(s.find('./customfields/customfield/[@id="customfield_10064"]/customfieldvalues/customfieldvalue').text)
             except AttributeError:

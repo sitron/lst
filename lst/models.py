@@ -33,6 +33,7 @@ class JiraEntry:
         self.status = None
         self.close_date = None
         self.is_nice = False
+        self.is_ignored = False
 
     def is_over(self):
         return self.status in JiraEntry.closed_status
