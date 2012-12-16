@@ -78,7 +78,6 @@ class JiraRemote(Remote):
             story.status = int(s.find('status').get('id'))
             if ignored is not None:
                 story.is_ignored = story.id in ignored
-                print 'checking if story %s is ignored: %s' % (story.id, story.is_ignored)
             try:
                 story.business_value = float(s.find('./customfields/customfield/[@id="customfield_10064"]/customfieldvalues/customfieldvalue').text)
             except AttributeError:

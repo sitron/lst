@@ -78,18 +78,27 @@ class ConfigParser:
             return [date]
 
         # it's a date delta str as start/end
-        b = list()
-        a = date.split('/')
-        if len(a) != 2:
-            raise SyntaxError( "A date delta should be specified as a string (date1/date2), given: %s" % (date))
+        if date.find('/') != -1:
+            b = list()
+            a = date.split('/')
+            if len(a) != 2:
+                raise SyntaxError( "A date delta should be specified as a string (date1/date2), given: %s" % (date))
 
-        start = dateutil.parser.parse(a[0])
-        end = dateutil.parser.parse(a[1])
-        if start > end:
-            raise SyntaxError( "The first date in a delta should be smaller than the second one, given: %s" % (date))
+            start = dateutil.parser.parse(a[0])
+            end = dateutil.parser.parse(a[1])
+            if start > end:
+                raise SyntaxError( "The first date in a delta should be smaller than the second one, given: %s" % (date))
 
-        dateDelta = end - start
-        for i in range(dateDelta.days + 1):
-            b.append(start + datetime.timedelta(days = i))
-        return b
+            dateDelta = end - start
+            for i in range(dateDelta.days + 1):
+                b.append(start + datetime.timedelta(days = i))
+            return b
+
+        # it's multiple dates separated by comma
+        if date.find(',') != -1:
+            b = list()
+            a = date.split(',')
+            for d in a:
+                b.append(dateutil.parser.parse(d))
+            return b
 
