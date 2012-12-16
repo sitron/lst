@@ -10,7 +10,7 @@ class SprintBurnUpJiraProcessor(JiraStoryProcessor):
         self.jira_remote = jira_remote
 
     def post_process(self, story):
-        # discard story if it's closed but didn't have the PO review status
+        # check on what day the story was closed
         if story.is_over():
             try:
                 story.close_date = self.jira_remote.get_story_close_date(
@@ -18,7 +18,10 @@ class SprintBurnUpJiraProcessor(JiraStoryProcessor):
                     self.closed_status
                 )
             except AttributeError:
-                print 'Story ' + story.id + ' is discarded as it is closed, but never had the status ' + self.closed_status
+                print 'Can\'t find closing date for story %s (looking for status \'%s\'). Story will be discarded for sprint graph' % (
+                    story.id,
+                    self.closed_status
+                )
                 return None
         return story
 
