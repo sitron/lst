@@ -13,7 +13,7 @@ LST is a command line utility to create sprint burnup charts out of Jira/Zebra d
 * coming soon: even easier configuration (through interactive questions)
 
 ## Installation
-* grab the source and run `python setup.py install`
+* pip install git+git://github.com/sitron/lst@v0.2
 * copy the .lst-secret_dist.yml file to you home, rename it to .lst-secret.yml and change your jira/zebra credentials
 * copy the .lst_dist.yml file to you home, rename it to .lst.yml and edit as needed (see below)
 * run lst sprint-graph -p [your_project_name]

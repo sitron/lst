@@ -1,8 +1,9 @@
 import yaml
-from models import Project
-from models import Sprint
 import datetime
 import dateutil
+
+from models import Project
+from models import Sprint
 
 class SecretParser:
     def __init__(self, url):
