@@ -37,10 +37,18 @@ class Lst(object):
         # read usernames and passwords for jira/zebra
         secret = SecretParser(SECRET_PATH)
 
+        # create globally accessible app container
         AppContainer.config = config
         AppContainer.secret = secret
 
-        action = SprintGraphCommand()
+        available_actions = {
+            'sprint-graph': SprintGraphCommand,
+        }
+
+        if args.command not in available_actions:
+            raise SyntaxError("Command %s does not exist." % (args.command))
+
+        action = available_actions[args.command]()
         action.run(args.project, args.sprint_index)
 
 if __name__ == '__main__':
