@@ -26,6 +26,6 @@ See the annotated example [.lst_dist.yml](lst/blob/master/.lst_dist.yml)
 You will need to define at least 1 project and 1 sprint to be able to run a command
 
 ## Commands
-### Fetch data and display a chart (default)
-`lst sprint-graph -p my_project -s my_sprint`
+### Fetch data and display a chart
+`lst sprint-graph -p my_project -s my_sprint` (if only 1 sprint is defined for the project, the s option can be omited)
 
