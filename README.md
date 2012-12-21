@@ -14,8 +14,8 @@ Just edit a yml config file so that it knows what project you're currently worki
 * coming soon: even easier configuration (through interactive questions)
 
 ## Installation
-* pip install git+git://github.com/sitron/lst@v0.3
-* pip install -r requirements.txt
+* pip install git+git://github.com/sitron/lst@v0.4
+* pip install -r https://raw.github.com/sitron/lst/master/requirements.txt
 * copy the [.lst-secret_dist.yml](lst/blob/master/.lst-secret_dist.yml) file to you home, rename it to .lst-secret.yml and change your jira/zebra credentials
 * create a directory somewhere on your machine where you want your graph to be outputted and add its path .lst-secret.yml 
 * copy the [.lst_dist.yml](lst/blob/master/.lst_dist.yml) file to you home, rename it to .lst.yml and edit as needed (see below)
