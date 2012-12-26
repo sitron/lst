@@ -2,9 +2,12 @@ import json
 import os
 import unicodedata
 import re
+import distutils.sysconfig
 
 from string import Template
 from datetime import datetime
+
+from models import AppContainer
 
 class BaseOutput(object):
     """Base class for all output classes"""
@@ -29,7 +32,10 @@ class TemplatedOutput(BaseOutput):
 
     def __init__(self, output_dir):
         super(TemplatedOutput, self).__init__(output_dir)
-        self.template_dir_path = 'lst/html_templates/'
+        if AppContainer.dev_mode:
+            self.template_dir_path = 'lst/html_templates/'
+        else:
+            self.template_dir_path = os.path.join(distutils.sysconfig.get_python_lib(), 'lst', 'html_templates/')
         self.abs_template_dir_path = os.path.abspath(self.template_dir_path) + '/'
 
     def get_template(self, name):

@@ -1,6 +1,7 @@
 class AppContainer(object):
     config = None
     secret = None
+    dev_mode = False
     pass
 
 class ZebraEntry:

@@ -7,14 +7,43 @@ from models import GraphEntries
 from models import AppContainer
 from output import SprintBurnUpOutput
 from processors import SprintBurnUpJiraProcessor
+import pkgutil
+import os
+import sys
+import distutils.sysconfig
 
 class BaseCommand:
     def __init__(self):
         self.secret = AppContainer.secret
         self.config = AppContainer.config
+        self.dev_mode = AppContainer.dev_mode
 
     def run(self):
         pass
+
+class TestInstallCommand(BaseCommand):
+    """
+    Usage:  test-install
+            will test the access to static files (html templates)
+
+    """
+
+    def run(self, project_id, sprint_index = None):
+        print 'Will dump some useful variable to debug'
+        print 'My sys.prefix is %s' % (sys.prefix)
+        print 'My modules are installed in %s' % (distutils.sysconfig.get_python_lib())
+
+        print 'Will now try to access the copied static files (development mode is %s)' % ('ON' if self.dev_mode else 'OFF')
+        if self.dev_mode:
+            template_dir = 'lst/html_templates'
+        else:
+            template_dir = os.path.join(distutils.sysconfig.get_python_lib(), 'lst', 'html_templates')
+        file_path = os.path.join(template_dir, 'test.html')
+        file_stream = open(file_path)
+        file_content = file_stream.read()
+        file_stream.close()
+        print file_content
+        print 'end'
 
 class SprintGraphCommand(BaseCommand):
     """
