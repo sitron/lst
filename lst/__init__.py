@@ -3,7 +3,7 @@ import os
 
 from parser import ConfigParser
 from parser import SecretParser
-from commands import SprintGraphCommand
+from commands import SprintGraphCommand, TestInstallCommand
 from models import AppContainer
 
 """LST, helps keep your sprint commitment safe"""
@@ -13,6 +13,7 @@ class Lst(object):
 
         Available commands:
         sprint-graph \t\tprints a burn up chart for a given sprint
+        test-install \t\ttest the installation
 
         """
 
@@ -25,6 +26,7 @@ class Lst(object):
 
         parser.add_argument("-p", "--project", help="project's name, as stated in your config")
         parser.add_argument("-s", "--sprint-index", help="sprint index, as stated in your config", type=unicode)
+        parser.add_argument("--dev-mode", action="store_true", help="development mode")
 
         # read command line arguments
         args = parser.parse_args()
@@ -40,9 +42,11 @@ class Lst(object):
         # create globally accessible app container
         AppContainer.config = config
         AppContainer.secret = secret
+        AppContainer.dev_mode = args.dev_mode
 
         available_actions = {
             'sprint-graph': SprintGraphCommand,
+            'test-install' : TestInstallCommand,
         }
 
         if args.command not in available_actions:

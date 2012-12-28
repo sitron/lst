@@ -1,0 +1,6 @@
+include lst/html_templates/css/graph.css
+include lst/html_templates/js/graph.js
+include lst/html_templates/js/vendors/d3.v2.js
+include lst/html_templates/js/vendors/jquery.js
+include lst/html_templates/sprint_burnup.html
+include lst/html_templates/test.html
