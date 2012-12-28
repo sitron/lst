@@ -1,5 +1,5 @@
 # Liip (unofficial) Scrum Toolbox (lst)
-<cite>"a bit of LST everyday keeps your trouble away"</cite> (Jimi Hendrix, 1969)
+<cite>"a bit of LST everyday keeps your troubles away"</cite> (Jimi Hendrix, 1969)
 
 ## What is it?
 LST is a command line utility to create sprint burnup charts out of Jira/Zebra data. 
