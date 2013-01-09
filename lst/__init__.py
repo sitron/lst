@@ -9,20 +9,27 @@ from models import AppContainer
 """LST, helps keep your sprint commitment safe"""
 class Lst(object):
     def __init__(self):
-        usage = """Usage: lst command
+        usage = """%(prog)s command [options]
 
-        Available commands:
-        sprint-graph \t\tprints a burn up chart for a given sprint
-        test-install \t\ttest the installation
-
-        """
+available commands:
+  sprint-graph \t\tprints a burn up chart for a given sprint
+  test-install \t\ttest the installation"""
 
         SETTINGS_PATH = os.path.expanduser('~/.lst.yml')
         SECRET_PATH = os.path.expanduser('~/.lst-secret.yml')
 
+        available_actions = {
+            'sprint-graph': SprintGraphCommand,
+            'test-install' : TestInstallCommand,
+        }
+
         # define arguments and options
-        parser = argparse.ArgumentParser()
-        parser.add_argument("command", help="command to execute")
+        parser = argparse.ArgumentParser(
+            prog='lst',
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            usage=usage
+        )
+        parser.add_argument("command", help="command to execute (see available commands above)")
 
         parser.add_argument("-p", "--project", help="project's name, as stated in your config")
         parser.add_argument("-s", "--sprint-index", help="sprint index, as stated in your config", type=unicode)
@@ -43,11 +50,6 @@ class Lst(object):
         AppContainer.config = config
         AppContainer.secret = secret
         AppContainer.dev_mode = args.dev_mode
-
-        available_actions = {
-            'sprint-graph': SprintGraphCommand,
-            'test-install' : TestInstallCommand,
-        }
 
         if args.command not in available_actions:
             raise SyntaxError("Command %s does not exist." % (args.command))
