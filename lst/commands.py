@@ -28,7 +28,7 @@ class TestInstallCommand(BaseCommand):
 
     """
 
-    def run(self, project_id, sprint_index = None):
+    def run(self, args):
         print 'Will dump some useful variable to debug'
         print 'My sys.prefix is %s' % (sys.prefix)
         print 'My modules are installed in %s' % (distutils.sysconfig.get_python_lib())
@@ -47,33 +47,33 @@ class TestInstallCommand(BaseCommand):
 
 class SprintGraphCommand(BaseCommand):
     """
-    Usage:  sprint-graph [project_id] (uses last sprint defined in this project)
-            sprint-graph [project_id] [-i sprint_index]
+    Usage:  sprint-graph [-p project_id] (uses last sprint defined in this project)
+            sprint-graph [-p project_id] [-i sprint_index]
 
     """
 
-    def run(self, project_id, sprint_index = None):
-        project = self.config.get_project(project_id)
+    def run(self, args):
+        project = self.config.get_project(args.project)
         try:
             print "Project %s found in config" % (project.name)
         except:
-            raise SyntaxError("Project %s not found. Make sure it's defined in your settings file" % (project_id))
+            raise SyntaxError("Project %s not found. Make sure it's defined in your settings file" % (args.project))
 
         if project.has_sprints() == False:
             raise SyntaxError("There is no sprint defined in your config for the project %s" % (project.name))
 
-        sprint = self.config.get_project(project_id).get_sprint(sprint_index, True)
+        sprint = project.get_sprint(args.sprint_index, True)
         try:
-            if sprint.index == sprint_index:
+            if sprint.index == args.sprint_index:
                 print "Sprint %s found in config" % (sprint.index)
             else:
-                print "No sprint with index %s found in config, taking %s as default" % (sprint_index, sprint.index)
+                print "No sprint with index %s found in config, taking %s as default" % (args.sprint_index, sprint.index)
 
         except:
-            if sprint_index is None:
+            if args.sprint_index is None:
                 raise SyntaxError("You have more than 1 sprint for the project %s. Please use the -s option to specify the one you'd like to use" % (project.name))
             else:
-                raise SyntaxError("There is no sprint with the index %s defined in your config for the project %s" % (sprint_index, project.name))
+                raise SyntaxError("There is no sprint with the index %s defined in your config for the project %s" % (args.sprint_index, project.name))
 
         print 'Start fetching Zebra'
 

@@ -2,6 +2,7 @@ class AppContainer(object):
     config = None
     secret = None
     dev_mode = False
+    user_args = None
     pass
 
 class ZebraEntry:

@@ -49,13 +49,14 @@ available commands:
         # create globally accessible app container
         AppContainer.config = config
         AppContainer.secret = secret
+        AppContainer.user_args = args
         AppContainer.dev_mode = args.dev_mode
 
         if args.command not in available_actions:
             raise SyntaxError("Command %s does not exist." % (args.command))
 
         action = available_actions[args.command]()
-        action.run(args.project, args.sprint_index)
+        action.run(args)
 
 if __name__ == '__main__':
     lst = Lst()
