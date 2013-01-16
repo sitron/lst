@@ -141,7 +141,7 @@ function addGraph(
         biggestRatio) {
 
     var max = biggestRatio > 1 ?
-        biggestRatio * commitedValues[prop] : commitedValues[prop],
+            biggestRatio * commitedValues[prop] : commitedValues[prop],
         yScale,
         graph,
         yAxis;

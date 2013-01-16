@@ -19,7 +19,7 @@ setup(
     data_files = [
         (template_dir, ['lst/html_templates/sprint_burnup.html', 'lst/html_templates/test.html']),
         (os.path.join(template_dir, 'css'), ['lst/html_templates/css/graph.css']),
-        (os.path.join(template_dir, 'js'), ['lst/html_templates/js/graph.js']),
+        (os.path.join(template_dir, 'js'), ['lst/html_templates/js/sprint_burnup.js']),
         (os.path.join(template_dir, 'js', 'vendors'), ['lst/html_templates/js/vendors/d3.v2.js', 'lst/html_templates/js/vendors/jquery.js']),
     ]
 )
