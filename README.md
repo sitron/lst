@@ -19,11 +19,11 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 * `sudo pip install -r https://raw.github.com/sitron/lst/master/requirements.txt`
 * copy the [.lst-secret_dist.yml](lst/blob/master/.lst-secret_dist.yml) file to you home, rename it to .lst-secret.yml and change your jira/zebra credentials (watch out for the file name: it's [dot]lst-secret.yml
 * create a directory somewhere on your machine where you want your graphs to be output and add its path to .lst-secret.yml 
-* copy the [.lst_dist.yml](lst/blob/master/.lst_dist.yml) file to you home, rename it to .lst.yml (watch out for the file name: it's [dot]lst.yml) and edit as needed (see below)
-* once your .lst.yml file is ready, run lst test-install to test your install. It should dump some html and finish by 'end' (yes! it's working!)
+* copy the [.lst_dist.yml](lst/blob/master/.lst_dist.yml) file to you home, rename it to .lst.yml (watch out for the file name: it's [dot]lst.yml) and edit as needed (see below). You'll need to have at least 1 project and 1 sprint defined in your config to continue
+* once your .lst.yml file is ready, run `lst test-install` to test your install. It should dump some html and finish by 'end' (yes! it's working!)
 * run `lst ls` to check what projects are defined in your config
 * run `lst ls -p [your_project_name]` to see all sprints defined for this project
-* run `lst sprint-burnup -p [your_project_name]` and enjoy your first graph!
+* run `lst sprint-burnup -p [your_project_name] -s [sprint_index]` and enjoy your first graph!
 
 ## Settings
 See the annotated example [.lst_dist.yml](lst/blob/master/.lst_dist.yml)
@@ -38,7 +38,7 @@ the config file is a project list, each project is defined by:
  * some Zebra specific settings:
        * the zebra client id (check in Zebra, usually a 4 digits integer). You can also easily find it by running `taxi search [project_name]` if you have Taxi installed (you should!)
        * a list of Zebra activitity ids (check Zebra) or put '*' (including the quotes) to use all activities
-       * a list of Zebra user ids. You can run `lst get-user-id my_last_name` to get ids out of Zebra
+       * a list of Zebra user ids (3 digits integer). You can run `lst get-user-id my_last_name` to get ids out of Zebra
        * a start date (like 2013-01-21)
        * a end date (like 2013-01-22)
        * optional: you can force some static data for Zebra: for example we have an external employee that does not log any hour in Zebra, but i know that i need to add 8 hours of work for each day. I can then use a date range '2013-01-21/2013-01/30 and '+8' as time to add 8 hours to all Zebra data retrieved.
@@ -50,7 +50,7 @@ the config file is a project list, each project is defined by:
        * optional, closed\_status\_codes: a list of status ids to consider as closed. By default it uses 6 (closed) and 10008 (For PO Review)
        * optional, ignored: a list of stories to ignore. Specify their ids in a list ['XXX-134', 'XXX-119']. Very often we have stories in the sprint that should not be considered for the graph (closed before the sprint, out of scope.. whatever)
 
-All this seems pretty complicated, and looking at the file itself might just be self explanatory enough...
+All this seems pretty complicated but it's just words... looking at the file itself might just be self explanatory enough...
 
 ## Available commands
 ### Fetch data and display a chart
