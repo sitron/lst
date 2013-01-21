@@ -1,26 +1,29 @@
 import argparse
 import os
 
-from parser import ConfigParser
-from parser import SecretParser
-from commands import SprintGraphCommand, TestInstallCommand
+from parser import ConfigParser, SecretParser
 from models import AppContainer
+import commands
 
-"""LST, helps keep your sprint commitment safe"""
+"""LST, helps keeping your sprint commitment safe"""
 class Lst(object):
     def __init__(self):
         usage = """%(prog)s command [options]
 
 available commands:
-  sprint-graph \t\tprints a burn up chart for a given sprint
-  test-install \t\ttest the installation"""
+  sprint-burnup \t\tprints a burn up chart for a given sprint
+  test-install \t\ttest the installation
+  get-user-id \t\tRetrieve a Zebra user id from his/her last name
+  ls \t\tlist either projects or sprints defined in config (depending on options)"""
 
         SETTINGS_PATH = os.path.expanduser('~/.lst.yml')
         SECRET_PATH = os.path.expanduser('~/.lst-secret.yml')
 
         available_actions = {
-            'sprint-graph': SprintGraphCommand,
-            'test-install' : TestInstallCommand,
+            'sprint-burnup': commands.SprintBurnUpCommand,
+            'test-install' : commands.TestInstallCommand,
+            'get-user-id' : commands.RetrieveUserIdCommand,
+            'ls' : commands.ListCommand,
         }
 
         # define arguments and options
@@ -33,6 +36,7 @@ available commands:
 
         parser.add_argument("-p", "--project", help="project's name, as stated in your config")
         parser.add_argument("-s", "--sprint-index", help="sprint index, as stated in your config", type=unicode)
+        parser.add_argument("-n", "--name", nargs="*", help="one or more user(s) last name")
         parser.add_argument("--dev-mode", action="store_true", help="development mode")
 
         # read command line arguments
@@ -51,6 +55,7 @@ available commands:
         AppContainer.secret = secret
         AppContainer.user_args = args
         AppContainer.dev_mode = args.dev_mode
+        AppContainer.SETTINGS_PATH = SETTINGS_PATH
 
         if args.command not in available_actions:
             raise SyntaxError("Command %s does not exist." % (args.command))

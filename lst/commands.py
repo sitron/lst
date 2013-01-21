@@ -21,6 +21,55 @@ class BaseCommand:
     def run(self):
         pass
 
+class ListCommand(BaseCommand):
+    """
+    Usage:  ls lists all projects defined in config
+            ls [-p project_id] lists all sprints defined in config for this project
+
+    """
+
+    def run(self, args):
+        if args.project is not None:
+            # list all sprints for this project
+            print ''
+            print 'All sprints defined for project %s:' % (args.project)
+            for s in self.config.get_project(args.project).sprints.values():
+                print 'index: %s' % (s.index)
+                print 'commited man days: %s' % (s.commited_man_days)
+                print ''
+        else:
+            # list all projects
+            print ''
+            print 'All currently defined projects:'
+            for p in self.config.get_projects():
+                print p['name']
+
+class RetrieveUserIdCommand(BaseCommand):
+    """
+    Usage: get-user-id [-n last_name] Retrieves the Zebra user id from his/her last name
+    """
+
+    def run(self, args):
+        # interactive command to retrieve a user id from his/her lastname
+        if args.name is None:
+            raise SyntaxError("To get a user id you need to specify his/her last name (using the -n option)")
+
+        names = [x.lower() for x in args.name]
+        report_url = 'user/.json'
+        zebra = ZebraRemote(self.secret.get_zebra('url'), self.secret.get_zebra('username'), self.secret.get_zebra('password'))
+        zebra_json_result = zebra.get_data(report_url)
+        zebra_users = zebra.parse_users(zebra_json_result)
+        if len(zebra_users) == 0:
+            raise SyntaxError("No user found (at all!) check that you are connected to internet")
+
+        users = []
+        for user in zebra_users:
+            if user['employee_lastname'].lower() in names:
+                users.append(user)
+                print 'found %s (%s) with id %s' % (user['employee_lastname'], user['employee_firstname'], user['id'])
+        if len(users) == 0:
+            print 'No user found with lastname %s' % (args.name)
+
 class TestInstallCommand(BaseCommand):
     """
     Usage:  test-install
@@ -45,10 +94,10 @@ class TestInstallCommand(BaseCommand):
         print file_content
         print 'end'
 
-class SprintGraphCommand(BaseCommand):
+class SprintBurnUpCommand(BaseCommand):
     """
-    Usage:  sprint-graph [-p project_id] (uses last sprint defined in this project)
-            sprint-graph [-p project_id] [-i sprint_index]
+    Usage:  sprint-burnup [-p project_id] (uses last sprint defined in this project)
+            sprint-burnup [-p project_id] [-i sprint_index]
 
     """
 
@@ -80,7 +129,9 @@ class SprintGraphCommand(BaseCommand):
         zebra = ZebraRemote(self.secret.get_zebra('url'), self.secret.get_zebra('username'), self.secret.get_zebra('password'))
 
         report_url = self._get_zebra_url_for_sprint_burnup(sprint)
-        zebra_days = zebra.get_data(report_url)
+        zebra_json_result = zebra.get_data(report_url)
+        # parse response
+        zebra_days = zebra.parse_entries(zebra_json_result)
 
         # check for forced zebra values
         for (key,value) in zebra_days.iteritems():

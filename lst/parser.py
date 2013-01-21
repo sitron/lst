@@ -1,9 +1,11 @@
 import yaml
 import datetime
 import dateutil
+import os
 
 from models import Project
 from models import Sprint
+from models import AppContainer
 
 class SecretParser:
     def __init__(self, url):
@@ -47,7 +49,10 @@ class ConfigParser:
         sprint.jira_data = data['jira']
         sprint.zebra_data = data['zebra']
         sprint.commited_man_days = unicode(data['commited_man_days'])
-        sprint.forced = self.parse_forced(data['zebra']['force'])
+        try:
+            sprint.forced = self.parse_forced(data['zebra']['force'])
+        except:
+            pass
         return sprint
 
     def get_project(self, name):
@@ -62,6 +67,19 @@ class ConfigParser:
                     project.sprints[sprint.index] = sprint
                 break
         return project
+
+    def get_raw_project(self, name):
+        for proj in self.data['projects']:
+            p = proj['project']
+            if p['name'] == name:
+                return p
+        return None
+
+    def get_projects(self):
+        l = []
+        for proj in self.data['projects']:
+            l.append(proj['project'])
+        return l
 
     def parse_forced(self, force):
         dates = dict()

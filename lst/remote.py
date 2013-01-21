@@ -161,15 +161,16 @@ class ZebraRemote(Remote):
         response_body = response.read()
 
         response_json = json.loads(response_body)
+        return response_json
+
+    def parse_users(self, response_json):
+        users = response_json['command']['users']['user']
+        return users
+
+    def parse_entries(self, response_json):
         entries = response_json['command']['reports']['report']
-
-        # parse response
         print 'Will now parse %d entries found in Zebra' % len(entries)
-        zebra_result = self.parse_entries(entries)
 
-        return zebra_result
-
-    def parse_entries(self, entries):
         zebra_days = ZebraDays()
         for entry in entries:
             # zebra last entries are totals, and dont have a tid
