@@ -1,6 +1,6 @@
 projects:
     - project:
-        name: my_project # this is the name you'll specify when running the script
+        name: my_project # this is the name you'll specify when running any command
         sprints:
             - sprint:
                 index: 1
@@ -20,7 +20,7 @@ projects:
                     sprint_name: "Fix+Version+As+Specified+In+Jira" # as seen in jira query builder
                     nice_identifier: "(NICE)" # how you specify that a story is a nice to have (must be part of the story title)
                     closed_status: "For PO Review" # what status you consider as 'closed' (use to know on what date the story was closed from the story activities)
-                    closed_status_codes: [6, 10008] # what status you consider as 'closed' (6 is "closed", 100008 is "For PO Review"). (used to know what status id to consider as closed when trying to find story closing date
+                    closed_status_codes: [6, 10008] # what status you consider as 'closed' (6 is "closed", 10008 is "For PO Review"). (used to know what status id to consider as closed when trying to find story closing date
                     ignored: ['XXX-501', 'XXX-505'] # list of stories that should be ignored
 
     # you can add further projects if needed
