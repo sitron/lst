@@ -25,6 +25,10 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 * run `lst ls -p [your_project_name]` to see all sprints defined for this project
 * run `lst sprint-burnup -p [your_project_name] -s [sprint_index]` and enjoy your first graph!
 
+## Upgrade
+if by any chance you already install LST before, just run:
+* `sudo pip install git+git://github.com/sitron/lst@v0.7 --upgrade` 
+
 ## Settings
 See the annotated example [.lst_dist.yml](lst/blob/master/.lst_dist.yml)
 You will need to define at least 1 project and 1 sprint to be able to run a command
