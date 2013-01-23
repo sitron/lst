@@ -152,8 +152,10 @@ class SprintBurnUpCommand(BaseCommand):
         # define jira post processor
         post_processor = SprintBurnUpJiraProcessor(closed_status, jira)
 
-        jira_entries = jira.get_data(
-            jira_url,
+        jira_xml_result = jira.get_data(jira_url)
+
+        jira_entries = jira.parse_stories(
+            jira_xml_result,
             nice_identifier,
             ignored_stories,
             post_processor

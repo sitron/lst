@@ -56,7 +56,7 @@ class JiraRemote(Remote):
     def login(self):
         pass
 
-    def get_data(self, url, nice_identifier = None, ignored = None, post_processor = None):
+    def get_data(self, url):
         url = '%s&os_username=%s&os_password=%s' % (
             url,
             str(self.username),
@@ -67,17 +67,33 @@ class JiraRemote(Remote):
         response_body = response.read()
 
         response_xml = ET.fromstring(response_body)
+        return response_xml
+
+    def parse_stories(
+            self,
+            response_xml,
+            nice_identifier = None,
+            ignored = None,
+            post_processor = None
+        ):
         stories = response_xml[0].findall('item')
 
         jira_entries = JiraEntries()
         for s in stories:
             story = JiraEntry()
             story.id = s.find('key').text
-            if nice_identifier is not None:
-                story.is_nice = s.find('title').text.find(nice_identifier) != -1
-            story.status = int(s.find('status').get('id'))
+
+            # check if the story should be ignored (see ignore in config)
             if ignored is not None:
                 story.is_ignored = story.id in ignored
+            if story.is_ignored:
+                continue
+
+            # check if the story is a 'nice to have'
+            if nice_identifier is not None:
+                story.is_nice = s.find('title').text.find(nice_identifier) != -1
+
+            story.status = int(s.find('status').get('id'))
             try:
                 story.business_value = float(s.find('./customfields/customfield/[@id="customfield_10064"]/customfieldvalues/customfieldvalue').text)
             except AttributeError:
@@ -89,8 +105,7 @@ class JiraRemote(Remote):
             if post_processor is not None:
                 story = post_processor.post_process(story)
 
-            if story is not None:
-                jira_entries.append(story)
+            jira_entries.append(story)
 
         return jira_entries
 

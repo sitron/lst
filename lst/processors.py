@@ -10,10 +10,6 @@ class SprintBurnUpJiraProcessor(JiraStoryProcessor):
         self.jira_remote = jira_remote
 
     def post_process(self, story):
-        # make sure the story shound not be ignored
-        if story.is_ignored:
-            return None
-
         # check on what day the story was closed
         if story.is_over():
             try:
