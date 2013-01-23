@@ -15,11 +15,11 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 * coming soon: even easier configuration (through interactive questions)
 
 ## Installation
-* `sudo pip install git+git://github.com/sitron/lst@v0.7`
+* `sudo pip install git+git://github.com/sitron/lst@v0.8`
 * `sudo pip install -r https://raw.github.com/sitron/lst/master/requirements.txt`
 * copy the [.lst-secret_dist.yml](lst/blob/master/.lst-secret_dist.yml) file to you home, rename it to .lst-secret.yml and change your jira/zebra credentials (watch out for the file name: it's [dot]lst-secret.yml
 * create a directory somewhere on your machine where you want your graphs to be output and add its path to .lst-secret.yml 
-* copy the [.lst_dist.yml](lst/blob/master/.lst_dist.yml) file to you home, rename it to .lst.yml (watch out for the file name: it's [dot]lst.yml) and edit as needed (see below). You'll need to have at least 1 project and 1 sprint defined in your config to continue
+* copy the [.lst_dist.yml](lst/blob/master/.lst_dist.yml) file to you home, rename it to .lst.yml (watch out for the file name: it's [dot]lst.yml) and edit as needed (see 'Settings' below). You'll need to have at least 1 project and 1 sprint defined in your config to continue
 * once your .lst.yml file is ready, run `lst test-install` to test your install. It should dump some html and finish by 'end' (yes! it's working!)
 * run `lst ls` to check what projects are defined in your config
 * run `lst ls -p [your_project_name]` to see all sprints defined for this project
@@ -47,8 +47,8 @@ the config file is a project list, each project is defined by:
        * a end date (like 2013-01-22)
        * optional: you can force some static data for Zebra: for example we have an external employee that does not log any hour in Zebra, but i know that i need to add 8 hours of work for each day. I can then use a date range '2013-01-21/2013-01/30 and '+8' as time to add 8 hours to all Zebra data retrieved.
  * some Jira specific settings:
-       * the Jira project id, usually a 5 digits integer. Run `lst jira-config-helper my_story_id` to get the project id
-       * the sprint name: the FixVersion name as seen in Jira Query Builder. Run `lst jira-config-helper my_story_id` to get the sprint name
+       * the Jira project id, usually a 5 digits integer. Run `lst jira-config-helper my_story_id` to get its project id
+       * the sprint name: the FixVersion name as seen in Jira Query Builder. Run `lst jira-config-helper my_story_id` to get its sprint name
        * optional, nice\_identifier: if you have "Nice to have" stories in your sprint, you can specify how to recognize them (we use '(NICE)' in the story title)
        * optional, closed_status: the status to consider as 'closed'. During the sprint the stories are usually not closed, but set as "For PO Review". Use this string to keep your burnup chart up-to-date
        * optional, closed\_status\_codes: a list of status ids to consider as closed. By default it uses 6 (closed) and 10008 (For PO Review)
