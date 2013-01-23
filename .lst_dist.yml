@@ -16,8 +16,8 @@ projects:
                           date: '2012-11-26/2012-12-11' # can be either a single date or a range (sep by /) or multiple dates (sep by ,)
                           time: '+8' # can be either a number (8) or a delta string ('+8') in both directions ('-8') 
                 jira:
-                    project_name: "Project+As+Specified+In+Jira" # as seen in jira query builder
-                    sprint_name: "Fix+Version+As+Specified+In+Jira" # as seen in jira query builder
+                    project_id: 12345
+                    sprint_name: "Fix+Version+As+Specified+In+Jira" # as seen in jira query builder (usually blanks are to be replaced with + in jira)
                     nice_identifier: "(NICE)" # how you specify that a story is a nice to have (must be part of the story title)
                     closed_status: "For PO Review" # what status you consider as 'closed' (use to know on what date the story was closed from the story activities)
                     closed_status_codes: [6, 10008] # what status you consider as 'closed' (6 is "closed", 10008 is "For PO Review"). (used to know what status id to consider as closed when trying to find story closing date
