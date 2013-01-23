@@ -69,13 +69,25 @@ class JiraRemote(Remote):
         response_xml = ET.fromstring(response_body)
         return response_xml
 
+    def parse_story(
+        self,
+        response_xml,
+    ):
+        s = response_xml[0].findall('item')[0]
+        story = {
+            'project_id': s.find('project').get('id'),
+            'project_name': s.find('project').text,
+            'sprint_name': s.find('fixVersion').text,
+        }
+        return story
+
     def parse_stories(
-            self,
-            response_xml,
-            nice_identifier = None,
-            ignored = None,
-            post_processor = None
-        ):
+        self,
+        response_xml,
+        nice_identifier = None,
+        ignored = None,
+        post_processor = None
+    ):
         stories = response_xml[0].findall('item')
 
         jira_entries = JiraEntries()

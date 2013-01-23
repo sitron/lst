@@ -21,6 +21,31 @@ class BaseCommand:
     def run(self):
         pass
 
+class RetrieveJiraInformationForConfigCommand(BaseCommand):
+    """
+    Usage: jira-config-helper [story-id] (ie: get-project-id JLC-1)
+
+    """
+    def run(self, args):
+        story_id = args.optional_argument[0].upper()
+        url = self._get_jira_url_for_project_lookup(story_id)
+
+        jira = JiraRemote(self.secret.get_jira('url'), self.secret.get_jira('username'), self.secret.get_jira('password'))
+        xml_data = jira.get_data(url)
+        story_data = jira.parse_story(xml_data)
+
+        print ''
+        print 'Project info for story %s' % (story_id)
+        print 'id: %s' % (story_data['project_id'])
+        print 'name: %s' % (story_data['project_name'])
+        print 'sprint name: %s' % (story_data['sprint_name'])
+        print 'sprint name for config: %s' % (
+            story_data['sprint_name'].replace(' ', '+')
+        )
+
+    def _get_jira_url_for_project_lookup(self, story_id):
+        return "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=key+%3D+'" + str(story_id) + "'&tempMax=1000"
+
 class ListCommand(BaseCommand):
     """
     Usage:  ls lists all projects defined in config
