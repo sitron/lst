@@ -39,7 +39,6 @@ available commands:
 
         parser.add_argument("-p", "--project", help="project's name, as stated in your config")
         parser.add_argument("-s", "--sprint-index", help="sprint index, as stated in your config", type=unicode)
-        parser.add_argument("-n", "--name", nargs="*", help="one or more user(s) last name")
         parser.add_argument("--dev-mode", action="store_true", help="development mode")
 
         # read command line arguments

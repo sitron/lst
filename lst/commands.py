@@ -76,10 +76,10 @@ class RetrieveUserIdCommand(BaseCommand):
 
     def run(self, args):
         # interactive command to retrieve a user id from his/her lastname
-        if args.name is None:
-            raise SyntaxError("To get a user id you need to specify his/her last name (using the -n option)")
+        if len(args.optional_argument) == 0:
+            raise SyntaxError("To get a user id you need to specify his/her last name (ie: 'lst get-user-id last_name')")
 
-        names = [x.lower() for x in args.name]
+        names = [x.lower() for x in args.optional_argument]
         report_url = 'user/.json'
         zebra = ZebraRemote(self.secret.get_zebra('url'), self.secret.get_zebra('username'), self.secret.get_zebra('password'))
         zebra_json_result = zebra.get_data(report_url)
@@ -93,7 +93,7 @@ class RetrieveUserIdCommand(BaseCommand):
                 users.append(user)
                 print 'found %s (%s) with id %s' % (user['employee_lastname'], user['employee_firstname'], user['id'])
         if len(users) == 0:
-            print 'No user found with lastname %s' % (args.name)
+            print 'No user found with lastname %s' % (args.optional_argument)
 
 class TestInstallCommand(BaseCommand):
     """

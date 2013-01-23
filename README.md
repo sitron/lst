@@ -68,9 +68,9 @@ All this seems pretty complicated but it's just words... looking at the file its
 ### Check all the sprints defined in your config for a specific project
 `lst ls -p my_project`
 ### Search a Zebra user id by employee last name
-`lst get-user-id -n my_last_name`
+`lst get-user-id my_last_name`
 ### Search multiple Zebra user ids by employees last name
-`lst get-user-id -n my_last_name his_last_name her_last_name`
+`lst get-user-id my_last_name his_last_name her_last_name`
 ### Get Jira info for config (helper)
 `lst jira-config-helper my_story_id`
 Useful to fill the Jira part of the config. Give it a story id (JLC-xx) and it will retrieve it's project id and sprint name
