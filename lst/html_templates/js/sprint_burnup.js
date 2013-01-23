@@ -271,9 +271,9 @@ $(function() {
     PieChart.create(mdResult, '#graph-results .man-days .chart');
     PieChart.displayResult(mdResult, '#graph-results .man-days .value');
     PieChart.create(spResult, '#graph-results .story-points .chart');
-    PieChart.displayResult(mdResult, '#graph-results .story-points .value');
+    PieChart.displayResult(spResult, '#graph-results .story-points .value');
     PieChart.create(bvResult, '#graph-results .business-value .chart');
-    PieChart.displayResult(mdResult, '#graph-results .business-value .value');
+    PieChart.displayResult(bvResult, '#graph-results .business-value .value');
 
     // display velocity on top
     SprintVelocity.display(
