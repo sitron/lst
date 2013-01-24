@@ -27,7 +27,7 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 
 ## Upgrade
 if by any chance you already install LST before, just run:
-* `sudo pip install git+git://github.com/sitron/lst@v0.7 --upgrade` 
+* `sudo pip install git+git://github.com/sitron/lst@v0.81 --upgrade` 
 
 ## Settings
 See the annotated example [.lst_dist.yml](lst/blob/master/.lst_dist.yml)
