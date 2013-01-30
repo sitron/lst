@@ -26,7 +26,7 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 * run `lst sprint-burnup -p [your_project_name] -s [sprint_index]` and enjoy your first graph!
 
 ## Upgrade
-if by any chance you already install LST before, just run:
+if by any chance you already installed LST before, just run:
 * `sudo pip install git+git://github.com/sitron/lst@v0.82 --upgrade` 
 
 ## Settings
@@ -45,7 +45,7 @@ the config file is a project list, each project is defined by:
        * a list of Zebra user ids (3 digits integer). You can run `lst get-user-id my_last_name` to get ids out of Zebra
        * a start date (like 2013-01-21)
        * a end date (like 2013-01-22)
-       * optional: you can force some static data for Zebra: for example we have an external employee that does not log any hour in Zebra, but i know that i need to add 8 hours of work for each day. I can then use a date range '2013-01-21/2013-01/30 and '+8' as time to add 8 hours to all Zebra data retrieved.
+       * optional: you can force some static data for Zebra: for example we have an external employee that does not log any hour in Zebra and works 100%. So i know that i need to add 8 hours of work for each day. I can use a date range '2013-01-21/2013-01-25' and '+8' as time to add 8 hours to all days within the date range.
  * some Jira specific settings:
        * the Jira project id, usually a 5 digits integer. Run `lst jira-config-helper my_story_id` to get its project id
        * the sprint name: the FixVersion name as seen in Jira Query Builder. Run `lst jira-config-helper my_story_id` to get its sprint name
