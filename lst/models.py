@@ -1,3 +1,6 @@
+import datetime
+import dateutil
+
 class AppContainer(object):
     config = None
     secret = None
@@ -20,9 +23,21 @@ class ZebraDays(dict):
         return self.ordered_dates
 
 class ZebraDay:
-    time = 0
-    entries = list()
-    day = '' # readable day (2012-07-31)
+    def __init__(self):
+        self.time = 0
+        self.entries = list() # list of ZebraEntry
+        self.day = '' # readable day (2012-07-31)
+        self.entries_per_user = None
+
+    def get_entries_per_user(self):
+        if self.entries_per_user is None:
+            self.entries_per_user = {}
+            for entry in self.entries:
+                try:
+                    self.entries_per_user[entry.username] += entry.time
+                except KeyError, e:
+                    self.entries_per_user[entry.username] = entry.time
+        return self.entries_per_user
 
 class JiraEntry:
     # status codes considered as closed
@@ -66,6 +81,9 @@ class JiraEntries(list):
                     o = {'sp': story.story_points, 'bv': story.business_value}
                     self.achieved_by_date[day] = o
         return self.achieved_by_date
+
+    def get_achievement_for_day(self, day):
+        return self.get_achievement_by_day().get(str(day))
 
     def get_commited_story_points(self):
         for s in self:
@@ -148,6 +166,24 @@ class Sprint:
 
     def get_jira_data(self, key):
         return self.jira_data.get(key)
+
+    def get_all_days(self, max_today = True):
+        ''' return all days from sprint start to sprint end or today (depending on the max_today value) '''
+        start = self.get_zebra_data('start_date')
+        end = self.get_zebra_data('end_date')
+        all_days = list()
+
+        if max_today:
+            today = datetime.datetime.now().date()
+            if end > today:
+                end = today
+
+        dateDelta = end - start
+
+        for i in range(dateDelta.days + 1):
+            date = start + datetime.timedelta(days = i)
+            all_days.append(date)
+        return all_days
 
 class GraphEntries(dict):
     ''' keeps all the graph entries '''

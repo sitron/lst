@@ -127,6 +127,7 @@ class SprintBurnUpCommand(BaseCommand):
     """
 
     def run(self, args):
+        # make sure the project and sprint specified exist in config
         project = self.config.get_project(args.project)
         try:
             print "Project %s found in config" % (project.name)
@@ -149,6 +150,7 @@ class SprintBurnUpCommand(BaseCommand):
             else:
                 raise SyntaxError("There is no sprint with the index %s defined in your config for the project %s" % (args.sprint_index, project.name))
 
+        # start fetching zebra data
         print 'Start fetching Zebra'
 
         zebra = ZebraRemote(self.secret.get_zebra('url'), self.secret.get_zebra('username'), self.secret.get_zebra('password'))
@@ -158,12 +160,9 @@ class SprintBurnUpCommand(BaseCommand):
         # parse response
         zebra_days = zebra.parse_entries(zebra_json_result)
 
-        # check for forced zebra values
-        for (key,value) in zebra_days.iteritems():
-            value.time = sprint.get_forced_data(key, value.time)
-
         print 'End Zebra'
 
+        # start fetching jira data
         print 'Start fetching Jira'
 
         JiraEntry.closed_status = set(sprint.get_closed_status_codes())
@@ -189,24 +188,66 @@ class SprintBurnUpCommand(BaseCommand):
         print 'End Jira'
 
         print 'Mixing retrieved values'
+
         graph_entries = GraphEntries()
-        for day,z in zebra_days.items():
-            graph_entry = GraphEntry()
-            graph_entry.time = z.time
-            graph_entries[day] = graph_entry
-        for day,j in jira_entries.get_achievement_by_day().items():
-            graph_entry = graph_entries.get(day, GraphEntry())
-            graph_entry.story_points = j['sp']
-            graph_entry.business_value = j['bv']
-            graph_entries[day] = graph_entry
+
+        print ''
+        print 'Zebra output per day:'
+
+        # get all sprint days until today
+        days = sprint.get_all_days(True)
+        for date in days:
+            total_time = 0
+            time_without_forced = 0
+            try:
+                zebra_day = zebra_days[str(date)]
+                print date
+
+                # output nb of hours for each person for this day
+                entries_per_user = zebra_day.get_entries_per_user()
+                for user,time in entries_per_user.items():
+                    print "%s : %s" % (user, time)
+                time_without_forced = zebra_day.time
+                # check for forced zebra values
+                total_time = sprint.get_forced_data(str(date), zebra_day.time)
+
+            except KeyError, e:
+                total_time = sprint.get_forced_data(str(date), 0)
+                if total_time != 0:
+                    print date
+
+            # print total time per day (with and/or without forced values)
+            if total_time != 0:
+                if time_without_forced == total_time:
+                    print 'Total: %s' % (total_time)
+                else:
+                    print 'Total (without forced data): %s' % (time_without_forced)
+                    print 'Total including forced data: %s' % (total_time)
+                print ''
+
+            # get jira achievement for this day (bv/sp done)
+            jira_data = jira_entries.get_achievement_for_day(str(date));
+
+            # if we have some time or story closed for this day add it to graph data
+            if jira_data is not None or total_time != 0:
+                graph_entry = GraphEntry()
+                graph_entry.time = total_time
+                try:
+                    graph_entry.story_points = jira_data['sp']
+                    graph_entry.business_value = jira_data['bv']
+                except TypeError, e:
+                    pass
+                graph_entries[str(date)] = graph_entry
 
         data = graph_entries.get_ordered_data()
 
+        # values needed to build the graph
         commited_values = {}
         commited_values['storyPoints'] = jira_entries.get_commited_story_points()
         commited_values['businessValue'] = jira_entries.get_commited_business_value()
         commited_values['manDays'] = sprint.commited_man_days
 
+        # values needed to build the graph
         sprint_data = {}
         sprint_data['startDate'] = sprint.get_zebra_data('start_date').strftime('%Y-%m-%d')
         sprint_data['endDate'] = sprint.get_zebra_data('end_date').strftime('%Y-%m-%d')
