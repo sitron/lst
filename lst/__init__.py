@@ -15,7 +15,8 @@ available commands:
   test-install \t\ttest the installation
   get-user-id \t\tRetrieve a Zebra user id from his/her last name
   ls \t\tlist either projects or sprints defined in config (depending on options)
-  jira-config-helper \t\tRetrieve some useful information about a Jira project project and sprint from a story id (ie. XX-12)"""
+  jira-config-helper \t\tRetrieve some useful information about a Jira project project and sprint from a story id (ie. XX-12)
+  add-sprint \t\tAdds a sprint to a new or existing project in your config file"""
 
         SETTINGS_PATH = os.path.expanduser('~/.lst.yml')
         SECRET_PATH = os.path.expanduser('~/.lst-secret.yml')
@@ -26,6 +27,7 @@ available commands:
             'get-user-id' : commands.RetrieveUserIdCommand,
             'ls' : commands.ListCommand,
             'jira-config-helper': commands.RetrieveJiraInformationForConfigCommand,
+            'add-sprint': commands.AddSprintCommand,
         }
 
         # define arguments and options
@@ -44,20 +46,22 @@ available commands:
         # read command line arguments
         args = parser.parse_args()
 
-        # read config
-        print 'Reading config'
-        config = ConfigParser()
-        config.load_config(SETTINGS_PATH)
+        AppContainer.SETTINGS_PATH = SETTINGS_PATH
+        AppContainer.SECRET_PATH = SECRET_PATH
 
         # read usernames and passwords for jira/zebra
         secret = SecretParser(SECRET_PATH)
 
         # create globally accessible app container
-        AppContainer.config = config
         AppContainer.secret = secret
         AppContainer.user_args = args
         AppContainer.dev_mode = args.dev_mode
-        AppContainer.SETTINGS_PATH = SETTINGS_PATH
+
+        # read config
+        print 'Reading config'
+        config = ConfigParser()
+        config.load_config(SETTINGS_PATH)
+        AppContainer.config = config
 
         if args.command not in available_actions:
             raise SyntaxError("Command %s does not exist." % (args.command))

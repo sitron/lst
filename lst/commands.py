@@ -7,10 +7,14 @@ from models import GraphEntries
 from models import AppContainer
 from output import SprintBurnUpOutput
 from processors import SprintBurnUpJiraProcessor
+from parser import ConfigParser
 import pkgutil
 import os
 import sys
 import distutils.sysconfig
+import yaml
+from pprint import pprint
+import datetime
 
 class BaseCommand:
     def __init__(self):
@@ -21,6 +25,78 @@ class BaseCommand:
     def run(self):
         pass
 
+class AddSprintCommand(BaseCommand):
+    """
+    Usage: add-sprint
+
+    """
+    def run(self, args):
+        project = {}
+
+        existing_projects = AppContainer.config.get_projects()
+        choice = 0
+        if len(existing_projects) != 0:
+            print ''
+            print 'Which project should this sprint belong to?'
+            print '%s - None, create a new project' % (0)
+            for index, p in enumerate(existing_projects):
+                print '%s - %s' % (index + 1, p['name'])
+            choice = int(raw_input('Your choice (0, 1, etc..): '))
+
+        if choice == 0:
+            # add project data
+            name = raw_input('Give me a nickname for your project (no special chars): ')
+            project['name'] = name
+        else:
+            project = AppContainer.config.get_raw_project(existing_projects[choice - 1]['name'])
+
+        # add sprint data
+        sprint = {}
+        nb_mandays = float(raw_input('Give me the number of commited man days for this sprint: '))
+        sprint['commited_man_days'] = nb_mandays
+
+        try:
+            sprints = project['sprints']
+            sprint['index'] = len(sprints) + 1
+        except:
+            sprints = list()
+            sprint['index'] = 1
+
+        sprints.append({'sprint': sprint})
+        project['sprints'] = sprints
+
+        # add zebra data
+        start = raw_input('Give me the sprint start date (as 2013.02.25): ')
+        [y,m,d] = map(int, start.split('.'))
+        start_date = datetime.date(y,m,d)
+        end = raw_input('Give me the sprint end date (as 2013.02.25): ')
+        [y,m,d] = map(int, end.split('.'))
+        end_date = datetime.date(y,m,d)
+
+        # todo: improve this part
+        client = raw_input('Give me the zebra project id (if you use Taxi, just do `taxi search client_name` else check in Zebra. It should be a four digit integer): ')
+        client_id = int(client)
+
+        zebra_data = {}
+        zebra_data['activities'] = '*'
+        zebra_data['users'] = '*'
+        zebra_data['start_date'] = start_date
+        zebra_data['end_date'] = end_date
+        zebra_data['client_id'] = client_id
+        sprint['zebra'] = zebra_data
+
+        jira_data = {}
+        story = raw_input('Give me the jira id of any story in your sprint (something like \'jlc-110\'): ').upper()
+        command = RetrieveJiraInformationForConfigCommand()
+        story_data = command.get_story_data(story)
+
+        jira_data['project_id'] = int(story_data['project_id'])
+        jira_data['sprint_name'] = story_data['clean_sprint_name']
+        sprint['jira'] = jira_data
+
+        # write to config file
+        AppContainer.config.create_project(project)
+
 class RetrieveJiraInformationForConfigCommand(BaseCommand):
     """
     Usage: jira-config-helper [story-id] (ie: get-project-id JLC-1)
@@ -28,23 +104,22 @@ class RetrieveJiraInformationForConfigCommand(BaseCommand):
     """
     def run(self, args):
         story_id = args.optional_argument[0].upper()
-        url = self._get_jira_url_for_project_lookup(story_id)
-
-        jira = JiraRemote(self.secret.get_jira('url'), self.secret.get_jira('username'), self.secret.get_jira('password'))
-        xml_data = jira.get_data(url)
-        story_data = jira.parse_story(xml_data)
+        story_data = self.get_story_data(story_id)
 
         print ''
         print 'Project info for story %s' % (story_id)
         print 'id: %s' % (story_data['project_id'])
         print 'name: %s' % (story_data['project_name'])
         print 'sprint name: %s' % (story_data['sprint_name'])
-        print 'sprint name for config: %s' % (
-            story_data['sprint_name'].replace(' ', '+')
-        )
+        print 'sprint name for config: %s' % (story_data['clean_sprint_name'])
 
-    def _get_jira_url_for_project_lookup(self, story_id):
-        return "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=key+%3D+'" + str(story_id) + "'&tempMax=1000"
+    def get_story_data(self, story_id):
+        jira = JiraRemote(self.secret.get_jira('url'), self.secret.get_jira('username'), self.secret.get_jira('password'))
+        url = jira.get_url_for_project_lookup(story_id)
+        xml_data = jira.get_data(url)
+        story_data = jira.parse_story(xml_data)
+        story_data['clean_sprint_name'] = story_data['sprint_name'].replace(' ', '+')
+        return story_data
 
 class ListCommand(BaseCommand):
     """
