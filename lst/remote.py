@@ -3,7 +3,6 @@ import urllib, urllib2, urlparse, cookielib
 import xml.etree.ElementTree as ET
 import dateutil.parser
 
-from models import Project
 from models import Sprint
 from models import JiraEntries
 from models import JiraEntry

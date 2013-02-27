@@ -50,7 +50,7 @@ class SprintBurnUpOutput(TemplatedOutput):
     def __init__(self, output_dir):
         super(SprintBurnUpOutput, self).__init__(output_dir)
 
-    def output(self, project_name, sprint_index, data, commited_values, sprint_data):
+    def output(self, sprint_name, data, commited_values, sprint_data):
         print 'Retrieving base graph'
         try:
             template = Template(self.get_template('sprint_burnup.html'))
@@ -59,9 +59,8 @@ class SprintBurnUpOutput(TemplatedOutput):
 
         print 'Writing graph'
         try:
-            path = 'sprint_burnup-%s-%s-%s.html' % (
-                Helper.slugify(project_name),
-                sprint_index,
+            path = 'sprint_burnup-%s-%s.html' % (
+                Helper.slugify(sprint_name),
                 datetime.now().strftime("%Y%m%d")
             )
             stream = self.get_output_stream(self.get_output_path(path))
@@ -87,4 +86,3 @@ class Helper(object):
         slug = re.sub(r'[^a-z0-9]+', '-', slug).strip('-')
         slug = re.sub(r'[-]+', '-', slug)
         return slug
-

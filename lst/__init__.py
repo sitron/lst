@@ -14,9 +14,9 @@ available commands:
   sprint-burnup \t\tprints a burn up chart for a given sprint
   test-install \t\ttest the installation
   get-user-id \t\tRetrieve a Zebra user id from his/her last name
-  ls \t\tlist either projects or sprints defined in config (depending on options)
-  jira-config-helper \t\tRetrieve some useful information about a Jira project project and sprint from a story id (ie. XX-12)
-  add-sprint \t\tAdds a sprint to a new or existing project in your config file"""
+  ls \t\tList all sprints defined in config
+  jira-config-helper \t\tRetrieve some useful information about a Jira project and sprint from a story id (ie. XX-12)
+  add-sprint \t\tAdds a sprint to your config file"""
 
         SETTINGS_PATH = os.path.expanduser('~/.lst.yml')
         SECRET_PATH = os.path.expanduser('~/.lst-secret.yml')
@@ -38,9 +38,6 @@ available commands:
         )
         parser.add_argument("command", help="command to execute (see available commands above)")
         parser.add_argument("optional_argument", nargs='*', help="depends on the command to execute")
-
-        parser.add_argument("-p", "--project", help="project's name, as stated in your config")
-        parser.add_argument("-s", "--sprint-index", help="sprint index, as stated in your config", type=unicode)
         parser.add_argument("--dev-mode", action="store_true", help="development mode")
 
         # read command line arguments
@@ -71,4 +68,3 @@ available commands:
 
 if __name__ == '__main__':
     lst = Lst()
-
