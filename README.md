@@ -15,19 +15,40 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 * coming soon: even easier configuration (through interactive questions)
 
 ## Installation
-* `sudo pip install git+git://github.com/sitron/lst@v0.82`
+* `sudo pip install git+git://github.com/sitron/lst@v0.83`
 * `sudo pip install -r https://raw.github.com/sitron/lst/master/requirements.txt`
 * copy the [.lst-secret_dist.yml](lst/blob/master/.lst-secret_dist.yml) file to you home, rename it to .lst-secret.yml and change your jira/zebra credentials (watch out for the file name: it's [dot]lst-secret.yml
 * create a directory somewhere on your machine where you want your graphs to be output and add its path to .lst-secret.yml 
-* copy the [.lst_dist.yml](lst/blob/master/.lst_dist.yml) file to you home, rename it to .lst.yml (watch out for the file name: it's [dot]lst.yml) and edit as needed (see 'Settings' below). You'll need to have at least 1 project and 1 sprint defined in your config to continue
-* once your .lst.yml file is ready, run `lst test-install` to test your install. It should dump some html and finish by 'end' (yes! it's working!)
+* create a blank file in your home called .lst.yml (`cd && touch .lst.yml`)
+* run `lst add-sprint` and answer the interactive questions. This will update your config using the default settings
+* run `lst test-install` to test your install. It should dump some html and finish by 'end' (yes! it's working!)
 * run `lst ls` to check what projects are defined in your config
 * run `lst ls -p [your_project_name]` to see all sprints defined for this project
 * run `lst sprint-burnup -p [your_project_name] -s [sprint_index]` and enjoy your first graph!
+* if you want to customize your config (to limit the Zebra users to take into account, or override a value or...) have a look at the Settings section below
 
 ## Upgrade
 if by any chance you already installed LST before, just run:
-* `sudo pip install git+git://github.com/sitron/lst@v0.82 --upgrade` 
+* `sudo pip install git+git://github.com/sitron/lst@v0.83 --upgrade`
+
+## Available commands
+### Fetch data and display a chart
+`lst sprint-burnup -p my_project -s my_sprint`
+### Fetch data and display a chart (if only 1 sprint is defined for the project)
+`lst sprint-burnup -p my_project`
+### Test LST installation
+`lst test-install`
+### Check all the projects defined in your config (if you don't remember their name for ex.)
+`lst ls`
+### Check all the sprints defined in your config for a specific project
+`lst ls -p my_project`
+### Search a Zebra user id by employee last name
+`lst get-user-id my_last_name`
+### Search multiple Zebra user ids by employees last name
+`lst get-user-id my_last_name his_last_name her_last_name`
+### Get Jira info for config (helper)
+`lst jira-config-helper my_story_id`
+Useful to fill the Jira part of the config. Give it a story id (JLC-xx) and it will retrieve it's project id and sprint name
 
 ## Settings
 See the annotated example [.lst_dist.yml](lst/blob/master/.lst_dist.yml)
@@ -54,24 +75,4 @@ the config file is a project list, each project is defined by:
        * optional, closed\_status\_codes: a list of status ids to consider as closed. By default it uses 6 (closed) and 10008 (For PO Review)
        * optional, ignored: a list of stories to ignore. Specify their ids in a list ['XXX-134', 'XXX-119']. Very often we have stories in the sprint that should not be considered for the graph (closed before the sprint, out of scope.. whatever)
 
-All this seems pretty complicated but it's just words... looking at the file itself might just be self explanatory enough...
-
-## Available commands
-### Fetch data and display a chart
-`lst sprint-burnup -p my_project -s my_sprint`
-### Fetch data and display a chart (if only 1 sprint is defined for the project)
-`lst sprint-burnup -p my_project`
-### Test LST installation
-`lst test-install`
-### Check all the projects defined in your config (if you don't remember their name for ex.)
-`lst ls`
-### Check all the sprints defined in your config for a specific project
-`lst ls -p my_project`
-### Search a Zebra user id by employee last name
-`lst get-user-id my_last_name`
-### Search multiple Zebra user ids by employees last name
-`lst get-user-id my_last_name his_last_name her_last_name`
-### Get Jira info for config (helper)
-`lst jira-config-helper my_story_id`
-Useful to fill the Jira part of the config. Give it a story id (JLC-xx) and it will retrieve it's project id and sprint name
-
+All this seems pretty complicated but it's just words... looking at the file itself [.lst_dist.yml](lst/blob/master/.lst_dist.yml) might just be self explanatory enough...

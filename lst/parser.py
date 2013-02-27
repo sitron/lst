@@ -9,13 +9,16 @@ from models import AppContainer
 
 class SecretParser:
     def __init__(self, url):
-        data_file = open(url)
-        settings = yaml.load(data_file)
-        data_file.close()
+        try:
+            data_file = open(url)
+            settings = yaml.load(data_file)
+            data_file.close()
 
-        self.zebra_data = settings['zebra']
-        self.jira_data = settings['jira']
-        self.output_dir = settings['output_dir']
+            self.zebra_data = settings['zebra']
+            self.jira_data = settings['jira']
+            self.output_dir = settings['output_dir']
+        except IOError as e:
+            raise Exception('Please make sure you have a file called .lst-secret.yml in your home directory (see README, setup section)')
 
     def get_zebra(self, key):
         return self.zebra_data[key]
@@ -31,11 +34,54 @@ class SecretParser:
 class ConfigParser:
     def __init__(self):
         self.data = None
+        self.url = None
 
     def load_config(self, url):
-        data_file = open(url)
-        self.data = yaml.load(data_file)
-        data_file.close()
+        # check that the config file exists
+        try:
+            with open(url) as f: pass
+        except IOError as e:
+            raise Exception('Please make sure you have a file called .lst.yml in your home directory (see README, setup section)')
+
+        self.url = url
+        try:
+            data_file = open(url)
+            self.data = yaml.load(data_file)
+            data_file.close()
+        except:
+            raise Exception('Couldn\'t load your setup file (.lst.yml) check that it exists and that it is yaml compliant')
+
+    def create_project(self, project):
+        if self.data is None:
+            self.data = {
+                'projects': list()
+            }
+
+        # check if the project already exist, if so replace it
+        p = self.get_raw_project(project['name'])
+        if p is not None:
+            p = project
+        else:
+            self.data['projects'].append({'project': project})
+
+        self.write_config()
+
+    def update_project(self, project):
+        p = self.get_raw_project(project.name)
+        if p is None:
+            print 'Project %s was not found, and thus can\'t be updated' % (project.name)
+            return
+        p = project
+        self.write_config()
+
+    def write_config(self):
+        try:
+            with open(self.url, 'w') as config:
+                config.write(yaml.dump(self.data, default_flow_style=False))
+        except:
+            raise Exception('Unable to write to config file')
+
+        print 'Your config file was updated. Check it at %s' % (self.url)
 
     def parse_project(self, data):
         project = Project()
@@ -77,8 +123,11 @@ class ConfigParser:
 
     def get_projects(self):
         l = []
-        for proj in self.data['projects']:
-            l.append(proj['project'])
+        try:
+            for proj in self.data['projects']:
+                l.append(proj['project'])
+        except TypeError as e:
+            print 'No projects defined'
         return l
 
     def parse_forced(self, force):

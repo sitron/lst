@@ -37,6 +37,9 @@ class JiraRemote(Remote):
         self.username = username
         self.password = password
 
+    def get_url_for_project_lookup(self, story_id):
+        return "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=key+%3D+'" + str(story_id) + "'&tempMax=1000"
+
     def _get_request(self, url, body = None, headers = {}):
         if 'User-Agent' not in headers:
             headers['User-Agent'] = 'LST Jira Client';
@@ -195,10 +198,14 @@ class ZebraRemote(Remote):
         return users
 
     def parse_entries(self, response_json):
-        entries = response_json['command']['reports']['report']
-        print 'Will now parse %d entries found in Zebra' % len(entries)
-
         zebra_days = ZebraDays()
+        try:
+            entries = response_json['command']['reports']['report']
+            print 'Will now parse %d entries found in Zebra' % len(entries)
+        except:
+            print 'No entries found in Zebra'
+            return zebra_days
+
         for entry in entries:
             # zebra last entries are totals, and dont have a tid
             if entry['tid'] == '':
