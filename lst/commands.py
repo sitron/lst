@@ -31,39 +31,14 @@ class AddSprintCommand(BaseCommand):
 
     """
     def run(self, args):
-        project = {}
-
-        existing_projects = AppContainer.config.get_projects()
-        choice = 0
-        if len(existing_projects) != 0:
-            print ''
-            print 'Which project should this sprint belong to?'
-            print '%s - None, create a new project' % (0)
-            for index, p in enumerate(existing_projects):
-                print '%s - %s' % (index + 1, p['name'])
-            choice = int(raw_input('Your choice (0, 1, etc..): '))
-
-        if choice == 0:
-            # add project data
-            name = raw_input('Give me a nickname for your project (no special chars): ')
-            project['name'] = name
-        else:
-            project = AppContainer.config.get_raw_project(existing_projects[choice - 1]['name'])
-
         # add sprint data
         sprint = {}
+
+        name = raw_input('Give me a nickname for your sprint (no special chars): ')
+        sprint['name'] = name
+
         nb_mandays = float(raw_input('Give me the number of commited man days for this sprint: '))
         sprint['commited_man_days'] = nb_mandays
-
-        try:
-            sprints = project['sprints']
-            sprint['index'] = len(sprints) + 1
-        except:
-            sprints = list()
-            sprint['index'] = 1
-
-        sprints.append({'sprint': sprint})
-        project['sprints'] = sprints
 
         # add zebra data
         start = raw_input('Give me the sprint start date (as 2013.02.25): ')
@@ -95,7 +70,7 @@ class AddSprintCommand(BaseCommand):
         sprint['jira'] = jira_data
 
         # write to config file
-        AppContainer.config.create_project(project)
+        AppContainer.config.create_sprint(sprint)
 
 class RetrieveJiraInformationForConfigCommand(BaseCommand):
     """
@@ -123,26 +98,15 @@ class RetrieveJiraInformationForConfigCommand(BaseCommand):
 
 class ListCommand(BaseCommand):
     """
-    Usage:  ls lists all projects defined in config
-            ls [-p project_id] lists all sprints defined in config for this project
+    Usage:  ls lists all sprints defined in config
 
     """
 
     def run(self, args):
-        if args.project is not None:
-            # list all sprints for this project
-            print ''
-            print 'All sprints defined for project %s:' % (args.project)
-            for s in self.config.get_project(args.project).sprints.values():
-                print 'index: %s' % (s.index)
-                print 'commited man days: %s' % (s.commited_man_days)
-                print ''
-        else:
-            # list all projects
-            print ''
-            print 'All currently defined projects:'
-            for p in self.config.get_projects():
-                print p['name']
+        print ''
+        print 'All currently defined sprints:'
+        for s in self.config.get_sprints():
+            print s['name']
 
 class RetrieveUserIdCommand(BaseCommand):
     """
@@ -196,34 +160,18 @@ class TestInstallCommand(BaseCommand):
 
 class SprintBurnUpCommand(BaseCommand):
     """
-    Usage:  sprint-burnup [-p project_id] (uses last sprint defined in this project)
-            sprint-burnup [-p project_id] [-i sprint_index]
+    Usage:  sprint-burnup [sprint_name]
 
     """
 
     def run(self, args):
-        # make sure the project and sprint specified exist in config
-        project = self.config.get_project(args.project)
+        # make sure the sprint specified exist in config
+        user_sprint_name = args.optional_argument[0]
+        sprint = self.config.get_sprint(user_sprint_name)
         try:
-            print "Project %s found in config" % (project.name)
+            print "Sprint %s found in config" % (sprint.name)
         except:
-            raise SyntaxError("Project %s not found. Make sure it's defined in your settings file" % (args.project))
-
-        if project.has_sprints() == False:
-            raise SyntaxError("There is no sprint defined in your config for the project %s" % (project.name))
-
-        sprint = project.get_sprint(args.sprint_index, True)
-        try:
-            if sprint.index == args.sprint_index:
-                print "Sprint %s found in config" % (sprint.index)
-            else:
-                print "No sprint with index %s found in config, taking %s as default" % (args.sprint_index, sprint.index)
-
-        except:
-            if args.sprint_index is None:
-                raise SyntaxError("You have more than 1 sprint for the project %s. Please use the -s option to specify the one you'd like to use" % (project.name))
-            else:
-                raise SyntaxError("There is no sprint with the index %s defined in your config for the project %s" % (args.sprint_index, project.name))
+            raise SyntaxError("Sprint %s not found. Make sure it's defined in your settings file" % (user_sprint_name))
 
         # start fetching zebra data
         print 'Start fetching Zebra'
@@ -330,7 +278,7 @@ class SprintBurnUpCommand(BaseCommand):
         # write the graph
         print 'Starting output'
         output = SprintBurnUpOutput(AppContainer.secret.get_output_dir())
-        output.output(project.name, sprint.index, data, commited_values, sprint_data)
+        output.output(sprint.name, data, commited_values, sprint_data)
 
     def _get_zebra_url_for_sprint_burnup(self, sprint):
         report_url = 'timesheet/report/.json?option_selector='
@@ -361,4 +309,3 @@ class SprintBurnUpCommand(BaseCommand):
 
     def _get_jira_url_for_sprint_burnup(self, sprint):
         return "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=project+%3D+'" + str(sprint.get_jira_data('project_id')) + "'+and+fixVersion+%3D+'" + sprint.get_jira_data('sprint_name') + "'&tempMax=1000"
-

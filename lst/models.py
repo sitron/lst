@@ -111,36 +111,12 @@ class JiraEntries(list):
                 self.achieved_business_value += s.business_value
         return self.achieved_business_value
 
-class Project:
-    def __init__(self):
-        self.name = ''
-        self.sprints = dict()
-        self.raw = None
-
-    def get_sprint(self, index, use_unique = False):
-        sprint = self.sprints.get(index)
-        if sprint is not None:
-            return sprint
-        if use_unique == True and self.nb_sprints() == 1:
-            return self.get_first_sprint()
-        else:
-            return None
-
-    def get_first_sprint(self):
-        items = self.sprints.values()
-        return items[0]
-
-    def has_sprints(self):
-        return len(self.sprints) > 0
-
-    def nb_sprints(self):
-        return len(self.sprints)
-
 class Sprint:
     def __init__(self):
+        self.name = ''
+        self.raw = None
         self.forced = dict()
         self.commited_man_days = 0
-        self.index = 0
         self.jira_data = None
         self.zebra_data = None
         self.raw = None
