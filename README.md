@@ -33,20 +33,19 @@ if by any chance you already installed LST before, just run:
 * special instructions for pre-0.9x users: config has changed. There is no "project" level anymore. You can easily update your config by removing the project level, and renaming your sprint index with a name property.
 
 before (prior to 0.9.0):
-`
+```
 projects:
     - project:
-        name: jlc_col # this is the name you'll specify when running the script
+        name: jlc_col
         sprints:
             - sprint:
                 index: 3
-`
+```
 after (from 0.9.0):
-`
+```
 sprints:
 - name: jlc_col_3
-  ...
-`
+```
 
 ## Available commands
 ### Fetch data and display a chart
