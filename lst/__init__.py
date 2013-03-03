@@ -11,12 +11,12 @@ class Lst(object):
         usage = """%(prog)s command [options]
 
 available commands:
-  sprint-burnup \t\tprints a burn up chart for a given sprint
-  test-install \t\ttest the installation
-  get-user-id \t\tRetrieve a Zebra user id from his/her last name
-  ls \t\tList all sprints defined in config
-  jira-config-helper \t\tRetrieve some useful information about a Jira project and sprint from a story id (ie. XX-12)
-  add-sprint \t\tAdds a sprint to your config file"""
+  sprint-burnup\t\tPrints a burn up chart for a given sprint
+  test-install\t\tTest the installation
+  get-user-id\t\tRetrieve a Zebra user id from his/her last name
+  ls \t\t\tList all sprints defined in config
+  jira-config-helper\tRetrieve some useful information about a Jira project and sprint from a story id (ie. XX-12)
+  add-sprint\t\tAdds a sprint to your config file"""
 
         SETTINGS_PATH = os.path.expanduser('~/.lst.yml')
         SECRET_PATH = os.path.expanduser('~/.lst-secret.yml')
