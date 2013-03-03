@@ -3,7 +3,6 @@ import datetime
 import dateutil
 import os
 
-from models import Project
 from models import Sprint
 from models import AppContainer
 
@@ -51,27 +50,14 @@ class ConfigParser:
         except:
             raise Exception('Couldn\'t load your setup file (.lst.yml) check that it exists and that it is yaml compliant')
 
-    def create_project(self, project):
+    def create_sprint(self, sprint):
         if self.data is None:
             self.data = {
-                'projects': list()
+                'sprints': list()
             }
 
-        # check if the project already exist, if so replace it
-        p = self.get_raw_project(project['name'])
-        if p is not None:
-            p = project
-        else:
-            self.data['projects'].append({'project': project})
+        self.data['sprints'].append(sprint)
 
-        self.write_config()
-
-    def update_project(self, project):
-        p = self.get_raw_project(project.name)
-        if p is None:
-            print 'Project %s was not found, and thus can\'t be updated' % (project.name)
-            return
-        p = project
         self.write_config()
 
     def write_config(self):
@@ -83,15 +69,10 @@ class ConfigParser:
 
         print 'Your config file was updated. Check it at %s' % (self.url)
 
-    def parse_project(self, data):
-        project = Project()
-        project.name = unicode(data['name'])
-        project.raw = data
-        return project
-
     def parse_sprint(self, data):
         sprint = Sprint()
-        sprint.index = unicode(data['index'])
+        sprint.name = unicode(data['name'])
+        sprint.raw = data
         sprint.jira_data = data['jira']
         sprint.zebra_data = data['zebra']
         sprint.commited_man_days = unicode(data['commited_man_days'])
@@ -101,33 +82,21 @@ class ConfigParser:
             pass
         return sprint
 
-    def get_project(self, name):
-        project = None
-        for proj in self.data['projects']:
-            p = proj['project']
-            if p['name'] == name:
-                project = self.parse_project(p)
-                for spr in p['sprints']:
-                    s = spr['sprint']
-                    sprint = self.parse_sprint(s)
-                    project.sprints[sprint.index] = sprint
+    def get_sprint(self, name):
+        sprint = None
+        for s in self.data['sprints']:
+            if s['name'] == name:
+                sprint = self.parse_sprint(s)
                 break
-        return project
+        return sprint
 
-    def get_raw_project(self, name):
-        for proj in self.data['projects']:
-            p = proj['project']
-            if p['name'] == name:
-                return p
-        return None
-
-    def get_projects(self):
+    def get_sprints(self):
         l = []
         try:
-            for proj in self.data['projects']:
-                l.append(proj['project'])
+            for s in self.data['sprints']:
+                l.append(s)
         except TypeError as e:
-            print 'No projects defined'
+            print 'No sprints defined'
         return l
 
     def parse_forced(self, force):
@@ -169,4 +138,3 @@ class ConfigParser:
             for d in a:
                 b.append(dateutil.parser.parse(d))
             return b
-
