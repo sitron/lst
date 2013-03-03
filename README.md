@@ -9,39 +9,52 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 ## Advantages
 * team knows how the sprint is going on
 * PO knows how the sprint is going on (bis)
+* no more "oh sh@@ i just noticed xxx pushed all his hours on a wrong project!"
 * easy installation (Python (and pip) is your friend)
 * easy setup (aka _no_ setup)
 * easy configuration (edit a yml file)
-* coming soon: even easier configuration (through interactive questions)
+* new! even easier configuration (through interactive questions)
 
 ## Installation
-* `sudo pip install git+git://github.com/sitron/lst@v0.83`
+* `sudo pip install git+git://github.com/sitron/lst@v0.9.0`
 * `sudo pip install -r https://raw.github.com/sitron/lst/master/requirements.txt`
 * copy the [.lst-secret_dist.yml](lst/blob/master/.lst-secret_dist.yml) file to you home, rename it to .lst-secret.yml and change your jira/zebra credentials (watch out for the file name: it's [dot]lst-secret.yml
 * create a directory somewhere on your machine where you want your graphs to be output and add its path to .lst-secret.yml 
 * create a blank file in your home called .lst.yml (`cd && touch .lst.yml`)
 * run `lst add-sprint` and answer the interactive questions. This will update your config using the default settings
 * run `lst test-install` to test your install. It should dump some html and finish by 'end' (yes! it's working!)
-* run `lst ls` to check what projects are defined in your config
-* run `lst ls -p [your_project_name]` to see all sprints defined for this project
-* run `lst sprint-burnup -p [your_project_name] -s [sprint_index]` and enjoy your first graph!
+* run `lst ls` to check what sprints are defined in your config
+* run `lst sprint-burnup [sprint_name]` and enjoy your first graph!
 * if you want to customize your config (to limit the Zebra users to take into account, or override a value or...) have a look at the Settings section below
 
 ## Upgrade
 if by any chance you already installed LST before, just run:
-* `sudo pip install git+git://github.com/sitron/lst@v0.83 --upgrade`
+* `sudo pip install git+git://github.com/sitron/lst@v0.9.0 --upgrade`
+* special instructions for pre-0.9x users: config has changed. There is no "project" level anymore. You can easily update your config by removing the project level, and renaming your sprint index with a name property.
+
+before (prior to 0.9.0):
+`
+projects:
+    - project:
+        name: jlc_col # this is the name you'll specify when running the script
+        sprints:
+            - sprint:
+                index: 3
+`
+after (from 0.9.0):
+`
+sprints:
+- name: jlc_col_3
+  ...
+`
 
 ## Available commands
 ### Fetch data and display a chart
-`lst sprint-burnup -p my_project -s my_sprint`
-### Fetch data and display a chart (if only 1 sprint is defined for the project)
-`lst sprint-burnup -p my_project`
+`lst sprint-burnup my_sprint_name`
 ### Test LST installation
 `lst test-install`
-### Check all the projects defined in your config (if you don't remember their name for ex.)
+### Check all the sprints defined in your config
 `lst ls`
-### Check all the sprints defined in your config for a specific project
-`lst ls -p my_project`
 ### Search a Zebra user id by employee last name
 `lst get-user-id my_last_name`
 ### Search multiple Zebra user ids by employees last name
@@ -52,27 +65,25 @@ Useful to fill the Jira part of the config. Give it a story id (JLC-xx) and it w
 
 ## Settings
 See the annotated example [.lst_dist.yml](lst/blob/master/.lst_dist.yml)
-You will need to define at least 1 project and 1 sprint to be able to run a command
+You will need to define at least 1 sprint to be able to run a command
 
-the config file is a project list, each project is defined by:
+the config file is a sprint list, each sprint is defined by:
 
-* a name: it can be anything. It's just a shortcut that you'll use to run all commands (that need a project name)
-* a list of sprints, each sprint being defined by:
- * an index (integer) must be unique within the project, so that you can then call "draw me a graph for [project_name], using sprint [sprint_index] 
- * a number of commited man days (integer). Self explanatory.
- * some Zebra specific settings:
-       * the zebra client id (check in Zebra, usually a 4 digits integer). You can also easily find it by running `taxi search [project_name]` if you have Taxi installed (you should!)
-       * a list of Zebra activitity ids (check Zebra) or put '*' (including the quotes) to use all activities
-       * a list of Zebra user ids (3 digits integer). You can run `lst get-user-id my_last_name` to get ids out of Zebra
-       * a start date (like 2013-01-21)
-       * a end date (like 2013-01-22)
-       * optional: you can force some static data for Zebra: for example we have an external employee that does not log any hour in Zebra and works 100%. So i know that i need to add 8 hours of work for each day. I can use a date range '2013-01-21/2013-01-25' and '+8' as time to add 8 hours to all days within the date range.
- * some Jira specific settings:
-       * the Jira project id, usually a 5 digits integer. Run `lst jira-config-helper my_story_id` to get its project id
-       * the sprint name: the FixVersion name as seen in Jira Query Builder. Run `lst jira-config-helper my_story_id` to get its sprint name
-       * optional, nice\_identifier: if you have "Nice to have" stories in your sprint, you can specify how to recognize them (we use '(NICE)' in the story title)
-       * optional, closed_status: the status to consider as 'closed'. During the sprint the stories are usually not closed, but set as "For PO Review". Use this string to keep your burnup chart up-to-date
-       * optional, closed\_status\_codes: a list of status ids to consider as closed. By default it uses 6 (closed) and 10008 (For PO Review)
-       * optional, ignored: a list of stories to ignore. Specify their ids in a list ['XXX-134', 'XXX-119']. Very often we have stories in the sprint that should not be considered for the graph (closed before the sprint, out of scope.. whatever)
+* a name: it can be anything. It's just a shortcut that you'll use to run all commands (that need a sprint name)
+* a number of commited man days (integer). Self explanatory.
+* some Zebra specific settings:
+      * the zebra client id (check in Zebra, usually a 4 digits integer). You can also easily find it by running `taxi search [project_name]` if you have Taxi installed (you should!)
+      * a list of Zebra activitity ids (check Zebra) or put '*' (including the quotes) to use all activities
+      * a list of Zebra user ids (3 digits integer). You can run `lst get-user-id my_last_name` to get ids out of Zebra
+      * a start date (like 2013-01-21)
+      * a end date (like 2013-01-22)
+      * optional: you can force some static data for Zebra: for example we have an external employee that does not log any hour in Zebra and works 100%. So i know that i need to add 8 hours of work for each day. I can use a date range '2013-01-21/2013-01-25' and '+8' as time to add 8 hours to all days within the date range.
+* some Jira specific settings:
+      * the Jira project id, usually a 5 digits integer. Run `lst jira-config-helper my_story_id` to get its project id
+      * the sprint name: the FixVersion name as seen in Jira Query Builder. Run `lst jira-config-helper my_story_id` to get its sprint name
+      * optional, nice\_identifier: if you have "Nice to have" stories in your sprint, you can specify how to recognize them (we use '(NICE)' in the story title)
+      * optional, closed_status: the status to consider as 'closed'. During the sprint the stories are usually not closed, but set as "For PO Review". Use this string to keep your burnup chart up-to-date
+      * optional, closed\_status\_codes: a list of status ids to consider as closed. By default it uses 6 (closed) and 10008 (For PO Review)
+      * optional, ignored: a list of stories to ignore. Specify their ids in a list ['XXX-134', 'XXX-119']. Very often we have stories in the sprint that should not be considered for the graph (closed before the sprint, out of scope.. whatever)
 
 All this seems pretty complicated but it's just words... looking at the file itself [.lst_dist.yml](lst/blob/master/.lst_dist.yml) might just be self explanatory enough...
