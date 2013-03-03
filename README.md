@@ -18,7 +18,7 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 ## Installation
 * `sudo pip install git+git://github.com/sitron/lst@v0.9.0`
 * `sudo pip install -r https://raw.github.com/sitron/lst/master/requirements.txt`
-* copy the [.lst-secret_dist.yml](lst/blob/master/.lst-secret_dist.yml) file to you home, rename it to .lst-secret.yml and change your jira/zebra credentials (watch out for the file name: it's [dot]lst-secret.yml
+* copy the [.lst-secret_dist.yml](.lst-secret_dist.yml) file to you home, rename it to .lst-secret.yml and change your jira/zebra credentials (watch out for the file name: it's [dot]lst-secret.yml
 * create a directory somewhere on your machine where you want your graphs to be output and add its path to .lst-secret.yml 
 * create a blank file in your home called .lst.yml (`cd && touch .lst.yml`)
 * run `lst add-sprint` and answer the interactive questions. This will update your config using the default settings
@@ -63,7 +63,7 @@ sprints:
 Useful to fill the Jira part of the config. Give it a story id (JLC-xx) and it will retrieve it's project id and sprint name
 
 ## Settings
-See the annotated example [.lst_dist.yml](lst/blob/master/.lst_dist.yml)
+See the annotated example [.lst_dist.yml](.lst_dist.yml)
 You will need to define at least 1 sprint to be able to run a command
 
 the config file is a sprint list, each sprint is defined by:
@@ -85,4 +85,4 @@ the config file is a sprint list, each sprint is defined by:
       * optional, closed\_status\_codes: a list of status ids to consider as closed. By default it uses 6 (closed) and 10008 (For PO Review)
       * optional, ignored: a list of stories to ignore. Specify their ids in a list ['XXX-134', 'XXX-119']. Very often we have stories in the sprint that should not be considered for the graph (closed before the sprint, out of scope.. whatever)
 
-All this seems pretty complicated but it's just words... looking at the file itself [.lst_dist.yml](lst/blob/master/.lst_dist.yml) might just be self explanatory enough...
+All this seems pretty complicated but it's just words... looking at the file itself [.lst_dist.yml](.lst_dist.yml) might just be self explanatory enough...
