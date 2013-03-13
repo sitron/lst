@@ -191,16 +191,16 @@ class SprintBurnUpCommand(BaseCommand):
         # start fetching jira data
         print 'Start fetching Jira'
 
-        JiraEntry.closed_status = set(sprint.get_closed_status_codes())
+        JiraEntry.closed_status_ids = sprint.get_closed_status_codes()
         jira = JiraRemote(self.secret.get_jira('url'), self.secret.get_jira('username'), self.secret.get_jira('password'))
 
         jira_url = self._get_jira_url_for_sprint_burnup(sprint)
         nice_identifier = sprint.get_jira_data('nice_identifier')
-        closed_status = sprint.get_closed_status_name()
+        closed_status_names = sprint.get_closed_status_names()
         ignored_stories = sprint.get_jira_data('ignored')
 
         # define jira post processor
-        post_processor = SprintBurnUpJiraProcessor(closed_status, jira)
+        post_processor = SprintBurnUpJiraProcessor(closed_status_names, jira)
 
         jira_xml_result = jira.get_data(jira_url)
 

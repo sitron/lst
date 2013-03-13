@@ -94,8 +94,7 @@ the config file is a sprint list, each sprint is defined by:
       * the Jira project id, usually a 5 digits integer. Run `lst jira-config-helper my_story_id` to get its project id
       * the sprint name: the FixVersion name as seen in Jira Query Builder. Run `lst jira-config-helper my_story_id` to get its sprint name
       * optional, nice\_identifier: if you have "Nice to have" stories in your sprint, you can specify how to recognize them (we use '(NICE)' in the story title)
-      * optional, closed_status: the status to consider as 'closed'. During the sprint the stories are usually not closed, but set as "For PO Review". Use this string to keep your burnup chart up-to-date
-      * optional, closed\_status\_codes: a list of status ids to consider as closed. By default it uses 6 (closed) and 10008 (For PO Review)
+      * optional, closed_statuses: the jira statuses to consider as 'closed'. During the sprint the stories are usually not closed, so your graph would be flat until the very last day. For example we use "For PO Review" as the "closed" status. Specified as a dictionary where the keys are the status codes, and the values the status names. See the "Advanced config" in [.lst_dist.yml](.lst_dist.yml) to see how it's structured.
       * optional, ignored: a list of stories to ignore. Specify their ids in a list ['XXX-134', 'XXX-119']. Very often we have stories in the sprint that should not be considered for the graph (closed before the sprint, out of scope.. whatever)
 
 All this seems pretty complicated but it's just words... looking at the file itself [.lst_dist.yml](.lst_dist.yml) might just be self explanatory enough...

@@ -41,7 +41,7 @@ class ZebraDay:
 
 class JiraEntry:
     # status codes considered as closed
-    closed_status = set()
+    closed_status_ids = set()
 
     def __init__(self):
         self.story_points = 0
@@ -53,7 +53,7 @@ class JiraEntry:
         self.is_ignored = False
 
     def is_over(self):
-        return self.status in JiraEntry.closed_status
+        return self.status in JiraEntry.closed_status_ids
 
     def get_close_day(self):
         return self.close_date.strftime('%Y-%m-%d')
@@ -120,16 +120,19 @@ class Sprint:
         self.jira_data = None
         self.zebra_data = None
         self.raw = None
-        self.default_closed_status_id = [6]
-        self.default_closed_status_name = 'closed'
+        self.default_closed_statuses = {6:'closed'}
+
+    def get_closed_statuses(self):
+        statuses = self.get_jira_data('closed_statuses')
+        return self.default_closed_statuses if statuses is None else statuses
 
     def get_closed_status_codes(self):
-        codes = self.get_jira_data('closed_status_codes')
-        return self.default_closed_status_id if codes is None else codes
+        statuses = self.get_closed_statuses()
+        return statuses.keys()
 
-    def get_closed_status_name(self):
-        name = self.get_jira_data('closed_status')
-        return self.default_closed_status_name if name is None else name
+    def get_closed_status_names(self):
+        statuses = self.get_closed_statuses()
+        return statuses.values()
 
     def get_forced_data(self, date, default):
         forced = self.forced.get(date, default)

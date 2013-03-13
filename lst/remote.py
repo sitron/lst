@@ -123,7 +123,7 @@ class JiraRemote(Remote):
 
         return jira_entries
 
-    def get_story_close_date(self, id, closed_status):
+    def get_story_close_date(self, id, closed_status_names):
         url = "/activity?maxResults=20&streams=issue-key+IS+"
         url += str(id)
         url += '&os_username=' + str(self.username)
@@ -134,8 +134,16 @@ class JiraRemote(Remote):
 
         response_xml = ET.fromstring(response_body)
         xmlns = {"atom": "http://www.w3.org/2005/Atom"}
-        close_date = response_xml.find("./atom:entry/atom:category/[@term='" + closed_status + "']/../atom:published", namespaces=xmlns).text
-        return dateutil.parser.parse(close_date)
+        close_dates = []
+        for name in closed_status_names:
+            try:
+                close_dates.append(response_xml.find("./atom:entry/atom:category/[@term='" + name + "']/../atom:published", namespaces=xmlns).text)
+            except:
+                pass
+        if len(close_dates) == 0:
+            return None
+
+        return dateutil.parser.parse(min(close_dates))
 
 class ZebraRemote(Remote):
     def __init__(self, base_url, username, password):

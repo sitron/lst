@@ -36,6 +36,6 @@ sprints:
             project_id: 12345 # Run `lst jira-config-helper jlc-100` to get its project id (change jlc-100 by the id of a story in your current sprint
             sprint_name: "Fix+Version+As+Specified+In+Jira" # as seen in jira query builder (usually blanks are to be replaced with + in jira). Run `lst jira-config-helper jlc-100` to get its sprint name (replace jlc-100 by the id of a story in your current sprint
             nice_identifier: "(NICE)" # optional, how you specify that a story is a nice to have (must be part of the story title)
-            closed_status: "For PO Review" # optional, what status you consider as 'closed' (use to know on what date the story was closed from the story activities)
-            closed_status_codes: [6, 10008] # optional, what status you consider as 'closed' (6 is "closed", 10008 is "For PO Review"). (used to know what status id to consider as closed when trying to find story closing date
+            closed_statuses:
+                {6: closed, 10008: For PO Review} # optional, what status you consider as 'closed' (used to check if a story is "closed" and to know on what date it was closed reading the story activity stream)
             ignored: ['XXX-501', 'XXX-505'] # optional, list of stories that should be ignored
