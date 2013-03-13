@@ -120,12 +120,12 @@ class Sprint:
         self.jira_data = None
         self.zebra_data = None
         self.raw = None
-        self.default_closed_status_id = 6
+        self.default_closed_status_id = [6]
         self.default_closed_status_name = 'closed'
 
     def get_closed_status_codes(self):
         codes = self.get_jira_data('closed_status_codes')
-        return [self.default_closed_status_id] if codes is None else codes
+        return self.default_closed_status_id if codes is None else codes
 
     def get_closed_status_name(self):
         name = self.get_jira_data('closed_status')

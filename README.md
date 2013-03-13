@@ -41,10 +41,23 @@ projects:
             - sprint:
                 index: 3
 ```
-after (from 0.9.0):
+after (from 1.0.0):
+```
+sprints:
+    jlc_col_3:
+        commited_man_days: xxx
+```
+* special instructions for 0.9.0 users: config has changed again! In the main config, the sprint list is now a dictionary, keyed by sprint name. Just change your config as following:
+before (in 0.9.0):
 ```
 sprints:
 - name: jlc_col_3
+```
+after (from 1.0.0):
+```
+sprints:
+    jlc_col_3:
+        commited_man_days: xxx
 ```
 
 ## Available commands

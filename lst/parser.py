@@ -50,13 +50,13 @@ class ConfigParser:
         except:
             raise Exception('Couldn\'t load your setup file (.lst.yml) check that it exists and that it is yaml compliant')
 
-    def create_sprint(self, sprint):
+    def create_sprint(self, name, sprint):
         if self.data is None:
             self.data = {
-                'sprints': list()
+                'sprints': dict()
             }
 
-        self.data['sprints'].append(sprint)
+        self.data['sprints'][name] = sprint
 
         self.write_config()
 
@@ -69,9 +69,9 @@ class ConfigParser:
 
         print 'Your config file was updated. Check it at %s' % (self.url)
 
-    def parse_sprint(self, data):
+    def parse_sprint(self, name, data):
         sprint = Sprint()
-        sprint.name = unicode(data['name'])
+        sprint.name = unicode(name)
         sprint.raw = data
         sprint.jira_data = data['jira']
         sprint.zebra_data = data['zebra']
@@ -84,20 +84,14 @@ class ConfigParser:
 
     def get_sprint(self, name):
         sprint = None
-        for s in self.data['sprints']:
-            if s['name'] == name:
-                sprint = self.parse_sprint(s)
+        for k,v in self.data['sprints'].items():
+            if k == name:
+                sprint = self.parse_sprint(k, v)
                 break
         return sprint
 
     def get_sprints(self):
-        l = []
-        try:
-            for s in self.data['sprints']:
-                l.append(s)
-        except TypeError as e:
-            print 'No sprints defined'
-        return l
+        return self.data['sprints']
 
     def parse_forced(self, force):
         dates = dict()

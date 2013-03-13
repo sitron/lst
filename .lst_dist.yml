@@ -3,41 +3,39 @@ sprints:
 # Simplest config
 # only mandatory arguments
 ######
-
-  - name: my_project_sprint_1 # this is the name you'll specify when running any command
-    commited_man_days: 30
-    zebra:
-        client_id: 111 # integer, zebra client id
-        activities: '*' # can be either '*' (all activities) or a list of activity ids [1,2,3]
-        users: '*' # can be either '*' (all users) or a list of zebra users id [1,2,3]
-        start_date : 2012-11-19 # date format yyyy-mm-dd
-        end_date : 2012-12-10 # date format yyyy-mm-dd
-    jira:
-        project_id: 12345 # Run `lst jira-config-helper jlc-100` to get its project id (change jlc-100 by the id of a story in your current sprint)
-        sprint_name: "Fix+Version+As+Specified+In+Jira" # as seen in jira query builder (usually blanks are to be replaced with + in jira). Run `lst jira-config-helper jlc-100` to get its sprint name (replace jlc-100 by the id of a story in your current sprint)
+    my_project_sprint_1: # this is the name you'll specify when running any command
+        commited_man_days: 30
+        zebra:
+            client_id: 111 # integer, zebra client id
+            activities: '*' # can be either '*' (all activities) or a list of activity ids [1,2,3]
+            users: '*' # can be either '*' (all users) or a list of zebra users id [1,2,3]
+            start_date : 2012-11-19 # date format yyyy-mm-dd
+            end_date : 2012-12-10 # date format yyyy-mm-dd
+        jira:
+            project_id: 12345 # Run `lst jira-config-helper jlc-100` to get its project id (change jlc-100 by the id of a story in your current sprint)
+            sprint_name: "Fix+Version+As+Specified+In+Jira" # as seen in jira query builder (usually blanks are to be replaced with + in jira). Run `lst jira-config-helper jlc-100` to get its sprint name (replace jlc-100 by the id of a story in your current sprint)
 
 
 ######
 # Advanced config
 # all optional arguments below can be completely deleted if not used
 ######
-
-  - name: my_project_sprint_2 # this is the name you'll specify when running any command
-    commited_man_days: 30
-    zebra:
-        client_id: 111 # integer, zebra client id
-        activities: '*' # can be either '*' (all activities) or a list of activity ids [1,2,3]
-        users: [100,101,102] # can be either '*' (all users) or a list of zebra users id [1,2,3]
-        start_date : 2012-11-19 # date format yyyy-mm-dd
-        end_date : 2012-12-10 # date format yyyy-mm-dd
-        force: # optional, can be removed alltogether if zebra data doesnt need any rectification
-          - static:
-              date: '2012-11-26/2012-12-11' # can be either a single date or a range (sep by /) or multiple dates (sep by ,)
-              time: '+8' # can be either a number (8) or a delta string ('+8') in both directions ('-8') 
-    jira:
-        project_id: 12345 # Run `lst jira-config-helper jlc-100` to get its project id (change jlc-100 by the id of a story in your current sprint
-        sprint_name: "Fix+Version+As+Specified+In+Jira" # as seen in jira query builder (usually blanks are to be replaced with + in jira). Run `lst jira-config-helper jlc-100` to get its sprint name (replace jlc-100 by the id of a story in your current sprint
-        nice_identifier: "(NICE)" # optional, how you specify that a story is a nice to have (must be part of the story title)
-        closed_status: "For PO Review" # optional, what status you consider as 'closed' (use to know on what date the story was closed from the story activities)
-        closed_status_codes: [6, 10008] # optional, what status you consider as 'closed' (6 is "closed", 10008 is "For PO Review"). (used to know what status id to consider as closed when trying to find story closing date
-        ignored: ['XXX-501', 'XXX-505'] # optional, list of stories that should be ignored
+    my_project_sprint_2: # this is the name you'll specify when running any command
+        commited_man_days: 30
+        zebra:
+            client_id: 111 # integer, zebra client id
+            activities: '*' # can be either '*' (all activities) or a list of activity ids [1,2,3]
+            users: [100,101,102] # can be either '*' (all users) or a list of zebra users id [1,2,3]
+            start_date : 2012-11-19 # date format yyyy-mm-dd
+            end_date : 2012-12-10 # date format yyyy-mm-dd
+            force: # optional, can be removed alltogether if zebra data doesnt need any rectification
+              - static:
+                  date: '2012-11-26/2012-12-11' # can be either a single date or a range (sep by /) or multiple dates (sep by ,)
+                  time: '+8' # can be either a number (8) or a delta string ('+8') in both directions ('-8') 
+        jira:
+            project_id: 12345 # Run `lst jira-config-helper jlc-100` to get its project id (change jlc-100 by the id of a story in your current sprint
+            sprint_name: "Fix+Version+As+Specified+In+Jira" # as seen in jira query builder (usually blanks are to be replaced with + in jira). Run `lst jira-config-helper jlc-100` to get its sprint name (replace jlc-100 by the id of a story in your current sprint
+            nice_identifier: "(NICE)" # optional, how you specify that a story is a nice to have (must be part of the story title)
+            closed_status: "For PO Review" # optional, what status you consider as 'closed' (use to know on what date the story was closed from the story activities)
+            closed_status_codes: [6, 10008] # optional, what status you consider as 'closed' (6 is "closed", 10008 is "For PO Review"). (used to know what status id to consider as closed when trying to find story closing date
+            ignored: ['XXX-501', 'XXX-505'] # optional, list of stories that should be ignored

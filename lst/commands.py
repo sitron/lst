@@ -35,7 +35,6 @@ class AddSprintCommand(BaseCommand):
         sprint = {}
 
         name = raw_input('Give me a nickname for your sprint (no special chars): ')
-        sprint['name'] = name
 
         nb_mandays = float(raw_input('Give me the number of commited man days for this sprint: '))
         sprint['commited_man_days'] = nb_mandays
@@ -70,7 +69,7 @@ class AddSprintCommand(BaseCommand):
         sprint['jira'] = jira_data
 
         # write to config file
-        AppContainer.config.create_sprint(sprint)
+        AppContainer.config.create_sprint(name, sprint)
 
 class RetrieveJiraInformationForConfigCommand(BaseCommand):
     """
@@ -104,9 +103,13 @@ class ListCommand(BaseCommand):
 
     def run(self, args):
         print ''
-        print 'All currently defined sprints:'
-        for s in self.config.get_sprints():
-            print s['name']
+        sprints = self.config.get_sprints()
+        if len(sprints) == 0:
+            print 'No sprints defined'
+        else:
+            print 'All currently defined sprints:'
+            for k,v in sprints.items():
+                print k
 
 class RetrieveUserIdCommand(BaseCommand):
     """
