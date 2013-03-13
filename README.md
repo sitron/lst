@@ -16,7 +16,7 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 * new! even easier configuration (through interactive questions)
 
 ## Installation
-* `sudo pip install git+git://github.com/sitron/lst@v0.9.0`
+* `sudo pip install git+git://github.com/sitron/lst@v1.0.0`
 * `sudo pip install -r https://raw.github.com/sitron/lst/master/requirements.txt`
 * copy the [.lst-secret_dist.yml](.lst-secret_dist.yml) file to you home, rename it to .lst-secret.yml and change your jira/zebra credentials (watch out for the file name: it's [dot]lst-secret.yml
 * create a directory somewhere on your machine where you want your graphs to be output and add its path to .lst-secret.yml 
@@ -29,7 +29,7 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 
 ## Upgrade
 if by any chance you already installed LST before, just run:
-* `sudo pip install git+git://github.com/sitron/lst@v0.9.0 --upgrade`
+* `sudo pip install git+git://github.com/sitron/lst@v1.0.0 --upgrade`
 * special instructions for pre-0.9x users: config has changed. There is no "project" level anymore. You can easily update your config by removing the project level, and renaming your sprint index with a name property.
 
 before (prior to 0.9.0):
@@ -48,10 +48,12 @@ sprints:
         commited_man_days: xxx
 ```
 * special instructions for 0.9.0 users: config has changed again! In the main config, the sprint list is now a dictionary, keyed by sprint name. Just change your config as following:
+
 before (in 0.9.0):
 ```
 sprints:
 - name: jlc_col_3
+  commited_man_days: xxx
 ```
 after (from 1.0.0):
 ```
@@ -63,6 +65,8 @@ sprints:
 ## Available commands
 ### Fetch data and display a chart
 `lst sprint-burnup my_sprint_name`
+### Add a sprint to your config (interactive command)
+`lst add-sprint`
 ### Test LST installation
 `lst test-install`
 ### Check all the sprints defined in your config
@@ -76,12 +80,11 @@ sprints:
 Useful to fill the Jira part of the config. Give it a story id (JLC-xx) and it will retrieve it's project id and sprint name
 
 ## Settings
-See the annotated example [.lst_dist.yml](.lst_dist.yml)
-You will need to define at least 1 sprint to be able to run a command
+See the annotated example [.lst_dist.yml](.lst_dist.yml), which shows both a basic example, and a more advanced one.
 
-the config file is a sprint list, each sprint is defined by:
+the config file is a sprint dictionary, keyed by sprint name. Each sprint is defined by:
 
-* a name: it can be anything. It's just a shortcut that you'll use to run all commands (that need a sprint name)
+* a name: it can be anything. It's just a shortcut that you'll use to run all commands (which need a sprint name)
 * a number of commited man days (integer). Self explanatory.
 * some Zebra specific settings:
       * the zebra client id (check in Zebra, usually a 4 digits integer). You can also easily find it by running `taxi search [project_name]` if you have Taxi installed (you should!)
