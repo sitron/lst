@@ -3,8 +3,7 @@ import datetime
 import dateutil
 import os
 
-from models import Sprint
-from models import AppContainer
+from models import Sprint, AppContainer, Team
 
 class SecretParser:
     def __init__(self, url):
@@ -89,6 +88,20 @@ class ConfigParser:
                 sprint = self.parse_sprint(k, v)
                 break
         return sprint
+
+    def get_team(self, name):
+        team = None
+        for k,v in self.data['teams'].items():
+            if k == name:
+                team = self.parse_team(k, v)
+                break
+        return team
+
+    def parse_team(self, name, data):
+        team = Team()
+        team.name = unicode(name)
+        team.users = data
+        return team
 
     def get_sprints(self):
         return self.data['sprints']

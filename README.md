@@ -3,7 +3,7 @@
 
 ## What is it?
 LST is a command line utility to help you with your scrum life at Liip.
-At the moment, it creates sprint burnup charts out of Jira/Zebra data, but more will come!
+At the moment, it creates sprint burnup charts out of Jira/Zebra data and it helps your PO/SM make sure you didn't push hours on a wrong project, but more will come!
 It's main advantage is its ease of use: just edit a yml config file so that it knows what project you're currently working on, and enjoy a nice up-to-date chart.
 
 ## Advantages
@@ -13,7 +13,7 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 * easy installation (Python (and pip) is your friend)
 * easy setup (aka _no_ setup)
 * easy configuration (edit a yml file)
-* new! even easier configuration (through interactive questions)
+* new! even easier configuration (through interactive commands)
 
 ## Installation
 * `sudo pip install git+git://github.com/sitron/lst@v1.1.0`
@@ -32,8 +32,30 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 ## Check that your team mates didn't charge a wrong project
 * run `lst check-hours to get all hours pushed by all users yesterday
 * optionally specify one or multiple user_id(s) `lst check-hours -u user_id user_id` to limit the users taken into account (get zebra user ids by running the get-user-id command (see 'Available commands' below)
+* optionally specify a team name (must be defined in your config) to limit the users taken into account
 * optionally specify a date `lst check-hours -d 23.03.2013` to get hours for that date
 * optionally specify an end date by adding a second date `lst check-hours -d 20.03.2013 22.03.2013` to get hours in this date range
+
+## Don't want to specify all user ids each time?
+* add a `teams` section in your config with all user ids (get user ids by running `lst get-user-id last_name`)
+```
+teams:
+    team_raw:
+        [user1_id, user2_id, user3_id]
+```
+* specify the --team (-t) argument in your command (ie: `lst check-hours -t team_raw`)
+
+Note that if you want to reuse your team definition elsewhere in your config you can easily do so (yml power!)
+```
+teams:
+    team_raw: &team_raw
+        [1,8,17]
+
+sprints:
+    jlc_col_3:
+        zebra:
+            users: *team_raw
+```
 
 ## Install troubleshooting
 * run `lst test-install` to test your install. It should dump some html and finish by 'end'

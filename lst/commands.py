@@ -75,12 +75,21 @@ class CheckHoursCommand(BaseCommand):
             check-hours [-d date] [-u user1_id user2_id]
             check-hours [-u user_id]
             check-hours [-d date]
+            check-hours [-t team_name]
+            check-hours [-t team1_name team2_name]
 
     """
     def run(self, args):
         users = args.user
         if users is not None and len(users) == 0:
             users = None
+
+        teams = args.team
+        if teams is not None and len(teams) != 0:
+            users = [] if users is None else users
+            for team_name in teams:
+                team = AppContainer.config.get_team(team_name)
+                users = users + team.users
 
         dates = [] if args.date is None else args.date
         if len(dates) > 2:
@@ -104,6 +113,8 @@ class CheckHoursCommand(BaseCommand):
         report_url = self._get_zebra_url_for_activities(start_date=start_date, end_date=end_date, users=users)
         zebra_json_result = zebra.get_data(report_url)
         zebra_entries = zebra.parse_entries(zebra_json_result)
+        if len(zebra_entries) == 0:
+            return
 
         # group entries by project
         projects = {}

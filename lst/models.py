@@ -198,3 +198,8 @@ class GraphEntry:
 
     def to_json(self):
         return {'date': self.date, 'businessValue': self.business_value, 'storyPoints': self.story_points, 'manDays': self.time}
+
+class Team:
+    def __init__(self):
+        self.name = ''
+        self.users = []
