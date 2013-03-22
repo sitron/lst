@@ -16,20 +16,32 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 * new! even easier configuration (through interactive questions)
 
 ## Installation
-* `sudo pip install git+git://github.com/sitron/lst@v1.0.0`
+* `sudo pip install git+git://github.com/sitron/lst@v1.1.0`
 * `sudo pip install -r https://raw.github.com/sitron/lst/master/requirements.txt`
-* copy the [.lst-secret_dist.yml](.lst-secret_dist.yml) file to you home, rename it to .lst-secret.yml and change your jira/zebra credentials (watch out for the file name: it's [dot]lst-secret.yml
+* copy the [.lst-secret_dist.yml](.lst-secret_dist.yml) file to you home (yes, click on the [link](.lst-secret_dist.yml)!), rename it to .lst-secret.yml and change your jira/zebra credentials (watch out for the file name: it's [dot]lst-secret.yml
 * create a directory somewhere on your machine where you want your graphs to be output and add its path to .lst-secret.yml 
 * create a blank file in your home called .lst.yml (`cd && touch .lst.yml`)
-* run `lst add-sprint` and answer the interactive questions. This will update your config using the default settings
-* run `lst test-install` to test your install. It should dump some html and finish by 'end' (yes! it's working!)
-* run `lst ls` to check what sprints are defined in your config
-* run `lst sprint-burnup [sprint_name]` and enjoy your first graph!
+* that'it!
+
+## Create your first burnup graph
+* first you need to add a sprint to your config. To do so just run the interactive command `lst add-sprint`
+* answer the questions. This will update your config using the default settings.
+* run `lst sprint-burnup my_sprint_name` and enjoy your first graph!
 * if you want to customize your config (to limit the Zebra users to take into account, or override a value or...) have a look at the Settings section below
+
+## Check that your team mates didn't charge a wrong project
+* run `lst check-hours to get all hours pushed by all users yesterday
+* optionally specify one or multiple user_id(s) `lst check-hours -u user_id user_id` to limit the users taken into account (get zebra user ids by running the get-user-id command (see 'Available commands' below)
+* optionally specify a date `lst check-hours -d 23.03.2013` to get hours for that date
+* optionally specify an end date by adding a second date `lst check-hours -d 20.03.2013 22.03.2013` to get hours in this date range
+
+## Install troubleshooting
+* run `lst test-install` to test your install. It should dump some html and finish by 'end'
+* get in touch with support :)
 
 ## Upgrade
 if by any chance you already installed LST before, just run:
-* `sudo pip install git+git://github.com/sitron/lst@v1.0.0 --upgrade`
+* `sudo pip install git+git://github.com/sitron/lst@v1.1.0 --upgrade`
 * special instructions for pre-0.9x users: config has changed. There is no "project" level anymore. You can easily update your config by removing the project level, and renaming your sprint index with a name property.
 
 before (prior to 0.9.0):
@@ -67,6 +79,8 @@ sprints:
 `lst sprint-burnup my_sprint_name`
 ### Add a sprint to your config (interactive command)
 `lst add-sprint`
+### Check that your team mates didn't charge wrong projects (date defaults to yesterday)
+`lst check-hours -u user1_id user2_id -d 23.03.2013`
 ### Test LST installation
 `lst test-install`
 ### Check all the sprints defined in your config
@@ -80,8 +94,53 @@ sprints:
 Useful to fill the Jira part of the config. Give it a story id (JLC-xx) and it will retrieve it's project id and sprint name
 
 ## Settings
-See the annotated example [.lst_dist.yml](.lst_dist.yml), which shows both a basic example, and a more advanced one.
+See the annotated example [.lst_dist.yml](.lst_dist.yml), which shows both a basic example, and a more advanced one. It's copied below for convenience:
+```
+# in .lst.yml
 
+sprints:
+
+######
+# Simplest config
+# only mandatory arguments
+######
+    my_project_sprint_1: # this is the name you'll specify when running any command
+        commited_man_days: 30
+        zebra:
+            client_id: 111 # integer, zebra client id
+            activities: '*' # can be either '*' (all activities) or a list of activity ids [1,2,3]
+            users: '*' # can be either '*' (all users) or a list of zebra users id [1,2,3]
+            start_date : 2012-11-19 # date format yyyy-mm-dd
+            end_date : 2012-12-10 # date format yyyy-mm-dd
+        jira:
+            project_id: 12345 # Run `lst jira-config-helper jlc-100` to get its project id (change jlc-100 by the id of a story in your current sprint)
+            sprint_name: "Fix+Version+As+Specified+In+Jira" # as seen in jira query builder (usually blanks are to be replaced with + in jira). Run `lst jira-config-helper jlc-100` to get its sprint name (replace jlc-100 by the id of a story in your current sprint)
+
+######
+# Advanced config
+# all optional arguments below can be completely deleted if not used
+######
+    my_project_sprint_2: # this is the name you'll specify when running any command
+        commited_man_days: 30
+        zebra:
+            client_id: 111 # integer, zebra client id
+            activities: '*' # can be either '*' (all activities) or a list of activity ids [1,2,3]
+            users: [100,101,102] # can be either '*' (all users) or a list of zebra users id [1,2,3]
+            start_date : 2012-11-19 # date format yyyy-mm-dd
+            end_date : 2012-12-10 # date format yyyy-mm-dd
+            force: # optional, can be removed alltogether if zebra data doesnt need any rectification
+              - static:
+                  date: '2012-11-26/2012-12-11' # can be either a single date or a range (sep by /) or multiple dates (sep by ,)
+                  time: '+8' # can be either a number (8) or a delta string ('+8') in both directions ('-8') 
+        jira:
+            project_id: 12345 # Run `lst jira-config-helper jlc-100` to get its project id (change jlc-100 by the id of a story in your current sprint
+            sprint_name: "Fix+Version+As+Specified+In+Jira" # as seen in jira query builder (usually blanks are to be replaced with + in jira). Run `lst jira-config-helper jlc-100` to get its sprint name (replace jlc-100 by the id of a story in your current sprint
+            nice_identifier: "(NICE)" # optional, how you specify that a story is a nice to have (must be part of the story title)
+            closed_statuses:
+                {6: closed, 10008: For PO Review} # optional, what status you consider as 'closed' (used to check if a story is "closed" and to know on what date it was closed reading the story activity stream)
+            ignored: ['XXX-501', 'XXX-505'] # optional, list of stories that should be ignored
+```
+If you prefer a text version:  
 the config file is a sprint dictionary, keyed by sprint name. Each sprint is defined by:
 
 * a name: it can be anything. It's just a shortcut that you'll use to run all commands (which need a sprint name)
@@ -99,5 +158,3 @@ the config file is a sprint dictionary, keyed by sprint name. Each sprint is def
       * optional, nice\_identifier: if you have "Nice to have" stories in your sprint, you can specify how to recognize them (we use '(NICE)' in the story title)
       * optional, closed_statuses: the jira statuses to consider as 'closed'. During the sprint the stories are usually not closed, so your graph would be flat until the very last day. For example we use "For PO Review" as the "closed" status. Specified as a dictionary where the keys are the status codes, and the values the status names. See the "Advanced config" in [.lst_dist.yml](.lst_dist.yml) to see how it's structured.
       * optional, ignored: a list of stories to ignore. Specify their ids in a list ['XXX-134', 'XXX-119']. Very often we have stories in the sprint that should not be considered for the graph (closed before the sprint, out of scope.. whatever)
-
-All this seems pretty complicated but it's just words... looking at the file itself [.lst_dist.yml](.lst_dist.yml) might just be self explanatory enough...
