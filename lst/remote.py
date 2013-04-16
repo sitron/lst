@@ -236,3 +236,8 @@ class ZebraRemote(Remote):
         zebra_entry.description = str(entry['description'].encode('utf-8'))
         return zebra_entry
 
+    def get_users(self):
+        return self.parse_users(self.get_data(self._get_users_url))
+
+    def _get_users_url(self):
+        return 'user/.json'

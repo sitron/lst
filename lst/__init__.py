@@ -17,7 +17,8 @@ available commands:
   ls \t\t\tList all sprints defined in config
   jira-config-helper\tRetrieve some useful information about a Jira project and sprint from a story id (ie. XX-12)
   add-sprint\t\tAdds a sprint to your config file
-  check-hours\t\tRetrieve all Zebra hours for a date/user(s)/team. See README for further information"""
+  check-hours\t\tRetrieve all Zebra hours for a date/user(s)/team. See README for further information
+  add-team\t\tAdds a team to your config file"""
 
         SETTINGS_PATH = os.path.expanduser('~/.lst.yml')
         SECRET_PATH = os.path.expanduser('~/.lst-secret.yml')
@@ -30,6 +31,7 @@ available commands:
             'jira-config-helper': commands.RetrieveJiraInformationForConfigCommand,
             'add-sprint': commands.AddSprintCommand,
             'check-hours': commands.CheckHoursCommand,
+            'add-team': commands.AddTeamCommand,
         }
 
         # define arguments and options

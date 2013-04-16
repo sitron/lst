@@ -146,6 +146,36 @@ class CheckHoursCommand(BaseCommand):
             print '  Total: %s' % (total)
             print ''
 
+class AddTeamCommand(BaseCommand):
+    """
+    Usage: add-team
+
+    """
+    def run(self, args):
+        users = []
+
+        name = raw_input('Give me a nickname for your team (no special chars): ')
+
+        raw_user = None
+
+        zebra = ZebraRemote(self.secret.get_zebra('url'), self.secret.get_zebra('username'), self.secret.get_zebra('password'))
+
+        while raw_user != '':
+            raw_user = raw_input('Give me a last name or user_id to be added to the team: (Press Enter to stop) ')
+            if raw_user != '':
+                try:
+                    # if an id is given add it directly
+                    user_id = int(raw_user)
+                    users.append(user_id)
+                except:
+                    try:
+                        user_id = zebra.get_user_id(raw_user)
+                    except:
+                        raise SyntaxError("Cound not find any user with lastname %s" % (raw_user))
+
+        # write to config file
+        AppContainer.config.create_team(name, users)
+
 class AddSprintCommand(BaseCommand):
     """
     Usage: add-sprint

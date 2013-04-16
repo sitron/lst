@@ -59,6 +59,19 @@ class ConfigParser:
 
         self.write_config()
 
+    def create_team(self, name, users):
+        self._init_config()
+        teams = self.data.get('_teams', {})
+        teams.update({name: {'users': users}})
+
+        self.data.update({'_teams': teams})
+
+        self.write_config()
+
+    def _init_config(self):
+        if self.data is None:
+            self.data = {}
+
     def write_config(self):
         try:
             with open(self.url, 'w') as config:
@@ -91,7 +104,7 @@ class ConfigParser:
 
     def get_team(self, name):
         team = None
-        for k,v in self.data['teams'].items():
+        for k,v in self.data['_teams'].items():
             if k == name:
                 team = self.parse_team(k, v)
                 break
