@@ -3,6 +3,7 @@ import os
 import unicodedata
 import re
 import distutils.sysconfig
+import webbrowser
 
 from string import Template
 from datetime import datetime
@@ -75,6 +76,10 @@ class SprintBurnUpOutput(TemplatedOutput):
             )
             stream.close()
             print 'Check your new graph at ' + output_file_absolute
+            try:
+                webbrowser.open(output_file_absolute)
+            except Exception as e:
+                print e
         except Exception as e:
             print 'Problem with the generation of the graph file', e
 
