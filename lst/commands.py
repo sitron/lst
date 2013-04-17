@@ -242,22 +242,27 @@ class SprintBurnUpCommand(BaseCommand):
                 if total_time != 0:
                     print date
 
+            planned_time = sprint.get_planned_data(str(date))
+            planned_str = '' if planned_time is None else '(Planned: ' + str(planned_time) + ')'
+
             # print total time per day (with and/or without forced values)
             if total_time != 0:
                 if time_without_forced == total_time:
-                    print 'Total: %s' % (total_time)
+                    print 'Total: %s %s' % (total_time, planned_str)
                 else:
                     print 'Total (without forced data): %s' % (time_without_forced)
-                    print 'Total including forced data: %s' % (total_time)
+                    print 'Total including forced data: %s %s' % (total_time, planned_str)
                 print ''
 
             # get jira achievement for this day (bv/sp done)
             jira_data = jira_entries.get_achievement_for_day(str(date));
 
-            # if we have some time or story closed for this day add it to graph data
-            if jira_data is not None or total_time != 0:
+            # if we have some time, story closed for this day or planned time, add it to graph data
+            if jira_data is not None or total_time != 0 or planned_time is not None:
                 graph_entry = GraphEntry()
                 graph_entry.time = total_time
+                if planned_time is not None:
+                    graph_entry.planned_time = planned_time
                 try:
                     graph_entry.story_points = jira_data['sp']
                     graph_entry.business_value = jira_data['bv']

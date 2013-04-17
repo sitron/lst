@@ -14,6 +14,7 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 * easy setup (aka _no_ setup)
 * easy configuration (edit a yml file)
 * new! even easier configuration (through interactive questions)
+* new! add MD forecast day by day with the new "planned" config param
 
 ## Installation
 * `sudo pip install git+git://github.com/sitron/lst@v1.0.1`
@@ -142,6 +143,13 @@ sprints:
                 time: '+8' # ...or a delta string (to be added to the existing zebra value)...
               - date: '2013-04-09/2013-04-11' # ...or a date range (str separated by /)
                 time: '-8' # ...in both directions 
+            planned: # optional, can be removed alltogether if you don't want to include your planned MD per day
+              - date: 2012-11-19 # can be either a single date...
+                time: 16 # nb of hours
+              - date: [2013-04-09,2013-04-11] # ...or multiple dates (list)
+                time: 24
+              - date: '2013-04-09/2013-04-11' # ...or a date range (str separated by /)
+                time: 24
         jira:
             project_id: 12345 # Run `lst jira-config-helper jlc-100` to get its project id (change jlc-100 by the id of a story in your current sprint
             sprint_name: "Fix+Version+As+Specified+In+Jira" # as seen in jira query builder (usually blanks are to be replaced with + in jira). Run `lst jira-config-helper jlc-100` to get its sprint name (replace jlc-100 by the id of a story in your current sprint
@@ -163,6 +171,7 @@ the config file is a sprint dictionary, keyed by sprint name. Each sprint is def
       * a end date (like 2013-01-22)
       * optional: you can force some static data for Zebra: for example we have an external employee that does not log any hour in Zebra and works 100%. So i know that i need to add 8 hours of work for each day. I can use a date range '2013-01-21/2013-01-25' and '+8' as time to add 8 hours to all days within the date range.
 * some Jira specific settings:
+      * optional: you can add your forecast, day by day. This is very useful if you have non linear MD consumption (everybody is off on Wednesday for ex.) so that you know if your MD consumption corresponds to reality. You can use a date range '2013-01-21/2013-01-25' or a list of dates [2013-01-21,2013-01-23] or a single date 2013-01-21 and a time value (int) in planned hours
       * the Jira project id, usually a 5 digits integer. Run `lst jira-config-helper my_story_id` to get its project id
       * the sprint name: the FixVersion name as seen in Jira Query Builder. Run `lst jira-config-helper my_story_id` to get its sprint name
       * optional, nice\_identifier: if you have "Nice to have" stories in your sprint, you can specify how to recognize them (we use '(NICE)' in the story title)
