@@ -16,7 +16,7 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 * new! even easier configuration (through interactive questions)
 
 ## Installation
-* `sudo pip install git+git://github.com/sitron/lst@v1.0.0`
+* `sudo pip install git+git://github.com/sitron/lst@v1.0.1`
 * `sudo pip install -r https://raw.github.com/sitron/lst/master/requirements.txt`
 * copy the [.lst-secret_dist.yml](.lst-secret_dist.yml) file to you home, rename it to .lst-secret.yml and change your jira/zebra credentials (watch out for the file name: it's [dot]lst-secret.yml
 * create a directory somewhere on your machine where you want your graphs to be output and add its path to .lst-secret.yml 
@@ -35,7 +35,7 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 
 ## Upgrade
 if by any chance you already installed LST before, just run:
-* `sudo pip install git+git://github.com/sitron/lst@v1.0.0 --upgrade`
+* `sudo pip install git+git://github.com/sitron/lst@v1.0.1 --upgrade`
 * special instructions for pre-0.9x users: config has changed. There is no "project" level anymore. You can easily update your config by removing the project level, and renaming your sprint index with a name property.
 
 before (prior to 0.9.0):
@@ -66,6 +66,21 @@ after (from 1.0.0):
 sprints:
     jlc_col_3:
         commited_man_days: xxx
+```
+* special instructions for 1.0.0 users using the obscure "force" parameter. Its syntax is now easier:
+
+before (in 1.0.0):
+```
+force:
+  - static:
+        date: 2013-04-17
+        time: xxx
+```
+after (from 1.0.1):
+```
+force:
+  - date: 2013-04-17
+    time: xxx
 ```
 
 ## Available commands
@@ -120,10 +135,13 @@ sprints:
             users: [100,101,102] # can be either '*' (all users) or a list of zebra users id [1,2,3]
             start_date : 2012-11-19 # date format yyyy-mm-dd
             end_date : 2012-12-10 # date format yyyy-mm-dd
-            force: # optional, can be removed alltogether if zebra data doesnt need any rectification
-              - static:
-                  date: '2012-11-26/2012-12-11' # can be either a single date or a range (sep by /) or multiple dates (sep by ,)
-                  time: '+8' # can be either a number (8) or a delta string ('+8') in both directions ('-8') 
+            force: # optional, use it to (force/)correct zebra values (this will not change the values *in* zebra, just force them to be displayed as you wish)
+              - date: 2012-11-19 # can be either a single date...
+                time: 8 # nb of hours. Can be either a number (= force value to 8 hours)...
+              - date: [2013-04-09,2013-04-11] # ...or multiple dates (list)
+                time: '+8' # ...or a delta string (to be added to the existing zebra value)...
+              - date: '2013-04-09/2013-04-11' # ...or a date range (str separated by /)
+                time: '-8' # ...in both directions 
         jira:
             project_id: 12345 # Run `lst jira-config-helper jlc-100` to get its project id (change jlc-100 by the id of a story in your current sprint
             sprint_name: "Fix+Version+As+Specified+In+Jira" # as seen in jira query builder (usually blanks are to be replaced with + in jira). Run `lst jira-config-helper jlc-100` to get its sprint name (replace jlc-100 by the id of a story in your current sprint
