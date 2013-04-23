@@ -104,6 +104,8 @@ class CheckHoursCommand(BaseCommand):
         report_url = self._get_zebra_url_for_activities(start_date=start_date, end_date=end_date, users=users)
         zebra_json_result = zebra.get_data(report_url)
         zebra_entries = zebra.parse_entries(zebra_json_result)
+        if len(zebra_entries) == 0:
+            return
 
         # group entries by project
         projects = {}
