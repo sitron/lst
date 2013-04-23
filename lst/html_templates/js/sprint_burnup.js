@@ -74,6 +74,25 @@ var BurnupChart = function() {
                 (result.businessValue / commitedValues.businessValue)
             );
 
+        // add planned graph only if necessary
+        if (result.planned != 0) {
+            commitedValues.planned = commitedValues.manDays;
+
+            _addGraph(
+                data,
+                'planned',
+                'planned',
+                chart,
+                'right',
+                axisContainer,
+                height,
+                xScale,
+                undefined,
+                commitedValues,
+                biggestRatio);
+        }
+
+        // add MD graph
         _addGraph(
             data,
             'manDays',
@@ -86,6 +105,8 @@ var BurnupChart = function() {
             0,
             commitedValues,
             biggestRatio);
+
+        // add SP graph
         _addGraph(
             data,
             'storyPoints',
@@ -98,6 +119,8 @@ var BurnupChart = function() {
             width,
             commitedValues,
             biggestRatio);
+
+        // add BV graph
         _addGraph(
             data,
             'businessValue',
@@ -170,14 +193,16 @@ var BurnupChart = function() {
             .attr('cx', function(d) {return xScale(d.date);})
             .attr('cy', function(d) {return yScale(d[prop] || 0);});
 
-        yAxis = d3.svg.axis()
-            .scale(yScale)
-            .orient(orientation);
+        if (position != undefined) {
+            yAxis = d3.svg.axis()
+                .scale(yScale)
+                .orient(orientation);
 
-        axisContainer.append('g')
-            .attr('class', 'axis ' + name)
-            .attr('transform', 'translate(' + position + ', 0)')
-            .call(yAxis);
+            axisContainer.append('g')
+                .attr('class', 'axis ' + name)
+                .attr('transform', 'translate(' + position + ', 0)')
+                .call(yAxis);
+        }
     }
 
     return {'create': create};

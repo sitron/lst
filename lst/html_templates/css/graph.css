@@ -12,6 +12,12 @@
 .chart .man-days-graph .point {
     fill: black
 }
+.chart .planned-graph .chart-line {
+    stroke: grey;
+}
+.chart .planned-graph .point {
+    fill: grey
+}
 .chart .story-points-graph .chart-line {
     stroke: blue;
 }

@@ -80,6 +80,10 @@ class ConfigParser:
             sprint.forced = self.parse_forced(data['zebra']['force'])
         except:
             pass
+        try:
+            sprint.planned = self.parse_planned(data['zebra']['planned'])
+        except:
+            pass
         return sprint
 
     def get_sprint(self, name):
@@ -97,38 +101,47 @@ class ConfigParser:
         dates = dict()
         forced = dict()
         for f in force:
-            static = f['static']
-            dates = self.parse_date(static['date'])
-            time = static['time']
+            dates = self.parse_date(f['date'])
+            time = f['time']
             for d in dates:
                 forced[d.strftime("%Y-%m-%d")] = time
         return forced
 
+    def parse_planned(self, plan):
+        dates = dict()
+        planned = dict()
+        for f in plan:
+            dates = self.parse_date(f['date'])
+            time = f['time']
+            for d in dates:
+                planned[d.strftime("%Y-%m-%d")] = time
+        return planned
+
     def parse_date(self, date):
+        # single date
         if type(date) == datetime.date:
             return [date]
 
-        # it's a date delta str as start/end
-        if date.find('/') != -1:
-            b = list()
-            a = date.split('/')
-            if len(a) != 2:
-                raise SyntaxError( "A date delta should be specified as a string (date1/date2), given: %s" % (date))
+        # multiple dates (list)
+        elif type(date) == list:
+            return date
 
-            start = dateutil.parser.parse(a[0])
-            end = dateutil.parser.parse(a[1])
-            if start > end:
-                raise SyntaxError( "The first date in a delta should be smaller than the second one, given: %s" % (date))
+        # date range (str as start/end)
+        else:
+            try:
+                b = list()
+                a = date.split('/')
+                if len(a) != 2:
+                    raise SyntaxError( "A date delta should be specified as a string (date1/date2), given: %s" % (date))
 
-            dateDelta = end - start
-            for i in range(dateDelta.days + 1):
-                b.append(start + datetime.timedelta(days = i))
-            return b
+                start = dateutil.parser.parse(a[0])
+                end = dateutil.parser.parse(a[1])
+                if start > end:
+                    raise SyntaxError( "The first date in a delta should be smaller than the second one, given: %s" % (date))
 
-        # it's multiple dates separated by comma
-        if date.find(',') != -1:
-            b = list()
-            a = date.split(',')
-            for d in a:
-                b.append(dateutil.parser.parse(d))
-            return b
+                dateDelta = end - start
+                for i in range(dateDelta.days + 1):
+                    b.append(start + datetime.timedelta(days = i))
+                return b
+            except:
+                raise SyntaxError( "The date should be specified as either a single date, a list of dates, or a string formated as start_date/end_date, given: %s" % (date))
