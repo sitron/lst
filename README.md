@@ -32,7 +32,7 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 ## Check that your team mates didn't charge a wrong project
 * run `lst check-hours to get all hours pushed by all users yesterday
 * optionally specify one or multiple user_id(s) `lst check-hours -u user_id user_id` to limit the users taken into account (get zebra user ids by running the get-user-id command (see 'Available commands' below)
-* optionally specify a date `lst check-hours -d 23.03.2013` to get hours for that date
+* optionally specify a date `lst check-hours -d 23.03.2013` to get hours for that date (defaults to yesterday)
 * optionally specify an end date by adding a second date `lst check-hours -d 20.03.2013 22.03.2013` to get hours in this date range
 
 ## Install troubleshooting
