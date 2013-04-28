@@ -28,6 +28,9 @@ class BaseCommand:
     def zebra_date(self, date_object):
         return date_object.strftime('%Y-%m-%d')
 
+    def _get_jira_url_for_sprint_burnup(self, sprint):
+        return "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=project+%3D+'" + str(sprint.get_jira_data('project_id')) + "'+and+fixVersion+%3D+'" + sprint.get_jira_data('sprint_name') + "'&tempMax=1000"
+
     def _get_zebra_url_for_sprint_burnup(self, sprint):
         users = sprint.get_zebra_data('users')
         client_id = sprint.get_zebra_data('client_id')
@@ -101,6 +104,29 @@ class ResultPerStoryCommand(BaseCommand):
         except:
             raise SyntaxError("No commit prefix found in config. Make sure it's defined in your settings file")
 
+        # retrieve jira data
+        # to compare estimated story_points to actual MD consumption
+        jira = JiraRemote(self.secret.get_jira('url'), self.secret.get_jira('username'), self.secret.get_jira('password'))
+        jira_url = self._get_jira_url_for_sprint_burnup(sprint)
+        jira_xml_result = jira.get_data(jira_url)
+        jira_entries = jira.parse_stories(
+            jira_xml_result,
+            ignored = sprint.get_jira_data('ignored')
+        )
+
+        # extract the integer from the story id
+        jira_id_only_regex = re.compile("-(\d+)$")
+        jira_values = {}
+        max_story_points = 0
+        for entry in jira_entries:
+            story_id = jira_id_only_regex.findall(entry.id)[0]
+            jira_values[story_id] = entry.story_points
+            max_story_points += entry.story_points
+
+        # calculate the ideal velocity
+        commit = float(sprint.commited_man_days)
+        velocity = max_story_points / commit
+
         # retrieve zebra data
         zebra = ZebraRemote(self.secret.get_zebra('url'), self.secret.get_zebra('username'), self.secret.get_zebra('password'))
         report_url = self._get_zebra_url_for_sprint_burnup(sprint)
@@ -130,12 +156,22 @@ class ResultPerStoryCommand(BaseCommand):
         result_list = sorted([(k, v) for (k, v) in results.items()], key = lambda x: x[1], reverse = True)
 
         print ''
-        print 'Results:'
+        print 'Results (velocity %s):' % (str(velocity))
         for story in result_list:
-            print '%s \t%.2f MD (%d hours)' % (story[0], story[1] / 8, story[1])
+            md_burnt = story[1] / 8
+            try:
+
+                planned_md = jira_values[story[0]] / velocity
+                planned_hours = planned_md * 8
+                result_percent = (md_burnt / planned_md) * 100
+            except KeyError:
+                planned_md = 0
+                planned_hours = 0
+                result_percent = 0
+            print '%s \t%.2f/%.1f MD\t(%d/%d hours)\t%d%%' % (story[0], md_burnt, planned_md, story[1], planned_hours, result_percent)
 
         print ''
-        print 'Total\t%.2f MD (%d hours)' % (total_hours / 8, total_hours)
+        print 'Total\t%.2f/%.1f MD\t(%d/%d hours)\t%d%%' % (total_hours / 8, commit, total_hours, commit * 8, (total_hours / (commit * 8)) * 100)
 
 class CheckHoursCommand(BaseCommand):
     """
@@ -484,6 +520,3 @@ class SprintBurnUpCommand(BaseCommand):
         print 'Starting output'
         output = SprintBurnUpOutput(AppContainer.secret.get_output_dir())
         output.output(sprint.name, data, commited_values, sprint_data)
-
-    def _get_jira_url_for_sprint_burnup(self, sprint):
-        return "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=project+%3D+'" + str(sprint.get_jira_data('project_id')) + "'+and+fixVersion+%3D+'" + sprint.get_jira_data('sprint_name') + "'&tempMax=1000"
