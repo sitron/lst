@@ -9,6 +9,8 @@ import sys
 import distutils.sysconfig
 import datetime
 import dateutil
+import re
+from pprint import pprint
 
 class BaseCommand:
     def __init__(self):
@@ -25,6 +27,15 @@ class BaseCommand:
 
     def zebra_date(self, date_object):
         return date_object.strftime('%Y-%m-%d')
+
+    def _get_zebra_url_for_sprint_burnup(self, sprint):
+        users = sprint.get_zebra_data('users')
+        client_id = sprint.get_zebra_data('client_id')
+        activities = sprint.get_zebra_data('activities')
+        start_date = sprint.get_zebra_data('start_date')
+        end_date = sprint.get_zebra_data('end_date')
+
+        return self._get_zebra_url_for_activities(start_date, end_date, client_id, users, activities)
 
     def _get_zebra_url_for_activities(
             self,
@@ -67,6 +78,64 @@ class BaseCommand:
         report_url += '&end=' + str(end_date)
 
         return report_url
+
+class ResultPerStoryCommand(BaseCommand):
+    """
+    Command to check how many hours were burnt per story (within a sprint)
+    Usage:  result-per-story  [sprint-name]
+
+    """
+    def run(self, args):
+        # make sure the sprint specified exist in config
+        user_sprint_name = args.optional_argument[0]
+        sprint = self.config.get_sprint(user_sprint_name)
+        try:
+            print "Sprint %s found in config" % (sprint.name)
+        except:
+            raise SyntaxError("Sprint %s not found. Make sure it's defined in your settings file" % (user_sprint_name))
+
+        # make sure a commit prefix is defined
+        prefix = sprint.get_zebra_data('commit_prefix')
+        try:
+            regex = re.compile("^" + prefix + "(\d+)",re.IGNORECASE)
+        except:
+            raise SyntaxError("No commit prefix found in config. Make sure it's defined in your settings file")
+
+        # retrieve zebra data
+        zebra = ZebraRemote(self.secret.get_zebra('url'), self.secret.get_zebra('username'), self.secret.get_zebra('password'))
+        report_url = self._get_zebra_url_for_sprint_burnup(sprint)
+        zebra_json_result = zebra.get_data(report_url)
+        zebra_entries = zebra.parse_entries(zebra_json_result)
+        if len(zebra_entries) == 0:
+            return
+
+        # group results by story
+        results = {}
+        total_hours = 0
+        for entry in zebra_entries:
+            story = None if regex.match(entry.description) is None else regex.findall(entry.description)[0]
+            if story is None:
+                try:
+                    results['other'] += entry.time
+                except KeyError:
+                    results['other'] = entry.time
+            else:
+                try:
+                    results[str(story)] += entry.time
+                except KeyError:
+                    results[str(story)] = entry.time
+            total_hours += entry.time
+
+        # sort results
+        result_list = sorted([(k, v) for (k, v) in results.items()], key = lambda x: x[1], reverse = True)
+
+        print ''
+        print 'Results:'
+        for story in result_list:
+            print '%s \t%.2f MD (%d hours)' % (story[0], story[1] / 8, story[1])
+
+        print ''
+        print 'Total\t%.2f MD (%d hours)' % (total_hours / 8, total_hours)
 
 class CheckHoursCommand(BaseCommand):
     """
@@ -415,15 +484,6 @@ class SprintBurnUpCommand(BaseCommand):
         print 'Starting output'
         output = SprintBurnUpOutput(AppContainer.secret.get_output_dir())
         output.output(sprint.name, data, commited_values, sprint_data)
-
-    def _get_zebra_url_for_sprint_burnup(self, sprint):
-        users = sprint.get_zebra_data('users')
-        client_id = sprint.get_zebra_data('client_id')
-        activities = sprint.get_zebra_data('activities')
-        start_date = sprint.get_zebra_data('start_date')
-        end_date = sprint.get_zebra_data('end_date')
-
-        return self._get_zebra_url_for_activities(start_date, end_date, client_id, users, activities)
 
     def _get_jira_url_for_sprint_burnup(self, sprint):
         return "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=project+%3D+'" + str(sprint.get_jira_data('project_id')) + "'+and+fixVersion+%3D+'" + sprint.get_jira_data('sprint_name') + "'&tempMax=1000"
