@@ -220,27 +220,33 @@ class SprintBurnUpCommand(BaseCommand):
         print ''
         print 'Zebra output per day:'
 
-        # get all sprint days until today
-        days = sprint.get_all_days(True)
+        # get all sprint days
+        days = sprint.get_all_days(False)
         for date in days:
             total_time = 0
             time_without_forced = 0
-            try:
-                zebra_day = zebra_days[str(date)]
-                print date
 
-                # output nb of hours for each person for this day
-                entries_per_user = zebra_day.get_entries_per_user()
-                for user,time in entries_per_user.items():
-                    print "%s : %s" % (user, time)
-                time_without_forced = zebra_day.time
-                # check for forced zebra values
-                total_time = sprint.get_forced_data(str(date), zebra_day.time)
+            # todo: graph_end_date could be user value
+            yesterday = datetime.date.today() - datetime.timedelta(days = 1)
+            graph_end_date = yesterday
 
-            except KeyError, e:
-                total_time = sprint.get_forced_data(str(date), 0)
-                if total_time != 0:
+            if date <= graph_end_date:
+                try:
+                    zebra_day = zebra_days[str(date)]
                     print date
+
+                    # output nb of hours for each person for this day
+                    entries_per_user = zebra_day.get_entries_per_user()
+                    for user,time in entries_per_user.items():
+                        print "%s : %s" % (user, time)
+                    time_without_forced = zebra_day.time
+                    # check for forced zebra values
+                    total_time = sprint.get_forced_data(str(date), zebra_day.time)
+
+                except KeyError, e:
+                    total_time = sprint.get_forced_data(str(date), 0)
+                    if total_time != 0:
+                        print date
 
             planned_time = sprint.get_planned_data(str(date))
             planned_str = '' if planned_time is None else '(Planned: ' + str(planned_time) + ')'
