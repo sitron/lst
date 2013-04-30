@@ -16,7 +16,8 @@ available commands:
   get-user-id\t\tRetrieve a Zebra user id from his/her last name
   ls \t\t\tList all sprints defined in config
   jira-config-helper\tRetrieve some useful information about a Jira project and sprint from a story id (ie. XX-12)
-  add-sprint\t\tAdds a sprint to your config file"""
+  add-sprint\t\tAdds a sprint to your config file
+  check-hours\t\tRetrieve all Zebra hours for a date/user(s). User is optional and can be multiple. Date is optional defaults to yesterday. If 2 dates are specified then min = start date, max = end date"""
 
         SETTINGS_PATH = os.path.expanduser('~/.lst.yml')
         SECRET_PATH = os.path.expanduser('~/.lst-secret.yml')
@@ -28,6 +29,7 @@ available commands:
             'ls' : commands.ListCommand,
             'jira-config-helper': commands.RetrieveJiraInformationForConfigCommand,
             'add-sprint': commands.AddSprintCommand,
+            'check-hours': commands.CheckHoursCommand,
         }
 
         # define arguments and options
@@ -39,6 +41,8 @@ available commands:
         parser.add_argument("command", help="command to execute (see available commands above)")
         parser.add_argument("optional_argument", nargs='*', help="depends on the command to execute")
         parser.add_argument("--dev-mode", action="store_true", help="development mode")
+        parser.add_argument("-u", "--user", nargs='*', help="specify user id(s). Optional, multiple argument (multiple syntax: -u 111 123 145)")
+        parser.add_argument("-d", "--date", nargs='*', help="specify date(s). Optional, multiple argument (syntax: -d 22.03.2013)")
 
         # read command line arguments
         args = parser.parse_args()

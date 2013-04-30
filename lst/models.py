@@ -12,6 +12,13 @@ class ZebraEntry:
     def __init__(self):
         self.username = None
         self.time = 0
+        self.date = None
+        self.project = None
+        self.id = 0
+        self.description = None
+
+    def readable_date(self):
+        return self.date.strftime('%Y-%m-%d')
 
 class ZebraDays(dict):
     def __init__(self):

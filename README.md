@@ -17,9 +17,9 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 * new! add MD forecast day by day with the new "planned" config param
 
 ## Installation
-* `sudo pip install git+git://github.com/sitron/lst@v1.0.1`
+* `sudo pip install git+git://github.com/sitron/lst@dev`
 * `sudo pip install -r https://raw.github.com/sitron/lst/master/requirements.txt`
-* copy the [.lst-secret_dist.yml](.lst-secret_dist.yml) file to you home, rename it to .lst-secret.yml and change your jira/zebra credentials (watch out for the file name: it's [dot]lst-secret.yml
+* copy the [.lst-secret_dist.yml](.lst-secret_dist.yml) file to you home (yes, click on the [link](.lst-secret_dist.yml)!), rename it to .lst-secret.yml and change your jira/zebra credentials (watch out for the file name: it's [dot]lst-secret.yml
 * create a directory somewhere on your machine where you want your graphs to be output and add its path to .lst-secret.yml 
 * create a blank file in your home called .lst.yml (`cd && touch .lst.yml`)
 * that'it!
@@ -30,13 +30,19 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 * run `lst sprint-burnup my_sprint_name` and enjoy your first graph!
 * if you want to customize your config (to limit the Zebra users to take into account, or override a value or...) have a look at the Settings section below
 
+## Check that your team mates didn't charge a wrong project
+* run `lst check-hours to get all hours pushed by all users yesterday
+* optionally specify one or multiple user_id(s) `lst check-hours -u user_id user_id` to limit the users taken into account (get zebra user ids by running the get-user-id command (see 'Available commands' below)
+* optionally specify a date `lst check-hours -d 23.03.2013` to get hours for that date (defaults to yesterday)
+* optionally specify an end date by adding a second date `lst check-hours -d 20.03.2013 22.03.2013` to get hours in this date range
+
 ## Install troubleshooting
 * run `lst test-install` to test your install. It should dump some html and finish by 'end'
 * get in touch with support :)
 
 ## Upgrade
 if by any chance you already installed LST before, just run:
-* `sudo pip install git+git://github.com/sitron/lst@v1.0.1 --upgrade`
+* `sudo pip install git+git://github.com/sitron/lst@dev --upgrade`
 * special instructions for pre-0.9x users: config has changed. There is no "project" level anymore. You can easily update your config by removing the project level, and renaming your sprint index with a name property.
 
 before (prior to 0.9.0):
@@ -89,6 +95,8 @@ force:
 `lst sprint-burnup my_sprint_name`
 ### Add a sprint to your config (interactive command)
 `lst add-sprint`
+### Check that your team mates didn't charge wrong projects (date defaults to yesterday)
+`lst check-hours -u user1_id user2_id -d 23.03.2013`
 ### Test LST installation
 `lst test-install`
 ### Check all the sprints defined in your config
