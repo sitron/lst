@@ -288,6 +288,12 @@ class SprintBurnUpCommand(BaseCommand):
         except:
             raise SyntaxError("Sprint %s not found. Make sure it's defined in your settings file" % (user_sprint_name))
 
+        # end date for the graph
+        try:
+            graph_end_date = dateutil.parser.parse(args.date[0])
+        except:
+            graph_end_date = datetime.date.today() - datetime.timedelta(days = 1)
+
         # start fetching zebra data
         print 'Start fetching Zebra'
 
@@ -354,27 +360,22 @@ class SprintBurnUpCommand(BaseCommand):
             total_time = 0
             time_without_forced = 0
 
-            # todo: graph_end_date could be user value
-            yesterday = datetime.date.today() - datetime.timedelta(days = 1)
-            graph_end_date = yesterday
+            try:
+                zebra_day = zebra_days[str(date)]
+                print date
 
-            if date <= graph_end_date:
-                try:
-                    zebra_day = zebra_days[str(date)]
+                # output nb of hours for each person for this day
+                entries_per_user = zebra_day.get_entries_per_user()
+                for user,time in entries_per_user.items():
+                    print "%s : %s" % (user, time)
+                time_without_forced = zebra_day.time
+                # check for forced zebra values
+                total_time = sprint.get_forced_data(str(date), zebra_day.time)
+
+            except KeyError, e:
+                total_time = sprint.get_forced_data(str(date), 0)
+                if total_time != 0:
                     print date
-
-                    # output nb of hours for each person for this day
-                    entries_per_user = zebra_day.get_entries_per_user()
-                    for user,time in entries_per_user.items():
-                        print "%s : %s" % (user, time)
-                    time_without_forced = zebra_day.time
-                    # check for forced zebra values
-                    total_time = sprint.get_forced_data(str(date), zebra_day.time)
-
-                except KeyError, e:
-                    total_time = sprint.get_forced_data(str(date), 0)
-                    if total_time != 0:
-                        print date
 
             planned_time = sprint.get_planned_data(str(date))
             planned_str = '' if planned_time is None else '(Planned: ' + str(planned_time) + ')'
@@ -394,9 +395,12 @@ class SprintBurnUpCommand(BaseCommand):
             # if we have some time, story closed for this day or planned time, add it to graph data
             if jira_data is not None or total_time != 0 or planned_time is not None:
                 graph_entry = GraphEntry()
-                graph_entry.time = total_time
+                graph_entry.date = date
+
                 if planned_time is not None:
                     graph_entry.planned_time = planned_time
+
+                graph_entry.time = total_time
                 try:
                     graph_entry.story_points = jira_data['sp']
                     graph_entry.business_value = jira_data['bv']
@@ -404,7 +408,7 @@ class SprintBurnUpCommand(BaseCommand):
                     pass
                 graph_entries[str(date)] = graph_entry
 
-        data = graph_entries.get_ordered_data()
+        data = graph_entries.get_ordered_data(graph_end_date)
 
         # values needed to build the graph
         commited_values = {}
@@ -412,10 +416,12 @@ class SprintBurnUpCommand(BaseCommand):
         commited_values['businessValue'] = jira_entries.get_commited_business_value()
         commited_values['manDays'] = sprint.commited_man_days
 
+
         # values needed to build the graph
         sprint_data = {}
         sprint_data['startDate'] = sprint.get_zebra_data('start_date').strftime('%Y-%m-%d')
         sprint_data['endDate'] = sprint.get_zebra_data('end_date').strftime('%Y-%m-%d')
+        sprint_data['graphEndDate'] = graph_end_date.strftime('%Y-%m-%d')
 
         # write the graph
         print 'Starting output'
