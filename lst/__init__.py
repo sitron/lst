@@ -11,7 +11,7 @@ class Lst(object):
         usage = """%(prog)s command [options]
 
 available commands:
-  sprint-burnup\t\tPrints a burn up chart for a given sprint
+  sprint-burnup\t\tPrints a burn up chart for a given sprint until an optional date (defaults to yesterday)
   test-install\t\tTest the installation
   get-user-id\t\tRetrieve a Zebra user id from his/her last name
   ls \t\t\tList all sprints defined in config
