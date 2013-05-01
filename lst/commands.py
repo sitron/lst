@@ -288,6 +288,12 @@ class SprintBurnUpCommand(BaseCommand):
         except:
             raise SyntaxError("Sprint %s not found. Make sure it's defined in your settings file" % (user_sprint_name))
 
+        # end date for the graph
+        try:
+            graph_end_date = dateutil.parser.parse(args.date[0])
+        except:
+            graph_end_date = datetime.date.today() - datetime.timedelta(days = 1)
+
         # start fetching zebra data
         print 'Start fetching Zebra'
 
@@ -348,11 +354,12 @@ class SprintBurnUpCommand(BaseCommand):
         print ''
         print 'Zebra output per day:'
 
-        # get all sprint days until today
-        days = sprint.get_all_days(True)
+        # get all sprint days
+        days = sprint.get_all_days(False)
         for date in days:
             total_time = 0
             time_without_forced = 0
+
             try:
                 zebra_day = zebra_days[str(date)]
                 print date
@@ -388,9 +395,12 @@ class SprintBurnUpCommand(BaseCommand):
             # if we have some time, story closed for this day or planned time, add it to graph data
             if jira_data is not None or total_time != 0 or planned_time is not None:
                 graph_entry = GraphEntry()
-                graph_entry.time = total_time
+                graph_entry.date = date
+
                 if planned_time is not None:
                     graph_entry.planned_time = planned_time
+
+                graph_entry.time = total_time
                 try:
                     graph_entry.story_points = jira_data['sp']
                     graph_entry.business_value = jira_data['bv']
@@ -398,7 +408,7 @@ class SprintBurnUpCommand(BaseCommand):
                     pass
                 graph_entries[str(date)] = graph_entry
 
-        data = graph_entries.get_ordered_data()
+        data = graph_entries.get_ordered_data(graph_end_date)
 
         # values needed to build the graph
         commited_values = {}
@@ -406,10 +416,12 @@ class SprintBurnUpCommand(BaseCommand):
         commited_values['businessValue'] = jira_entries.get_commited_business_value()
         commited_values['manDays'] = sprint.commited_man_days
 
+
         # values needed to build the graph
         sprint_data = {}
         sprint_data['startDate'] = sprint.get_zebra_data('start_date').strftime('%Y-%m-%d')
         sprint_data['endDate'] = sprint.get_zebra_data('end_date').strftime('%Y-%m-%d')
+        sprint_data['graphEndDate'] = graph_end_date.strftime('%Y-%m-%d')
 
         # write the graph
         print 'Starting output'
