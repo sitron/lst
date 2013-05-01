@@ -91,8 +91,10 @@ force:
 ```
 
 ## Available commands
-### Fetch data and display a chart
+### Fetch data and display a chart (by default displays values up to yesterday)
 `lst sprint-burnup my_sprint_name`
+### Fetch data and display a chart up to a specific date
+`lst sprint-burnup my_sprint_name -d 2013.05.01
 ### Add a sprint to your config (interactive command)
 `lst add-sprint`
 ### Check that your team mates didn't charge wrong projects (date defaults to yesterday)

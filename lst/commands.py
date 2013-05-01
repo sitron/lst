@@ -276,6 +276,9 @@ class TestInstallCommand(BaseCommand):
 class SprintBurnUpCommand(BaseCommand):
     """
     Usage:  sprint-burnup [sprint_name]
+            sprint-burnup [sprint_name] [-d 2013.01.25]
+
+            date defaults to yesterday
 
     """
 
@@ -290,7 +293,7 @@ class SprintBurnUpCommand(BaseCommand):
 
         # end date for the graph
         try:
-            graph_end_date = dateutil.parser.parse(args.date[0])
+            graph_end_date = dateutil.parser.parse(args.date[0]).date()
         except:
             graph_end_date = datetime.date.today() - datetime.timedelta(days = 1)
 

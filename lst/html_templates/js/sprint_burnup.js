@@ -188,15 +188,6 @@ var BurnupChart = function() {
             result,
             biggestRatio;
 
-        var data = DataManager.getData().slice(0);
-        data.unshift({
-            'storyPoints': 0,
-            'businessValue': 0,
-            'manDays': 0,
-            'planned': 0,
-            'date': '0'
-        });
-
         // to show a nicer graph we draw all days till the end of the sprint
         // not only past ones
         allDates = DataManager.getDates().slice(0);
@@ -209,6 +200,8 @@ var BurnupChart = function() {
                 }
             }
         }
+        // add x-axis origin
+        allDates.unshift('0');
 
         xScale = d3.scale.ordinal()
             .domain(allDates)
@@ -327,6 +320,12 @@ var BurnupChart = function() {
             yAxis,
             max = biggestRatio > 1 ?
                 biggestRatio * commitedValues[prop] : commitedValues[prop];
+
+        // add y-axis origin
+        data.unshift({
+            'value': 0,
+            'date': '0'
+        });
 
         yScale = d3.scale.linear()
             .domain([0, max])
