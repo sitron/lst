@@ -205,39 +205,34 @@ class ZebraRemote(Remote):
         return users
 
     def parse_entries(self, response_json):
-        zebra_days = ZebraDays()
+        zebra_entries = []
+
         try:
             entries = response_json['command']['reports']['report']
             print 'Will now parse %d entries found in Zebra' % len(entries)
         except:
             print 'No entries found in Zebra'
-            return zebra_days
+            return zebra_entries
 
         for entry in entries:
             # zebra last entries are totals, and dont have a tid
             if entry['tid'] == '':
                 continue
-            # get a readable date to use as dict key
-            date = dateutil.parser.parse(entry['date']).strftime('%Y-%m-%d')
 
             # parse zebra entry
             zebra_entry = self.parse_entry(entry)
 
-            # add/update zebra entries
-            if date in zebra_days:
-                zebra_days[date].entries.append(zebra_entry)
-                zebra_days[date].time += zebra_entry.time
-            else:
-                day = ZebraDay()
-                day.time = zebra_entry.time
-                day.day = date
-                day.entries.append(zebra_entry)
-                zebra_days[date] = day
-        return zebra_days
+            zebra_entries.append(zebra_entry)
+
+        return zebra_entries
 
     def parse_entry(self, entry):
         zebra_entry = ZebraEntry()
-        zebra_entry.username = str(entry['username'])
+        zebra_entry.username = str(entry['username'].encode('utf-8'))
         zebra_entry.time = float(entry['time'])
+        zebra_entry.project = (entry['project'].encode('utf-8'))
+        zebra_entry.date = dateutil.parser.parse(entry['date'])
+        zebra_entry.id = int(entry['tid'])
+        zebra_entry.description = str(entry['description'].encode('utf-8'))
         return zebra_entry
 

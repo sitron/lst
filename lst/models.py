@@ -12,6 +12,13 @@ class ZebraEntry:
     def __init__(self):
         self.username = None
         self.time = 0
+        self.date = None
+        self.project = None
+        self.id = 0
+        self.description = None
+
+    def readable_date(self):
+        return self.date.strftime('%Y-%m-%d')
 
 class ZebraDays(dict):
     def __init__(self):
@@ -116,6 +123,7 @@ class Sprint:
         self.name = ''
         self.raw = None
         self.forced = dict()
+        self.planned = dict()
         self.commited_man_days = 0
         self.jira_data = None
         self.zebra_data = None
@@ -139,6 +147,9 @@ class Sprint:
         if type(forced) == str:
             return default + float(forced)
         return forced
+
+    def get_planned_data(self, date):
+        return self.planned.get(date)
 
     def get_zebra_data(self, key):
         return self.zebra_data.get(key)
@@ -166,20 +177,29 @@ class Sprint:
 
 class GraphEntries(dict):
     ''' keeps all the graph entries '''
-    def get_ordered_data(self):
+    def get_ordered_data(self, date_limit = None):
         data = list()
         cumulated_bv = 0
         cumulated_sp = 0
         cumulated_time = 0
+        cumulated_planned_time = 0
         for key in sorted(self.iterkeys()):
             value = self[key]
-            value.date = key
             cumulated_bv += value.business_value
             cumulated_sp += value.story_points
             cumulated_time += value.time
-            value.business_value = cumulated_bv
-            value.story_points = cumulated_sp
-            value.time = cumulated_time / 8
+            cumulated_planned_time += value.planned_time
+            value.planned_time = cumulated_planned_time / 8
+
+            # only add data if before graph end date
+            if date_limit is None or value.date <= date_limit:
+                value.business_value = cumulated_bv
+                value.story_points = cumulated_sp
+                value.time = cumulated_time / 8
+            else:
+                value.business_value = None
+                value.story_points = None
+                value.time = None
             data.append(value.to_json())
         return data
 
@@ -188,6 +208,17 @@ class GraphEntry:
     business_value = 0
     story_points = 0
     time = 0
+    planned_time = 0
 
     def to_json(self):
-        return {'date': self.date, 'businessValue': self.business_value, 'storyPoints': self.story_points, 'manDays': self.time}
+        o = {
+            'date': str(self.date),
+            'planned': self.planned_time
+        }
+        if self.business_value is not None:
+            o['businessValue'] = self.business_value
+        if self.story_points is not None:
+            o['storyPoints'] = self.story_points
+        if self.time is not None:
+            o['manDays'] = self.time
+        return o

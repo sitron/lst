@@ -35,6 +35,13 @@ sprints:
                 time: '+8' # ...or a delta string (to be added to the existing zebra value)...
               - date: '2013-04-09/2013-04-11' # ...or a date range (str separated by /)
                 time: '-8' # ...in both directions
+            planned: # optional, use it to display your MD consumption forecast on your burnup chart
+              - date: 2012-11-19 # can be either a single date...
+                time: 16 # nb of hours
+              - date: [2013-04-09,2013-04-11] # ...or multiple dates (list)
+                time: 24
+              - date: '2013-04-09/2013-04-11' # ...or a date range (str separated by /)
+                time: 24
         jira:
             project_id: 12345 # Run `lst jira-config-helper jlc-100` to get its project id (change jlc-100 by the id of a story in your current sprint
             sprint_name: "Fix+Version+As+Specified+In+Jira" # as seen in jira query builder (usually blanks are to be replaced with + in jira). Run `lst jira-config-helper jlc-100` to get its sprint name (replace jlc-100 by the id of a story in your current sprint

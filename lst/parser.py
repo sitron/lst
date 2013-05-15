@@ -80,6 +80,10 @@ class ConfigParser:
             sprint.forced = self.parse_forced(data['zebra']['force'])
         except:
             pass
+        try:
+            sprint.planned = self.parse_planned(data['zebra']['planned'])
+        except:
+            pass
         return sprint
 
     def get_sprint(self, name):
@@ -102,6 +106,16 @@ class ConfigParser:
             for d in dates:
                 forced[d.strftime("%Y-%m-%d")] = time
         return forced
+
+    def parse_planned(self, plan):
+        dates = dict()
+        planned = dict()
+        for f in plan:
+            dates = self.parse_date(f['date'])
+            time = f['time']
+            for d in dates:
+                planned[d.strftime("%Y-%m-%d")] = time
+        return planned
 
     def parse_date(self, date):
         # single date
