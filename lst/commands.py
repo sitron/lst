@@ -90,7 +90,10 @@ class CheckHoursCommand(BaseCommand):
 
         # default values
         if date_objects is None or len(date_objects) == 0:
-            date_objects.append(datetime.date.today() - datetime.timedelta(days=1))
+            today = datetime.date.today()
+            # either yesterday or friday if today is monday
+            delta = 1 if today.weekday() != 0 else 3
+            date_objects.append(today - datetime.timedelta(days=delta))
         end_date = None
 
         if len(date_objects) == 1:
