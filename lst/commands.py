@@ -3,6 +3,7 @@ from models import JiraEntry, JiraEntries, GraphEntry, GraphEntries, AppContaine
 from output import SprintBurnUpOutput
 from processors import SprintBurnUpJiraProcessor
 from parser import ConfigParser
+from errors import *
 import pkgutil
 import os
 import sys
@@ -68,6 +69,46 @@ class BaseCommand:
 
         return report_url
 
+    def sanitize_input_users(self, users):
+        if users is not None and len(users) == 0:
+            users = None
+        return users
+
+    def sanitize_input_dates(self, dates):
+        return [] if dates is None else dates
+
+    def ensure_max_2_dates(self, dates):
+        if len(dates) > 2:
+            raise InputParametersError("You can't specify more than 2 dates (start and end)")
+
+    def get_last_week_day(self, today = None):
+        today = datetime.date.today() if today is None else today
+        # either yesterday or friday if today is monday
+        delta = 1 if today.weekday() != 0 else 3
+        return today - datetime.timedelta(days=delta)
+
+    def get_start_and_end_date(self, dates):
+        """
+        Get a tuple with start and end dates. Default is none for end date, and last week-day for start_date
+
+        :param dates:list of dates
+        :return:tuple (start,end)
+        """
+        date_objects = [dateutil.parser.parse(d) for d in dates]
+
+        # default values is None for end_date and last week-day for start_date
+        end_date = None
+        if date_objects is None or len(date_objects) == 0:
+            date_objects.append(self.get_last_week_day())
+
+        if len(date_objects) == 1:
+            start_date = self.zebra_date(date_objects[0])
+        if len(date_objects) == 2:
+            start_date = self.zebra_date(min(date_objects))
+            end_date = self.zebra_date(max(date_objects))
+
+        return (start_date, end_date)
+
 class CheckHoursCommand(BaseCommand):
     """
     Command to retrieve all Zebra hours for a specific date and/or user_id, and group them by project
@@ -78,29 +119,12 @@ class CheckHoursCommand(BaseCommand):
 
     """
     def run(self, args):
-        users = args.user
-        if users is not None and len(users) == 0:
-            users = None
+        users = self.sanitize_input_users(args.user)
+        dates = self.sanitize_input_dates(args.date)
 
-        dates = [] if args.date is None else args.date
-        if len(dates) > 2:
-            raise SyntaxError("You can't specify more than 2 dates (start and end)")
+        self.ensure_max_2_dates(dates)
 
-        date_objects = [dateutil.parser.parse(d) for d in dates]
-
-        # default values
-        if date_objects is None or len(date_objects) == 0:
-            today = datetime.date.today()
-            # either yesterday or friday if today is monday
-            delta = 1 if today.weekday() != 0 else 3
-            date_objects.append(today - datetime.timedelta(days=delta))
-        end_date = None
-
-        if len(date_objects) == 1:
-            start_date = self.zebra_date(date_objects[0])
-        if len(date_objects) == 2:
-            start_date = self.zebra_date(min(date_objects))
-            end_date = self.zebra_date(max(date_objects))
+        start_date, end_date = self.get_start_and_end_date(dates)
 
         # retrieve zebra data
         zebra = ZebraRemote(self.secret.get_zebra('url'), self.secret.get_zebra('username'), self.secret.get_zebra('password'))
