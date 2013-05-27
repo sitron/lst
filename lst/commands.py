@@ -1,5 +1,5 @@
 from remote import ZebraRemote, JiraRemote
-from models import JiraEntry, JiraEntries, GraphEntry, GraphEntries, AppContainer, ZebraDays, ZebraDay, ZebraManager
+from models import JiraEntry, GraphEntry, GraphEntries, AppContainer, ZebraDays, ZebraDay, ZebraManager
 from output import SprintBurnUpOutput
 from processors import SprintBurnUpJiraProcessor
 from errors import *
@@ -17,7 +17,7 @@ class BaseCommand:
         self.config = AppContainer.config
         self.dev_mode = AppContainer.dev_mode
 
-    def run(self):
+    def run(self, args):
         pass
 
     def get_start_and_end_date(self, dates):
@@ -30,6 +30,7 @@ class BaseCommand:
         date_objects = [dateutil.parser.parse(d) for d in dates]
 
         # default values is None for end_date and last week-day for start_date
+        start_date = None
         end_date = None
         if date_objects is None or len(date_objects) == 0:
             date_objects.append(DateHelper.get_last_week_day())
@@ -43,7 +44,11 @@ class BaseCommand:
         return (start_date, end_date)
 
     def get_zebra_remote(self):
-        return ZebraRemote(self.secret.get_zebra('url'), self.secret.get_zebra('username'), self.secret.get_zebra('password'))
+        return ZebraRemote(
+            self.secret.get_zebra('url'),
+            self.secret.get_zebra('username'),
+            self.secret.get_zebra('password')
+        )
 
 
 class CheckHoursCommand(BaseCommand):
@@ -84,7 +89,6 @@ class CheckHoursCommand(BaseCommand):
         """group entries by project"""
         return ZebraManager.group_by_project(entries)
 
-
     def _output(self, projects):
         # formated output
         print ''
@@ -96,7 +100,7 @@ class CheckHoursCommand(BaseCommand):
             total = 0
             template = "  {time:<12} {username:<23} {description:<45} ({url:<15})"
             for entry in entries:
-                d = {}
+                d = dict
                 d['time'] = str(entry.time) + ' hours'
                 d['username'] = entry.username
                 d['description'] = entry.description[:44]
@@ -113,45 +117,57 @@ class AddSprintCommand(BaseCommand):
 
     """
     def run(self, args):
-        # add sprint data
-        sprint = {}
+        name = InputHelper.get_user_input(
+            'Give me a nickname for your sprint (no special chars): ',
+            str
+        )
 
-        name = raw_input('Give me a nickname for your sprint (no special chars): ')
+        sprint = dict
+        sprint['commited_man_days'] = InputHelper.get_user_input(
+            'Give me the number of commited man days for this sprint: ',
+            float
+        )
 
-        nb_mandays = float(raw_input('Give me the number of commited man days for this sprint: '))
-        sprint['commited_man_days'] = nb_mandays
+        # add zebra/jira data
+        sprint['zebra'] = self._get_zebra_data()
+        sprint['jira'] = self._get_jira_data()
 
-        # add zebra data
-        start = raw_input('Give me the sprint start date (as 2013.02.25): ')
-        [y,m,d] = map(int, start.split('.'))
-        start_date = datetime.date(y,m,d)
-        end = raw_input('Give me the sprint end date (as 2013.02.25): ')
-        [y,m,d] = map(int, end.split('.'))
-        end_date = datetime.date(y,m,d)
+        # write to config file
+        AppContainer.config.create_sprint(name, sprint)
+
+    def _get_zebra_data(self):
+        start_date = InputHelper.get_user_input('Give me the sprint start date (as 2013.02.25): ', 'date')
+        end_date = InputHelper.get_user_input('Give me the sprint end date (as 2013.02.25): ', 'date')
 
         # todo: improve this part
-        client = raw_input('Give me the zebra project id (if you use Taxi, just do `taxi search client_name` else check in Zebra. It should be a four digit integer): ')
-        client_id = int(client)
+        client_id = InputHelper.get_user_input(
+            'Give me the zebra project id (if you use Taxi, just do `taxi search client_name` else check in Zebra. It should be a four digit integer): ',
+            int
+        )
 
-        zebra_data = {}
+        zebra_data = dict
         zebra_data['activities'] = '*'
         zebra_data['users'] = '*'
         zebra_data['start_date'] = start_date
         zebra_data['end_date'] = end_date
         zebra_data['client_id'] = client_id
-        sprint['zebra'] = zebra_data
 
-        jira_data = {}
-        story = raw_input('Give me the jira id of any story in your sprint (something like \'jlc-110\'): ').upper()
+        return zebra_data
+
+    def _get_jira_data(self):
+        story = InputHelper.get_user_input(
+            'Give me the jira id of any story in your sprint (something like \'jlc-110\'): ',
+            str
+        ).upper()
         command = RetrieveJiraInformationForConfigCommand()
         story_data = command.get_story_data(story)
 
+        jira_data = {}
         jira_data['project_id'] = int(story_data['project_id'])
         jira_data['sprint_name'] = story_data['clean_sprint_name']
-        sprint['jira'] = jira_data
 
-        # write to config file
-        AppContainer.config.create_sprint(name, sprint)
+        return jira_data
+
 
 class RetrieveJiraInformationForConfigCommand(BaseCommand):
     """

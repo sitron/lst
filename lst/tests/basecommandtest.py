@@ -42,6 +42,7 @@ from ..parser import SecretParser
 from ..remote import ZebraRemote
 import json
 
+
 class CheckHoursTest(unittest.TestCase):
     """Unit tests for check-hours command in commands.py"""
 
@@ -51,9 +52,9 @@ class CheckHoursTest(unittest.TestCase):
         args.user = [103]
         args.date = []
         AppContainer.secret = SecretParser()
-        AppContainer.secret.get_zebra = mock.MagicMock(return_value = {'url': 'xx'})
+        AppContainer.secret.get_zebra = mock.MagicMock(return_value={'url': 'xx'})
         zebra_remote = ZebraRemote('baseurl', 'username', 'pwd')
-        json_data=open('lst/tests/check_hours.json')
+        json_data = open('lst/tests/check_hours.json')
         data = json.load(json_data)
         zebra_remote.get_data = mock.MagicMock(return_value=data)
 

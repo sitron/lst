@@ -19,11 +19,6 @@ class InputHelper(object):
         return [] if dates is None else dates
 
     @classmethod
-    def sanitize_date(cls, date):
-        """From a user input string date returns a date object"""
-        return dateutil.parser.parse(date)
-
-    @classmethod
     def check_nb_arguments(cls, args, minLimit=0, maxLimit=None):
         """Check that the number of arguments is within an definite range (raise an error if not)"""
         if len(args) > maxLimit or len(args) < minLimit:
@@ -37,9 +32,27 @@ class InputHelper(object):
         except InputParametersError:
             raise InputParametersError("You can't specify more than 2 dates (start and end)")
 
+    @classmethod
+    def get_user_input(cls, question, format_method=str, input_method=raw_input):
+        input = input_method(question)
+        if format_method == 'date':
+            try:
+                return DateHelper.sanitize_date(input)
+            except:
+                raise InputParametersError('could not parse your input "%s" to %s' % (input, str(format_method)))
+        try:
+            return format_method(input)
+        except:
+            raise InputParametersError('could not parse your input "%s" to %s' % (input, str(format_method)))
+
 
 class DateHelper(object):
     """Help to sanitize and uniform dates"""
+
+    @classmethod
+    def sanitize_date(cls, date):
+        """From a user input string date returns a date object"""
+        return dateutil.parser.parse(date).date()
 
     @classmethod
     def get_last_week_day(cls, today=None):

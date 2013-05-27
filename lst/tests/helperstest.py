@@ -1,5 +1,7 @@
 import datetime, unittest
 from ..helpers import *
+import mock
+
 
 class InputHelperTest(unittest.TestCase):
     """Unit tests for InputHelper in helpers.py"""
@@ -31,6 +33,20 @@ class InputHelperTest(unittest.TestCase):
         """should not raise any error"""
         dates = ['2013.05.22']
         InputHelper.ensure_max_2_dates(dates)
+
+    def testGetUserInput(self):
+        """test getting and formating user input"""
+        self.assertEquals('string', InputHelper.get_user_input('input a string', str, lambda _:'string'))
+        self.assertEquals(10, InputHelper.get_user_input('input an int', int, lambda _:10))
+        self.assertEquals(10.00, InputHelper.get_user_input('input a float', float, lambda _:10.00))
+        date = datetime.date(2013, 05, 27)
+        self.assertEquals(date, InputHelper.get_user_input('input a date', 'date', lambda _:'2013-05-27'))
+        self.assertEquals(date, InputHelper.get_user_input('input a date', 'date', lambda _:'27.05.2013'))
+        self.assertEquals(date, InputHelper.get_user_input('input a date', 'date', lambda _:'05.27.2013'))
+        self.assertRaises(InputParametersError, InputHelper.get_user_input, 'not an int', int, lambda _:'not an int')
+        self.assertRaises(
+            InputParametersError, InputHelper.get_user_input, 'not a float', float, lambda _:'not a float'
+        )
 
 
 class DateHelperTest(unittest.TestCase):
