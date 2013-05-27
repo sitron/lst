@@ -1,15 +1,15 @@
 from remote import ZebraRemote, JiraRemote
-from models import JiraEntry, JiraEntries, GraphEntry, GraphEntries, AppContainer, ZebraDays, ZebraDay
+from models import JiraEntry, JiraEntries, GraphEntry, GraphEntries, AppContainer, ZebraDays, ZebraDay, ZebraManager
 from output import SprintBurnUpOutput
 from processors import SprintBurnUpJiraProcessor
-from parser import ConfigParser
 from errors import *
-import pkgutil
+from helpers import *
 import os
 import sys
 import distutils.sysconfig
 import datetime
 import dateutil
+
 
 class BaseCommand:
     def __init__(self):
@@ -19,73 +19,6 @@ class BaseCommand:
 
     def run(self):
         pass
-
-    def sanitize_date(self, date):
-        date_object = dateutil.parser.parse(date)
-        return date_object.strftime('%Y-%m-%d')
-
-    def zebra_date(self, date_object):
-        return date_object.strftime('%Y-%m-%d')
-
-    def _get_zebra_url_for_activities(
-            self,
-            start_date,
-            end_date = None,
-            projects = None,
-            users = None,
-            activities = None
-        ):
-        report_url = 'timesheet/report/.json?option_selector='
-
-        if end_date is None:
-            end_date = start_date
-
-        if users is None:
-            report_url += '&users[]=*'
-        elif type(users) == list:
-            for user in users:
-                report_url += '&users[]=' + str(user)
-        else:
-            report_url += '&users[]=' + str(users)
-
-        if activities is None:
-            report_url += '&activities[]=*'
-        elif type(activities) == list:
-            for activity in activities:
-                report_url += '&activities[]=' + `activity`
-        else:
-            report_url += '&activities[]=' + str(activities)
-
-        if projects is None:
-            report_url += '&projects[]=*'
-        elif type(projects) == list:
-            for project in projects:
-                report_url += '&projects[]=' + `project`
-        else:
-            report_url += '&projects[]=' + str(projects)
-
-        report_url += '&start=' + str(start_date)
-        report_url += '&end=' + str(end_date)
-
-        return report_url
-
-    def sanitize_input_users(self, users):
-        if users is not None and len(users) == 0:
-            users = None
-        return users
-
-    def sanitize_input_dates(self, dates):
-        return [] if dates is None else dates
-
-    def ensure_max_2_dates(self, dates):
-        if len(dates) > 2:
-            raise InputParametersError("You can't specify more than 2 dates (start and end)")
-
-    def get_last_week_day(self, today = None):
-        today = datetime.date.today() if today is None else today
-        # either yesterday or friday if today is monday
-        delta = 1 if today.weekday() != 0 else 3
-        return today - datetime.timedelta(days=delta)
 
     def get_start_and_end_date(self, dates):
         """
@@ -99,15 +32,19 @@ class BaseCommand:
         # default values is None for end_date and last week-day for start_date
         end_date = None
         if date_objects is None or len(date_objects) == 0:
-            date_objects.append(self.get_last_week_day())
+            date_objects.append(DateHelper.get_last_week_day())
 
         if len(date_objects) == 1:
-            start_date = self.zebra_date(date_objects[0])
+            start_date = ZebraHelper.zebra_date(date_objects[0])
         if len(date_objects) == 2:
-            start_date = self.zebra_date(min(date_objects))
-            end_date = self.zebra_date(max(date_objects))
+            start_date = ZebraHelper.zebra_date(min(date_objects))
+            end_date = ZebraHelper.zebra_date(max(date_objects))
 
         return (start_date, end_date)
+
+    def get_zebra_remote(self):
+        return ZebraRemote(self.secret.get_zebra('url'), self.secret.get_zebra('username'), self.secret.get_zebra('password'))
+
 
 class CheckHoursCommand(BaseCommand):
     """
@@ -119,30 +56,36 @@ class CheckHoursCommand(BaseCommand):
 
     """
     def run(self, args):
-        users = self.sanitize_input_users(args.user)
-        dates = self.sanitize_input_dates(args.date)
-
-        self.ensure_max_2_dates(dates)
-
+        # parse and verify user arguments
+        users = InputHelper.sanitize_users(args.user)
+        dates = InputHelper.sanitize_dates(args.date)
+        InputHelper.ensure_max_2_dates(dates)
         start_date, end_date = self.get_start_and_end_date(dates)
 
+        # get zebra url to call
+        report_url = ZebraHelper.get_zebra_url_for_activities(start_date=start_date, end_date=end_date, users=users)
+
         # retrieve zebra data
-        zebra = ZebraRemote(self.secret.get_zebra('url'), self.secret.get_zebra('username'), self.secret.get_zebra('password'))
-        report_url = self._get_zebra_url_for_activities(start_date=start_date, end_date=end_date, users=users)
-        zebra_json_result = zebra.get_data(report_url)
-        zebra_entries = zebra.parse_entries(zebra_json_result)
+        zebra_entries = self._get_zebra_entries(report_url)
         if len(zebra_entries) == 0:
             return
 
-        # group entries by project
-        projects = {}
-        for zebra_entry in zebra_entries:
+        # print output to console
+        self._output(self._group_entries_by_project(zebra_entries))
 
-            if zebra_entry.project not in projects:
-                projects[zebra_entry.project] = []
+    def _get_zebra_entries(self, report_url):
+        """query zebra to retrieve entries"""
+        zebra = self.get_zebra_remote()
+        zebra_json_result = zebra.get_data(report_url)
+        zebra_entries = zebra.parse_entries(zebra_json_result)
+        return zebra_entries
 
-            projects[zebra_entry.project].append(zebra_entry)
+    def _group_entries_by_project(self, entries):
+        """group entries by project"""
+        return ZebraManager.group_by_project(entries)
 
+
+    def _output(self, projects):
         # formated output
         print ''
         print 'Projects:'
@@ -157,7 +100,7 @@ class CheckHoursCommand(BaseCommand):
                 d['time'] = str(entry.time) + ' hours'
                 d['username'] = entry.username
                 d['description'] = entry.description[:44]
-                d['url'] = zebra_url + '/timesheet/' + str(entry.id)
+                d['url'] = ZebraHelper.get_activity_url(zebra_url, entry.id)
                 print template.format(**d)
                 total += entry.time
 
@@ -465,7 +408,7 @@ class SprintBurnUpCommand(BaseCommand):
         start_date = sprint.get_zebra_data('start_date')
         end_date = sprint.get_zebra_data('end_date')
 
-        return self._get_zebra_url_for_activities(start_date, end_date, client_id, users, activities)
+        return ZebraHelper.get_zebra_url_for_activities(start_date, end_date, client_id, users, activities)
 
     def _get_jira_url_for_sprint_burnup(self, sprint):
         return "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=project+%3D+'" + str(sprint.get_jira_data('project_id')) + "'+and+fixVersion+%3D+'" + sprint.get_jira_data('sprint_name') + "'&tempMax=1000"
