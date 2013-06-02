@@ -39,6 +39,7 @@ class InputHelperTest(unittest.TestCase):
         self.assertEquals('string', InputHelper.get_user_input('input a string', str, lambda _:'string'))
         self.assertEquals(10, InputHelper.get_user_input('input an int', int, lambda _:10))
         self.assertEquals(10.00, InputHelper.get_user_input('input a float', float, lambda _:10.00))
+        self.assertEquals(10.00, InputHelper.get_user_input('input a float', float, lambda _:'10'))
         date = datetime.date(2013, 05, 27)
         self.assertEquals(date, InputHelper.get_user_input('input a date', 'date', lambda _:'2013-05-27'))
         self.assertEquals(date, InputHelper.get_user_input('input a date', 'date', lambda _:'27.05.2013'))
@@ -113,3 +114,24 @@ class ZebraHelperTest(unittest.TestCase):
 
     def testGetActivityId(self):
         self.assertEquals('basepath/timesheet/123', ZebraHelper.get_activity_url('basepath', 123))
+
+
+class JiraHelperTest(unittest.TestCase):
+    """Unit test for JiraHelper in helpers.py"""
+
+    def testGetUrlForProjectLookupByStoryId(self):
+        wanted_url = "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml" \
+                     "?jqlQuery=key+%3D+'xx-112'" \
+                     "&tempMax=1000"
+        story_id = 'xx-112'
+        self.assertEquals(wanted_url, JiraHelper.get_url_for_project_lookup_by_story_id(story_id))
+
+    def testSanitizeSprintName(self):
+        self.assertEquals(
+            'my+sprint+name',
+            JiraHelper.sanitize_sprint_name('my sprint name')
+        )
+        self.assertEquals(
+            'MySprintName',
+            JiraHelper.sanitize_sprint_name('MySprintName')
+        )

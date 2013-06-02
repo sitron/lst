@@ -50,6 +50,21 @@ class BaseCommand:
             self.secret.get_zebra('password')
         )
 
+    def get_jira_remote(self):
+        return JiraRemote(
+            self.secret.get_jira('url'),
+            self.secret.get_jira('username'),
+            self.secret.get_jira('password')
+        )
+
+    def get_story_data(self, story_id):
+        url = JiraHelper.get_url_for_project_lookup_by_story_id(story_id)
+        jira = self.get_jira_remote()
+        xml_data = jira.get_data(url)
+        story_data = jira.parse_story(xml_data)
+        story_data['clean_sprint_name'] = JiraHelper.sanitize_sprint_name(story_data['sprint_name'])
+        return story_data
+
 
 class CheckHoursCommand(BaseCommand):
     """
@@ -100,7 +115,7 @@ class CheckHoursCommand(BaseCommand):
             total = 0
             template = "  {time:<12} {username:<23} {description:<45} ({url:<15})"
             for entry in entries:
-                d = dict
+                d = dict()
                 d['time'] = str(entry.time) + ' hours'
                 d['username'] = entry.username
                 d['description'] = entry.description[:44]
@@ -116,13 +131,14 @@ class AddSprintCommand(BaseCommand):
     Usage: add-sprint
 
     """
+    # @todo: to be tested
     def run(self, args):
         name = InputHelper.get_user_input(
             'Give me a nickname for your sprint (no special chars): ',
             str
         )
 
-        sprint = dict
+        sprint = dict()
         sprint['commited_man_days'] = InputHelper.get_user_input(
             'Give me the number of commited man days for this sprint: ',
             float
@@ -145,7 +161,7 @@ class AddSprintCommand(BaseCommand):
             int
         )
 
-        zebra_data = dict
+        zebra_data = dict()
         zebra_data['activities'] = '*'
         zebra_data['users'] = '*'
         zebra_data['start_date'] = start_date
@@ -159,8 +175,7 @@ class AddSprintCommand(BaseCommand):
             'Give me the jira id of any story in your sprint (something like \'jlc-110\'): ',
             str
         ).upper()
-        command = RetrieveJiraInformationForConfigCommand()
-        story_data = command.get_story_data(story)
+        story_data = self.get_story_data(story)
 
         jira_data = {}
         jira_data['project_id'] = int(story_data['project_id'])
@@ -171,11 +186,16 @@ class AddSprintCommand(BaseCommand):
 
 class RetrieveJiraInformationForConfigCommand(BaseCommand):
     """
-    Usage: jira-config-helper [story-id] (ie: get-project-id JLC-1)
+    Usage: jira-config-helper [story-id] (ie: jira-config-helper jlc-112)
 
     """
     def run(self, args):
-        story_id = args.optional_argument[0].upper()
+        try:
+            story_id = args.optional_argument[0].upper()
+        except:
+            raise InputParametersError('Specify a story id, something like \'jira-config-helper jlc-112\'')
+
+        # retrieve data from jira
         story_data = self.get_story_data(story_id)
 
         print ''
@@ -185,13 +205,6 @@ class RetrieveJiraInformationForConfigCommand(BaseCommand):
         print 'sprint name: %s' % (story_data['sprint_name'])
         print 'sprint name for config: %s' % (story_data['clean_sprint_name'])
 
-    def get_story_data(self, story_id):
-        jira = JiraRemote(self.secret.get_jira('url'), self.secret.get_jira('username'), self.secret.get_jira('password'))
-        url = jira.get_url_for_project_lookup(story_id)
-        xml_data = jira.get_data(url)
-        story_data = jira.parse_story(xml_data)
-        story_data['clean_sprint_name'] = story_data['sprint_name'].replace(' ', '+')
-        return story_data
 
 class ListCommand(BaseCommand):
     """

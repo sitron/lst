@@ -137,3 +137,22 @@ class ZebraHelper(object):
         :return: string, url
         """
         return base_url + '/timesheet/' + str(activity_id)
+
+
+class JiraHelper(object):
+
+    @classmethod
+    def get_url_for_project_lookup_by_story_id(cls, story_id):
+        return "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml" \
+               "?jqlQuery=key+%3D+'" + str(story_id) + "'" \
+               "&tempMax=1000"
+
+    @classmethod
+    def sanitize_sprint_name(cls, sprint_name):
+        """
+        Converts "human readable" sprint name to what jira expects (blanks replaced by +)
+
+        :param sprint_name:string sprint name
+        :return:string
+        """
+        return sprint_name.replace(' ', '+')
