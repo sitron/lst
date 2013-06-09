@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<rss version="0.92">
+  <channel>
+    <issue start="0" end="2" total="2"/>
+    <item>
+      <title>Story title</title>
+      <link>https://jira.liip.ch/browse/XX-123</link>
+      <project id="10636" key="XX">Project name</project>
+      <description/>
+      <key id="72454">XX-123</key>
+      <summary>Story title 123</summary>
+      <status id="10008">For PO Review</status>
+      <resolution id="-1">Unresolved</resolution>
+      <assignee username="assignee.user">Assignee user</assignee>
+      <reporter username="reporter.user">Reporter user</reporter>
+      <created>Mon, 13 May 2013 15:45:14 +0200</created>
+      <updated>Thu, 30 May 2013 09:38:39 +0200</updated>
+      <fixVersion>Sprint name</fixVersion>
+      <customfields>
+        <customfield id="customfield_10040" key="com.atlassian.jira.plugin.system.customfieldtypes:float">
+          <customfieldname>Story Points</customfieldname>
+          <customfieldvalues>
+            <customfieldvalue>2.0</customfieldvalue>
+          </customfieldvalues>
+        </customfield>
+        <customfield id="customfield_10064" key="com.atlassian.jira.plugin.system.customfieldtypes:float">
+          <customfieldname>Business Value</customfieldname>
+          <customfieldvalues>
+            <customfieldvalue>2500.0</customfieldvalue>
+          </customfieldvalues>
+        </customfield>
+      </customfields>
+    </item>
+    <item>
+      <title>Story title</title>
+      <link>https://jira.liip.ch/browse/XX-123</link>
+      <project id="10636" key="XX">Project name</project>
+      <description/>
+      <key id="72454">XX-124</key>
+      <summary>Story title 124</summary>
+      <status id="10008">For PO Review</status>
+      <resolution id="-1">Unresolved</resolution>
+      <assignee username="assignee.user">Assignee user</assignee>
+      <reporter username="reporter.user">Reporter user</reporter>
+      <created>Mon, 13 May 2013 15:45:14 +0200</created>
+      <updated>Thu, 30 May 2013 09:38:39 +0200</updated>
+      <fixVersion>Sprint name</fixVersion>
+      <customfields>
+        <customfield id="customfield_10040" key="com.atlassian.jira.plugin.system.customfieldtypes:float">
+          <customfieldname>Story Points</customfieldname>
+          <customfieldvalues>
+            <customfieldvalue>5.0</customfieldvalue>
+          </customfieldvalues>
+        </customfield>
+        <customfield id="customfield_10064" key="com.atlassian.jira.plugin.system.customfieldtypes:float">
+          <customfieldname>Business Value</customfieldname>
+          <customfieldvalues>
+            <customfieldvalue>2000.0</customfieldvalue>
+          </customfieldvalues>
+        </customfield>
+      </customfields>
+    </item>
+  </channel>
+</rss>

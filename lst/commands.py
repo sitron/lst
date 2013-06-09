@@ -445,3 +445,48 @@ class SprintBurnUpCommand(BaseCommand):
 
     def _get_jira_url_for_sprint_burnup(self, sprint):
         return "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=project+%3D+'" + str(sprint.get_jira_data('project_id')) + "'+and+fixVersion+%3D+'" + sprint.get_jira_data('sprint_name') + "'&tempMax=1000"
+
+
+import xml.etree.ElementTree as ET
+class StoriesCommand(BaseCommand):
+    """
+    Usage:  stories [sprint_name] where sprint_name is a sprint defined in your config
+
+    """
+
+    def run(self, args):
+        # make sure the sprint specified exist in config
+        user_sprint_name = args.optional_argument[0]
+        sprint = self.config.get_sprint(user_sprint_name)
+        try:
+            print "Sprint %s found in config" % (sprint.name)
+        except:
+            raise SyntaxError("Sprint %s not found. Make sure it's defined in your settings file" % (user_sprint_name))
+
+        stories = self._get_jira_data(sprint)
+
+        print ''
+        print 'Stories for sprint %s:' % sprint.name
+        template = "  {name:<10} {status:<12} {sp:<5} {bv:<5}"
+        for story in stories:
+            d = {}
+            d['name'] = str(story.id)
+            d['status'] = str(story.status)
+            d['sp'] = story.story_points
+            d['bv'] = story.business_value
+            print template.format(**d)
+
+    def _get_jira_data(self, sprint):
+        jira = JiraRemote(self.secret.get_jira('url'), self.secret.get_jira('username'), self.secret.get_jira('password'))
+
+#        jira_xml_result = jira.get_data(self._get_jira_url_for_sprint_stories(sprint))
+        jira_xml_result = ET.fromstring(open('lst/offline.jira.xml').read())
+
+        jira_entries = jira.parse_stories(
+            jira_xml_result
+        )
+
+        return jira_entries
+
+    def _get_jira_url_for_sprint_stories(self, sprint):
+        return "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=project+%3D+'" + str(sprint.get_jira_data('project_id')) + "'+and+fixVersion+%3D+'" + sprint.get_jira_data('sprint_name') + "'&tempMax=1000"
