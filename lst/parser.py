@@ -3,21 +3,32 @@ import datetime
 import dateutil
 import os
 
-from models import Sprint
-from models import AppContainer
+from models import Sprint, AppContainer
+from errors import FileNotFoundError, SyntaxError
 
 class SecretParser:
-    def __init__(self, url):
+    def __init__(self):
+        self.zebra_data = None
+        self.jira_data = None
+        self.output_dir = None
+
+    def parse(self, url):
         try:
             data_file = open(url)
             settings = yaml.load(data_file)
             data_file.close()
+        except IOError as e:
+            raise FileNotFoundError('Please make sure you have a file called .lst-secret.yml in your home directory (see README, setup section)')
 
+        self.extract_data(settings)
+
+    def extract_data(self, settings):
+        try:
             self.zebra_data = settings['zebra']
             self.jira_data = settings['jira']
             self.output_dir = settings['output_dir']
-        except IOError as e:
-            raise Exception('Please make sure you have a file called .lst-secret.yml in your home directory (see README, setup section)')
+        except KeyError as e:
+            raise SyntaxError('Your .lst-secret.yml does not contain all necessary information (key problem: %s)' % (e))
 
     def get_zebra(self, key):
         return self.zebra_data[key]

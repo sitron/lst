@@ -4,9 +4,11 @@ import os
 from parser import ConfigParser, SecretParser
 from models import AppContainer
 import commands
+from errors import NotFoundError
 
-"""LST, helps keeping your sprint commitment safe"""
 class Lst(object):
+    """LST, helps keeping your sprint commitment safe"""
+
     def __init__(self):
         usage = """%(prog)s command [options]
 
@@ -51,7 +53,8 @@ available commands:
         AppContainer.SECRET_PATH = SECRET_PATH
 
         # read usernames and passwords for jira/zebra
-        secret = SecretParser(SECRET_PATH)
+        secret = SecretParser()
+        secret.parse(SECRET_PATH)
 
         # create globally accessible app container
         AppContainer.secret = secret
@@ -65,7 +68,7 @@ available commands:
         AppContainer.config = config
 
         if args.command not in available_actions:
-            raise SyntaxError("Command %s does not exist." % (args.command))
+            raise NotFoundError("Command '%s' does not exist. See lst -h" % (args.command))
 
         action = available_actions[args.command]()
         action.run(args)

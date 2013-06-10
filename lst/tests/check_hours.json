@@ -1,0 +1,32 @@
+{
+    "command": {
+        "reports": {
+            "report": [
+                {
+                    "date": "2013-05-24 00:00:00",
+                    "description": "activity 1",
+                    "project": "Project 1",
+                    "tid": "1",
+                    "time": "2.00", 
+                    "username": "laurent"
+                },
+                {
+                    "date": "2013-05-24 00:00:00",
+                    "description": "activity 2",
+                    "project": "Project 2",
+                    "tid": "2",
+                    "time": "3.00",
+                    "username": "laurent"
+                },
+                {
+                    "date": "2013-05-25 00:00:00",
+                    "description": "activity 3",
+                    "project": "Project 2",
+                    "tid": "3",
+                    "time": "1.00",
+                    "username": "laurent"
+                }
+            ]
+        }
+    }
+}
