@@ -118,6 +118,22 @@ class ZebraHelper(object):
         return report_url
 
     @classmethod
+    def get_zebra_url_for_sprint_last_day(cls, sprint):
+        """
+        Returns zebra url to retrieve all sprint days from start date to today
+
+        :param sprint:Sprint
+        :return:string url to call on zebra remote
+        """
+        users = sprint.get_zebra_data('users')
+        client_id = sprint.get_zebra_data('client_id')
+        activities = sprint.get_zebra_data('activities')
+        start_date = sprint.get_zebra_data('start_date')
+        end_date = datetime.date.today()
+
+        return cls.get_zebra_url_for_activities(start_date, end_date, client_id, users, activities)
+
+    @classmethod
     def zebra_date(cls, date_object):
         """
         Returns a Zebra compatible date string from a Date object
