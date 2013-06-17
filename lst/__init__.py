@@ -4,9 +4,11 @@ import os
 from parser import ConfigParser, SecretParser
 from models import AppContainer
 import commands
+from errors import NotFoundError
 
-"""LST, helps keeping your sprint commitment safe"""
 class Lst(object):
+    """LST, helps keeping your sprint commitment safe"""
+
     def __init__(self):
         usage = """%(prog)s command [options]
 
@@ -18,7 +20,8 @@ available commands:
   jira-config-helper\tRetrieve some useful information about a Jira project and sprint from a story id (ie. XX-12)
   add-sprint\t\tAdds a sprint to your config file
   check-hours\t\tRetrieve all Zebra hours for a date/user(s). User is optional and can be multiple. Date is optional defaults to yesterday. If 2 dates are specified then min = start date, max = end date
-  stories\t\tPrints all stories for a sprint with their status"""
+  stories\t\tPrints all stories for a sprint with their status
+  get-last-zebra-day\tRetrieve the last Zebra day that contains a commit for this project"""
 
         SETTINGS_PATH = os.path.expanduser('~/.lst.yml')
         SECRET_PATH = os.path.expanduser('~/.lst-secret.yml')
@@ -32,6 +35,7 @@ available commands:
             'add-sprint': commands.AddSprintCommand,
             'check-hours': commands.CheckHoursCommand,
             'stories': commands.StoriesCommand,
+            'get-last-zebra-day': commands.GetLastZebraDayCommand,
         }
 
         # define arguments and options
@@ -53,7 +57,8 @@ available commands:
         AppContainer.SECRET_PATH = SECRET_PATH
 
         # read usernames and passwords for jira/zebra
-        secret = SecretParser(SECRET_PATH)
+        secret = SecretParser()
+        secret.parse(SECRET_PATH)
 
         # create globally accessible app container
         AppContainer.secret = secret
@@ -67,7 +72,7 @@ available commands:
         AppContainer.config = config
 
         if args.command not in available_actions:
-            raise SyntaxError("Command %s does not exist." % (args.command))
+            raise NotFoundError("Command '%s' does not exist. See lst -h" % (args.command))
 
         action = available_actions[args.command]()
         action.run(args)
