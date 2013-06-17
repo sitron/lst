@@ -65,6 +65,19 @@ class BaseCommand:
         story_data['clean_sprint_name'] = JiraHelper.sanitize_sprint_name(story_data['sprint_name'])
         return story_data
 
+    def ensure_sprint_in_config(self, sprint_name):
+        sprint = self.config.get_sprint(sprint_name)
+        if sprint is None:
+            raise InputParametersError("Sprint %s not found. Make sure it's defined in your settings file" % (sprint_name))
+
+        print "Sprint %s found in config" % (sprint.name)
+
+        return sprint
+
+    def ensure_optional_argument_is_present(self, optional_arguments, message='Missing parameter'):
+        if type(optional_arguments) != list or len(optional_arguments) == 0:
+            raise InputParametersError(message)
+
 
 class CheckHoursCommand(BaseCommand):
     """
@@ -284,11 +297,7 @@ class SprintBurnUpCommand(BaseCommand):
     def run(self, args):
         # make sure the sprint specified exist in config
         user_sprint_name = args.optional_argument[0]
-        sprint = self.config.get_sprint(user_sprint_name)
-        try:
-            print "Sprint %s found in config" % (sprint.name)
-        except:
-            raise SyntaxError("Sprint %s not found. Make sure it's defined in your settings file" % (user_sprint_name))
+        sprint = self.ensure_sprint_in_config(user_sprint_name)
 
         # end date for the graph
         try:
@@ -392,7 +401,7 @@ class SprintBurnUpCommand(BaseCommand):
                 print ''
 
             # get jira achievement for this day (bv/sp done)
-            jira_data = jira_entries.get_achievement_for_day(str(date));
+            jira_data = jira_entries.get_achievement_for_day(str(date))
 
             # if we have some time, story closed for this day or planned time, add it to graph data
             if jira_data is not None or total_time != 0 or planned_time is not None:
@@ -441,3 +450,33 @@ class SprintBurnUpCommand(BaseCommand):
 
     def _get_jira_url_for_sprint_burnup(self, sprint):
         return "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=project+%3D+'" + str(sprint.get_jira_data('project_id')) + "'+and+fixVersion+%3D+'" + sprint.get_jira_data('sprint_name') + "'&tempMax=1000"
+
+
+class GetLastZebraDayCommand(BaseCommand):
+    """
+    Usage:  get-last-zebra-day [sprint_name]
+
+    """
+
+    def run(self, args):
+        self.ensure_optional_argument_is_present(
+            args.optional_argument,
+            'You need to specify a sprint name as parameter'
+        )
+        # make sure the sprint specified exist in config
+        user_sprint_name = args.optional_argument[0]
+        sprint = self.ensure_sprint_in_config(user_sprint_name)
+        url = ZebraHelper.get_zebra_url_for_sprint_last_day(sprint)
+
+        # fetch zebra data
+        last_zebra_entry = self.get_last_zebra_entry(url)
+
+        # get last entry and return its date
+        print ''
+        print 'last date in sprint \'%s\': %s' % (sprint.name, last_zebra_entry.readable_date())
+
+    def get_last_zebra_entry(self, url):
+        zebra = self.get_zebra_remote()
+        zebra_json_result = zebra.get_data(url)
+        zebra_entries = zebra.parse_entries(zebra_json_result)
+        return zebra_entries[-1]

@@ -1,6 +1,6 @@
 from ..commands import *
-from ..models import AppContainer
-from ..parser import SecretParser
+from ..models import *
+from ..parser import *
 
 import unittest
 import mock
@@ -49,11 +49,32 @@ class BaseCommandTest(unittest.TestCase):
         self.assertEquals('Sprint name', story_data['sprint_name'])
         self.assertEquals('Sprint+name', story_data['clean_sprint_name'])
 
+    def testEnsureOptionalArgumentIsPresent(self):
+        command = BaseCommand()
+        self.assertRaises(InputParametersError, command.ensure_optional_argument_is_present, None)
+        self.assertRaises(InputParametersError, command.ensure_optional_argument_is_present, [])
+        command.ensure_optional_argument_is_present(['should not raise any error'])
+
+    def testEnsureSprintInConfig(self):
+        mock_helper = MockHelper()
+        command = BaseCommand()
+
+        s = mock_helper.get_sprint()
+        command.config.get_sprint = mock.MagicMock(return_value=s)
+        self.assertEquals(s, command.ensure_sprint_in_config('in config'))
+
+        command.config.get_sprint = mock.MagicMock(return_value=None)
+        self.assertRaises(InputParametersError, command.ensure_sprint_in_config, 'not in config')
+
 
 class MockHelper:
     """A minimal class to simulate argparse return"""
     def __init__(self):
+        self.optional_argument = list()
+
         AppContainer.secret = SecretParser()
+        AppContainer.config = ConfigParser()
+
         AppContainer.secret.get_zebra = mock.MagicMock(
             return_value={
                 'url': 'xx'
@@ -64,6 +85,12 @@ class MockHelper:
                 'url': 'xx'
             }
         )
+        AppContainer.config.get_sprint = mock.MagicMock(return_value=self.get_sprint())
+
+    def get_sprint(self):
+        s = Sprint()
+        s.name = 'my sprint'
+        return s
 
     def get_zebra_remote(self):
         return ZebraRemote('baseurl', 'username', 'pwd')
@@ -73,10 +100,10 @@ class MockHelper:
 
     def get_mock_data(self, url):
         data = open(url)
-        format = url[url.rfind('.') + 1:]
-        if format == 'json':
+        file_format = url[url.rfind('.') + 1:]
+        if file_format == 'json':
             return json.load(data)
-        if format == 'xml':
+        if file_format == 'xml':
             tree = ET.fromstring(data.read())
             return tree
 
@@ -120,3 +147,26 @@ class RetrieveJiraInformationForConfigTest(unittest.TestCase):
         mock_helper = MockHelper()
         mock_helper.optional_argument = list
         self.assertRaises(InputParametersError, command.run, mock_helper)
+
+
+class GetLastZebraEntryTest(unittest.TestCase):
+    """Unit tests for get-last-zebra-day command in commands.py"""
+
+    def testRunWithoutArgs(self):
+        # user doesn't specify a sprint name
+        mock_helper = MockHelper()
+        command = GetLastZebraDayCommand()
+        self.assertRaises(InputParametersError, command.run, mock_helper)
+
+    def testGetLastZebraEntry(self):
+        mock_helper = MockHelper()
+        data = mock_helper.get_mock_data('lst/tests/check_hours.json')
+        zebra_remote = mock_helper.get_zebra_remote()
+        zebra_remote.get_data = mock.MagicMock(return_value=data)
+
+        command = GetLastZebraDayCommand()
+        command.get_zebra_remote = mock.MagicMock(return_value=zebra_remote)
+        url = 'xxx'
+        last_entry = command.get_last_zebra_entry(url)
+
+        self.assertEquals('2013-05-25', ZebraHelper.zebra_date(last_entry.date))
