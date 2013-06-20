@@ -497,13 +497,13 @@ class StoriesCommand(BaseCommand):
 
         print ''
         print 'Stories for sprint %s:' % sprint.name
-        template = "  {name:<10} {status:<12} {sp:<5} {bv:<5}"
+        template = "  {name:<10} {status:<25} {sp:<5} {bv:<5}"
         for story in stories:
             d = {}
             d['name'] = str(story.id)
-            d['status'] = str(story.status)
-            d['sp'] = story.story_points
-            d['bv'] = story.business_value
+            d['status'] = story.status_name
+            d['sp'] = int(story.story_points)
+            d['bv'] = int(story.business_value)
             print template.format(**d)
 
     def _get_jira_data(self, sprint):
@@ -513,7 +513,8 @@ class StoriesCommand(BaseCommand):
         # jira_xml_result = ET.fromstring(open('lst/offline.jira.xml').read())
 
         jira_entries = jira.parse_stories(
-            jira_xml_result
+            jira_xml_result,
+            ignored=sprint.get_jira_data('ignored')
         )
 
         return jira_entries

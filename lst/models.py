@@ -80,6 +80,7 @@ class JiraEntry:
         self.business_value = 0
         self.id = None
         self.status = None
+        self.status_name = None
         self.close_date = None
         self.is_nice = False
         self.is_ignored = False
