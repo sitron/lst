@@ -81,6 +81,7 @@ class JiraEntry:
         self.id = None
         self.status = None
         self.status_name = None
+        self.assignee = None
         self.close_date = None
         self.is_nice = False
         self.is_ignored = False

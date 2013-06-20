@@ -497,13 +497,14 @@ class StoriesCommand(BaseCommand):
 
         print ''
         print 'Stories for sprint %s:' % sprint.name
-        template = "  {name:<10} {status:<25} {sp:<5} {bv:<5}"
+        template = "  {name:<10} {status:<25} {sp:<3} {bv:<6} {assignee:<20}"
         for story in stories:
             d = {}
             d['name'] = str(story.id)
             d['status'] = story.status_name
             d['sp'] = int(story.story_points)
             d['bv'] = int(story.business_value)
+            d['assignee'] = story.assignee[:20]
             print template.format(**d)
 
     def _get_jira_data(self, sprint):

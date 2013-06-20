@@ -106,6 +106,7 @@ class JiraRemote(Remote):
 
             story.status = int(s.find('status').get('id'))
             story.status_name = str(s.find('status').text)
+            story.assignee = str(s.find('assignee').text)
             try:
                 story.business_value = float(s.find('./customfields/customfield/[@id="customfield_10064"]/customfieldvalues/customfieldvalue').text)
             except AttributeError:
