@@ -187,3 +187,7 @@ the config file is a sprint dictionary, keyed by sprint name. Each sprint is def
       * optional, nice\_identifier: if you have "Nice to have" stories in your sprint, you can specify how to recognize them (we use '(NICE)' in the story title)
       * optional, closed_statuses: the jira statuses to consider as 'closed'. During the sprint the stories are usually not closed, so your graph would be flat until the very last day. For example we use "For PO Review" as the "closed" status. Specified as a dictionary where the keys are the status codes, and the values the status names. See the "Advanced config" in [.lst_dist.yml](.lst_dist.yml) to see how it's structured.
       * optional, ignored: a list of stories to ignore. Specify their ids in a list ['XXX-134', 'XXX-119']. Very often we have stories in the sprint that should not be considered for the graph (closed before the sprint, out of scope.. whatever)
+
+## Power tips
+* create a _current entry at root level specifying the name of your current sprint `_current: my_sprint_name (<- this
+value should be in the `sprints` list) and call `lst sprint-burnup` (without specifying a sprint name)
