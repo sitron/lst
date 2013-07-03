@@ -66,6 +66,11 @@ class BaseCommandTest(unittest.TestCase):
         command.config.get_sprint = mock.MagicMock(return_value=None)
         self.assertRaises(InputParametersError, command.ensure_sprint_in_config, 'not in config')
 
+    def testGetCurrentSprintNameIfNoArgsSpecified(self):
+        command = BaseCommand()
+        command.config.get_current_sprint_name = mock.MagicMock(return_value='sprint name')
+        self.assertEquals('sprint name', command.get_sprint_name_from_args_or_current(list()))
+
 
 class MockHelper:
     """A minimal class to simulate argparse return"""
@@ -151,12 +156,6 @@ class RetrieveJiraInformationForConfigTest(unittest.TestCase):
 
 class GetLastZebraEntryTest(unittest.TestCase):
     """Unit tests for get-last-zebra-day command in commands.py"""
-
-    def testRunWithoutArgs(self):
-        # user doesn't specify a sprint name
-        mock_helper = MockHelper()
-        command = GetLastZebraDayCommand()
-        self.assertRaises(InputParametersError, command.run, mock_helper)
 
     def testGetLastZebraEntry(self):
         mock_helper = MockHelper()

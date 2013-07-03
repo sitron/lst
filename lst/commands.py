@@ -1,5 +1,5 @@
 from remote import ZebraRemote, JiraRemote
-from models import JiraEntry, GraphEntry, GraphEntries, AppContainer, ZebraDays, ZebraDay, ZebraManager
+from models import *
 from output import SprintBurnUpOutput
 from processors import SprintBurnUpJiraProcessor
 from errors import *
@@ -66,6 +66,10 @@ class BaseCommand:
         return story_data
 
     def ensure_sprint_in_config(self, sprint_name):
+        """
+
+        :rtype : models.Sprint
+        """
         sprint = self.config.get_sprint(sprint_name)
         if sprint is None:
             raise InputParametersError("Sprint %s not found. Make sure it's defined in your settings file" % (sprint_name))
@@ -77,6 +81,20 @@ class BaseCommand:
     def ensure_optional_argument_is_present(self, optional_arguments, message='Missing parameter'):
         if type(optional_arguments) != list or len(optional_arguments) == 0:
             raise InputParametersError(message)
+
+    def get_sprint_name_from_args_or_current(self, optional_argument):
+        """
+        get a sprint name by parsing command args or by using _current sprint in config
+
+        :param optional_argument:list user input arguments
+        :return: string sprint name
+        """
+        if len(optional_argument) != 0:
+            sprint_name = optional_argument[0]
+        else:
+            sprint_name = self.config.get_current_sprint_name()
+
+        return sprint_name
 
 
 class CheckHoursCommand(BaseCommand):
@@ -285,19 +303,20 @@ class TestInstallCommand(BaseCommand):
         print file_content
         print 'end'
 
+
 class SprintBurnUpCommand(BaseCommand):
     """
     Usage:  sprint-burnup [sprint_name]
             sprint-burnup [sprint_name] [-d 2013.01.25]
+            sprint-burnup (if _current is set)
 
             date defaults to yesterday
 
     """
 
     def run(self, args):
-        # make sure the sprint specified exist in config
-        user_sprint_name = args.optional_argument[0]
-        sprint = self.ensure_sprint_in_config(user_sprint_name)
+        sprint_name = self.get_sprint_name_from_args_or_current(args.optional_argument)
+        sprint = self.ensure_sprint_in_config(sprint_name)
 
         # end date for the graph
         try:
@@ -459,13 +478,9 @@ class GetLastZebraDayCommand(BaseCommand):
     """
 
     def run(self, args):
-        self.ensure_optional_argument_is_present(
-            args.optional_argument,
-            'You need to specify a sprint name as parameter'
-        )
-        # make sure the sprint specified exist in config
-        user_sprint_name = args.optional_argument[0]
-        sprint = self.ensure_sprint_in_config(user_sprint_name)
+        sprint_name = self.get_sprint_name_from_args_or_current(args.optional_argument)
+        sprint = self.ensure_sprint_in_config(sprint_name)
+
         url = ZebraHelper.get_zebra_url_for_sprint_last_day(sprint)
 
         # fetch zebra data

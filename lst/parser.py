@@ -97,13 +97,21 @@ class ConfigParser:
             pass
         return sprint
 
-    def get_sprint(self, name):
+    def get_sprint(self, name = None):
         sprint = None
-        for k,v in self.data['sprints'].items():
-            if k == name:
-                sprint = self.parse_sprint(k, v)
-                break
+        if name is None:
+            name = self.get_current_sprint_name()
+
+        if name is not None:
+            for k,v in self.data['sprints'].items():
+                if k == name:
+                    sprint = self.parse_sprint(k, v)
+                    break
         return sprint
+
+    def get_current_sprint_name(self):
+        sprint_name = self.data.get('_current')
+        return sprint_name
 
     def get_sprints(self):
         return self.data['sprints']
