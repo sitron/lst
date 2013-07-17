@@ -71,7 +71,9 @@ class ZebraHelper(object):
             end_date = None,
             projects = None,
             users = None,
-            activities = None
+            activities = None,
+            internal_projects = None,
+            project_type_to_consider = 'external'
     ):
         """
         Get zebra url to retrieve project's activities
@@ -81,6 +83,8 @@ class ZebraHelper(object):
         :param projects: list of project ids
         :param users: list of user ids
         :param activities: list of activity ids (project is divided in multiple activities
+        :param internal_projects: list of internal project ids
+        :param project_type_to_consider: external/internal/all. Zebra stores internal/external projects differently
         :return: string Zebra url
         """
         report_url = 'timesheet/report/.json?option_selector='
@@ -104,13 +108,23 @@ class ZebraHelper(object):
         else:
             report_url += '&activities[]=' + str(activities)
 
-        if projects is None:
-            report_url += '&projects[]=*'
-        elif type(projects) == list:
-            for project in projects:
-                report_url += '&projects[]=' + `project`
-        else:
-            report_url += '&projects[]=' + str(projects)
+        if project_type_to_consider != 'internal':
+            if projects is None:
+                report_url += '&projects[]=*'
+            elif type(projects) == list:
+                for project in projects:
+                    report_url += '&projects[]=' + `project`
+            else:
+                report_url += '&projects[]=' + str(projects)
+
+        if project_type_to_consider != 'external':
+            if internal_projects is None:
+                report_url += '&internal[]=*'
+            elif type(internal_projects) == list:
+                for internal_project in internal_projects:
+                    report_url += '&internal[]=' + `internal_project`
+            else:
+                report_url += '&internal[]=' + str(internal_projects)
 
         report_url += '&start=' + str(start_date)
         report_url += '&end=' + str(end_date)

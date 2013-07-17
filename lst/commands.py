@@ -114,7 +114,12 @@ class CheckHoursCommand(BaseCommand):
         start_date, end_date = self.get_start_and_end_date(dates)
 
         # get zebra url to call
-        report_url = ZebraHelper.get_zebra_url_for_activities(start_date=start_date, end_date=end_date, users=users)
+        report_url = ZebraHelper.get_zebra_url_for_activities(
+            start_date=start_date,
+            end_date=end_date,
+            users=users,
+            project_type_to_consider='all'
+        )
 
         # retrieve zebra data
         zebra_entries = self._get_zebra_entries(report_url)
@@ -122,7 +127,11 @@ class CheckHoursCommand(BaseCommand):
             return
 
         # print output to console
-        self._output(self._group_entries_by_project(zebra_entries))
+        self._output(
+            self._sort_groups_alphabetically(
+                self._group_entries_by_project(zebra_entries)
+            )
+        )
 
     def _get_zebra_entries(self, report_url):
         """query zebra to retrieve entries"""
@@ -135,12 +144,16 @@ class CheckHoursCommand(BaseCommand):
         """group entries by project"""
         return ZebraManager.group_by_project(entries)
 
+    def _sort_groups_alphabetically(self, projects):
+        """sort grouped entries alphabetically"""
+        return sorted(projects.items(), key=lambda kv: kv[0])
+
     def _output(self, projects):
         # formated output
         print ''
         print 'Projects:'
         zebra_url = self.secret.get_zebra('url')
-        for name,entries in projects.items():
+        for name,entries in projects:
             print '- %s' % (name)
 
             total = 0
