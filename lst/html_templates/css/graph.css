@@ -86,3 +86,19 @@
     fill: #f1f1f1;
 }
 
+/* Result per story */
+.chart rect.burnt {
+    fill: #333;
+}
+.chart rect.planned {
+    fill: #999;
+}
+.chart text.label {
+    fill: #fff;
+    font-weight: bold;
+}
+.chart text.label.burnt {
+    fill: #fff;
+    font-weight: bold;
+}
+

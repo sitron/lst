@@ -1,6 +1,6 @@
 from remote import ZebraRemote, JiraRemote
 from models import *
-from output import SprintBurnUpOutput
+from output import *
 from processors import SprintBurnUpJiraProcessor
 from errors import *
 from helpers import *
@@ -184,6 +184,7 @@ class ResultPerStoryCommand(BaseCommand):
         # sort results
         result_list = sorted([(k, v) for (k, v) in results.items()], key = lambda x: x[1], reverse = True)
 
+        data = [];
         print ''
         print 'Results (planned velocity %s):' % (str(velocity))
         for story in result_list:
@@ -198,9 +199,24 @@ class ResultPerStoryCommand(BaseCommand):
                 planned_hours = 0
                 result_percent = 0
             print '%s \t%.2f/%.1f MD\t(%d/%d hours)\t%d%%' % (story[0], md_burnt, planned_md, story[1], planned_hours, result_percent)
+            o = {
+                'id': story[0],
+                'md_burnt': md_burnt,
+                'md_planned': planned_md,
+                'hours_burnt': story[1],
+                'hours_planned': planned_hours,
+                'result_percent': result_percent
+            }
+            data.append(o)
 
         print ''
         print 'Total\t%.2f/%.1f MD\t(%d/%d hours)\t%d%%' % (total_hours / 8, commit, total_hours, commit * 8, (total_hours / (commit * 8)) * 100)
+
+        # write the graph
+        print 'Starting chart output'
+        output = ResultPerStoryOutput(AppContainer.secret.get_output_dir())
+        output.output(sprint.name, data)
+
 
 class CheckHoursCommand(BaseCommand):
     """
