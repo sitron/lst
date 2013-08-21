@@ -4,20 +4,23 @@ import os
 from parser import ConfigParser, SecretParser
 from models import AppContainer
 import commands
+from errors import NotFoundError
 
-"""LST, helps keeping your sprint commitment safe"""
 class Lst(object):
+    """LST, helps keeping your sprint commitment safe"""
+
     def __init__(self):
         usage = """%(prog)s command [options]
 
 available commands:
-  sprint-burnup\t\tPrints a burn up chart for a given sprint
+  sprint-burnup\t\tPrints a burn up chart for a given sprint until an optional date (defaults to yesterday)
   test-install\t\tTest the installation
   get-user-id\t\tRetrieve a Zebra user id from his/her last name
   ls \t\t\tList all sprints defined in config
   jira-config-helper\tRetrieve some useful information about a Jira project and sprint from a story id (ie. XX-12)
   add-sprint\t\tAdds a sprint to your config file
   check-hours\t\tRetrieve all Zebra hours for a date/user(s). User is optional and can be multiple. Date is optional defaults to yesterday. If 2 dates are specified then min = start date, max = end date
+  get-last-zebra-day\tRetrieve the last Zebra day that contains a commit for this project
   result-per-story\t\tPrint the actual time used per story"""
 
         SETTINGS_PATH = os.path.expanduser('~/.lst.yml')
@@ -31,6 +34,7 @@ available commands:
             'jira-config-helper': commands.RetrieveJiraInformationForConfigCommand,
             'add-sprint': commands.AddSprintCommand,
             'check-hours': commands.CheckHoursCommand,
+            'get-last-zebra-day': commands.GetLastZebraDayCommand,
             'result-per-story': commands.ResultPerStoryCommand,
         }
 
@@ -53,7 +57,8 @@ available commands:
         AppContainer.SECRET_PATH = SECRET_PATH
 
         # read usernames and passwords for jira/zebra
-        secret = SecretParser(SECRET_PATH)
+        secret = SecretParser()
+        secret.parse(SECRET_PATH)
 
         # create globally accessible app container
         AppContainer.secret = secret
@@ -67,7 +72,7 @@ available commands:
         AppContainer.config = config
 
         if args.command not in available_actions:
-            raise SyntaxError("Command %s does not exist." % (args.command))
+            raise NotFoundError("Command '%s' does not exist. See lst -h" % (args.command))
 
         action = available_actions[args.command]()
         action.run(args)

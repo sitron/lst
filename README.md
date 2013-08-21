@@ -17,7 +17,7 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 * new! add MD forecast day by day with the new "planned" config param
 
 ## Installation
-* `sudo pip install git+git://github.com/sitron/lst@dev`
+* `sudo pip install git+git://github.com/sitron/lst@v1.1.1`
 * `sudo pip install -r https://raw.github.com/sitron/lst/master/requirements.txt`
 * copy the [.lst-secret_dist.yml](.lst-secret_dist.yml) file to you home (yes, click on the [link](.lst-secret_dist.yml)!), rename it to .lst-secret.yml and change your jira/zebra credentials (watch out for the file name: it's [dot]lst-secret.yml
 * create a directory somewhere on your machine where you want your graphs to be output and add its path to .lst-secret.yml 
@@ -42,7 +42,7 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 
 ## Upgrade
 if by any chance you already installed LST before, just run:
-* `sudo pip install git+git://github.com/sitron/lst@dev --upgrade`
+* `sudo pip install git+git://github.com/sitron/lst@v1.1.1 --upgrade`
 * special instructions for pre-0.9x users: config has changed. There is no "project" level anymore. You can easily update your config by removing the project level, and renaming your sprint index with a name property.
 
 before (prior to 0.9.0):
@@ -91,8 +91,10 @@ force:
 ```
 
 ## Available commands
-### Fetch data and display a chart
+### Fetch data and display a chart (by default displays values up to yesterday)
 `lst sprint-burnup my_sprint_name`
+### Fetch data and display a chart up to a specific date
+`lst sprint-burnup my_sprint_name -d 2013.05.01
 ### Add a sprint to your config (interactive command)
 `lst add-sprint`
 ### Check that your team mates didn't charge wrong projects (date defaults to yesterday)
@@ -185,3 +187,7 @@ the config file is a sprint dictionary, keyed by sprint name. Each sprint is def
       * optional, nice\_identifier: if you have "Nice to have" stories in your sprint, you can specify how to recognize them (we use '(NICE)' in the story title)
       * optional, closed_statuses: the jira statuses to consider as 'closed'. During the sprint the stories are usually not closed, so your graph would be flat until the very last day. For example we use "For PO Review" as the "closed" status. Specified as a dictionary where the keys are the status codes, and the values the status names. See the "Advanced config" in [.lst_dist.yml](.lst_dist.yml) to see how it's structured.
       * optional, ignored: a list of stories to ignore. Specify their ids in a list ['XXX-134', 'XXX-119']. Very often we have stories in the sprint that should not be considered for the graph (closed before the sprint, out of scope.. whatever)
+
+## Power tips
+* create a _current entry at root level specifying the name of your current sprint `_current: my_sprint_name (<- this
+value should be in the `sprints` list) and call `lst sprint-burnup` (without specifying a sprint name)

@@ -1,9 +1,9 @@
 from remote import ZebraRemote, JiraRemote
-from models import JiraEntry, JiraEntries, GraphEntry, GraphEntries, AppContainer, ZebraDays, ZebraDay
+from models import *
 from output import SprintBurnUpOutput
 from processors import SprintBurnUpJiraProcessor
-from parser import ConfigParser
-import pkgutil
+from errors import *
+from helpers import *
 import os
 import sys
 import distutils.sysconfig
@@ -12,24 +12,91 @@ import dateutil
 import re
 from pprint import pprint
 
+
 class BaseCommand:
     def __init__(self):
         self.secret = AppContainer.secret
         self.config = AppContainer.config
         self.dev_mode = AppContainer.dev_mode
 
-    def run(self):
+    def run(self, args):
         pass
 
-    def sanitize_date(self, date):
-        date_object = dateutil.parser.parse(date)
-        return date_object.strftime('%Y-%m-%d')
+    def get_start_and_end_date(self, dates):
+        """
+        Get a tuple with start and end dates. Default is none for end date, and last week-day for start_date
 
-    def zebra_date(self, date_object):
-        return date_object.strftime('%Y-%m-%d')
+        :param dates:list of dates
+        :return:tuple (start,end)
+        """
+        date_objects = [dateutil.parser.parse(d) for d in dates]
 
-    def _get_jira_url_for_sprint_burnup(self, sprint):
-        return "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=project+%3D+'" + str(sprint.get_jira_data('project_id')) + "'+and+fixVersion+%3D+'" + sprint.get_jira_data('sprint_name') + "'&tempMax=1000"
+        # default values is None for end_date and last week-day for start_date
+        start_date = None
+        end_date = None
+        if date_objects is None or len(date_objects) == 0:
+            date_objects.append(DateHelper.get_last_week_day())
+
+        if len(date_objects) == 1:
+            start_date = ZebraHelper.zebra_date(date_objects[0])
+        if len(date_objects) == 2:
+            start_date = ZebraHelper.zebra_date(min(date_objects))
+            end_date = ZebraHelper.zebra_date(max(date_objects))
+
+        return (start_date, end_date)
+
+    def get_zebra_remote(self):
+        return ZebraRemote(
+            self.secret.get_zebra('url'),
+            self.secret.get_zebra('username'),
+            self.secret.get_zebra('password')
+        )
+
+    def get_jira_remote(self):
+        return JiraRemote(
+            self.secret.get_jira('url'),
+            self.secret.get_jira('username'),
+            self.secret.get_jira('password')
+        )
+
+    def get_story_data(self, story_id):
+        url = JiraHelper.get_url_for_project_lookup_by_story_id(story_id)
+        jira = self.get_jira_remote()
+        xml_data = jira.get_data(url)
+        story_data = jira.parse_story(xml_data)
+        story_data['clean_sprint_name'] = JiraHelper.sanitize_sprint_name(story_data['sprint_name'])
+        return story_data
+
+    def ensure_sprint_in_config(self, sprint_name):
+        """
+
+        :rtype : models.Sprint
+        """
+        sprint = self.config.get_sprint(sprint_name)
+        if sprint is None:
+            raise InputParametersError("Sprint %s not found. Make sure it's defined in your settings file" % (sprint_name))
+
+        print "Sprint %s found in config" % (sprint.name)
+
+        return sprint
+
+    def ensure_optional_argument_is_present(self, optional_arguments, message='Missing parameter'):
+        if type(optional_arguments) != list or len(optional_arguments) == 0:
+            raise InputParametersError(message)
+
+    def get_sprint_name_from_args_or_current(self, optional_argument):
+        """
+        get a sprint name by parsing command args or by using _current sprint in config
+
+        :param optional_argument:list user input arguments
+        :return: string sprint name
+        """
+        if len(optional_argument) != 0:
+            sprint_name = optional_argument[0]
+        else:
+            sprint_name = self.config.get_current_sprint_name()
+
+        return sprint_name
 
     def _get_zebra_url_for_sprint_burnup(self, sprint):
         users = sprint.get_zebra_data('users')
@@ -38,49 +105,11 @@ class BaseCommand:
         start_date = sprint.get_zebra_data('start_date')
         end_date = sprint.get_zebra_data('end_date')
 
-        return self._get_zebra_url_for_activities(start_date, end_date, client_id, users, activities)
+        return ZebraHelper.get_zebra_url_for_activities(start_date, end_date, client_id, users, activities)
 
-    def _get_zebra_url_for_activities(
-            self,
-            start_date,
-            end_date = None,
-            projects = None,
-            users = None,
-            activities = None
-        ):
-        report_url = 'timesheet/report/.json?option_selector='
+    def _get_jira_url_for_sprint_burnup(self, sprint):
+        return "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=project+%3D+'" + str(sprint.get_jira_data('project_id')) + "'+and+fixVersion+%3D+'" + sprint.get_jira_data('sprint_name') + "'&tempMax=1000"
 
-        if end_date is None:
-            end_date = start_date
-
-        if users is None:
-            report_url += '&users[]=*'
-        elif type(users) == list:
-            for user in users:
-                report_url += '&users[]=' + str(user)
-        else:
-            report_url += '&users[]=' + str(users)
-
-        if activities is None:
-            report_url += '&activities[]=*'
-        elif type(activities) == list:
-            for activity in activities:
-                report_url += '&activities[]=' + `activity`
-        else:
-            report_url += '&activities[]=' + str(activities)
-
-        if projects is None:
-            report_url += '&projects[]=*'
-        elif type(projects) == list:
-            for project in projects:
-                report_url += '&projects[]=' + `project`
-        else:
-            report_url += '&projects[]=' + str(projects)
-
-        report_url += '&start=' + str(start_date)
-        report_url += '&end=' + str(end_date)
-
-        return report_url
 
 class ResultPerStoryCommand(BaseCommand):
     """
@@ -106,7 +135,7 @@ class ResultPerStoryCommand(BaseCommand):
 
         # retrieve jira data
         # to compare estimated story_points to actual MD consumption
-        jira = JiraRemote(self.secret.get_jira('url'), self.secret.get_jira('username'), self.secret.get_jira('password'))
+        jira = self.get_jira_remote()
         jira_url = self._get_jira_url_for_sprint_burnup(sprint)
         jira_xml_result = jira.get_data(jira_url)
         jira_entries = jira.parse_stories(
@@ -156,7 +185,7 @@ class ResultPerStoryCommand(BaseCommand):
         result_list = sorted([(k, v) for (k, v) in results.items()], key = lambda x: x[1], reverse = True)
 
         print ''
-        print 'Results (velocity %s):' % (str(velocity))
+        print 'Results (planned velocity %s):' % (str(velocity))
         for story in result_list:
             md_burnt = story[1] / 8
             try:
@@ -183,59 +212,63 @@ class CheckHoursCommand(BaseCommand):
 
     """
     def run(self, args):
-        users = args.user
-        if users is not None and len(users) == 0:
-            users = None
+        # parse and verify user arguments
+        users = InputHelper.sanitize_users(args.user)
+        dates = InputHelper.sanitize_dates(args.date)
+        InputHelper.ensure_max_2_dates(dates)
+        start_date, end_date = self.get_start_and_end_date(dates)
 
-        dates = [] if args.date is None else args.date
-        if len(dates) > 2:
-            raise SyntaxError("You can't specify more than 2 dates (start and end)")
-
-        date_objects = [dateutil.parser.parse(d) for d in dates]
-
-        # default values
-        if date_objects is None or len(date_objects) == 0:
-            date_objects.append(datetime.date.today() - datetime.timedelta(days=1))
-        end_date = None
-
-        if len(date_objects) == 1:
-            start_date = self.zebra_date(date_objects[0])
-        if len(date_objects) == 2:
-            start_date = self.zebra_date(min(date_objects))
-            end_date = self.zebra_date(max(date_objects))
+        # get zebra url to call
+        report_url = ZebraHelper.get_zebra_url_for_activities(
+            start_date=start_date,
+            end_date=end_date,
+            users=users,
+            project_type_to_consider='all'
+        )
 
         # retrieve zebra data
-        zebra = ZebraRemote(self.secret.get_zebra('url'), self.secret.get_zebra('username'), self.secret.get_zebra('password'))
-        report_url = self._get_zebra_url_for_activities(start_date=start_date, end_date=end_date, users=users)
-        zebra_json_result = zebra.get_data(report_url)
-        zebra_entries = zebra.parse_entries(zebra_json_result)
+        zebra_entries = self._get_zebra_entries(report_url)
         if len(zebra_entries) == 0:
             return
 
-        # group entries by project
-        projects = {}
-        for zebra_entry in zebra_entries:
+        # print output to console
+        self._output(
+            self._sort_groups_alphabetically(
+                self._group_entries_by_project(zebra_entries)
+            )
+        )
 
-            if zebra_entry.project not in projects:
-                projects[zebra_entry.project] = []
+    def _get_zebra_entries(self, report_url):
+        """query zebra to retrieve entries"""
+        zebra = self.get_zebra_remote()
+        zebra_json_result = zebra.get_data(report_url)
+        zebra_entries = zebra.parse_entries(zebra_json_result)
+        return zebra_entries
 
-            projects[zebra_entry.project].append(zebra_entry)
+    def _group_entries_by_project(self, entries):
+        """group entries by project"""
+        return ZebraManager.group_by_project(entries)
 
+    def _sort_groups_alphabetically(self, projects):
+        """sort grouped entries alphabetically"""
+        return sorted(projects.items(), key=lambda kv: kv[0])
+
+    def _output(self, projects):
         # formated output
         print ''
         print 'Projects:'
         zebra_url = self.secret.get_zebra('url')
-        for name,entries in projects.items():
+        for name,entries in projects:
             print '- %s' % (name)
 
             total = 0
             template = "  {time:<12} {username:<23} {description:<45} ({url:<15})"
             for entry in entries:
-                d = {}
+                d = dict()
                 d['time'] = str(entry.time) + ' hours'
                 d['username'] = entry.username
                 d['description'] = entry.description[:44]
-                d['url'] = zebra_url + '/timesheet/' + str(entry.id)
+                d['url'] = ZebraHelper.get_activity_url(zebra_url, entry.id)
                 print template.format(**d)
                 total += entry.time
 
@@ -247,54 +280,71 @@ class AddSprintCommand(BaseCommand):
     Usage: add-sprint
 
     """
+    # @todo: to be tested
     def run(self, args):
-        # add sprint data
-        sprint = {}
+        name = InputHelper.get_user_input(
+            'Give me a nickname for your sprint (no special chars): ',
+            str
+        )
 
-        name = raw_input('Give me a nickname for your sprint (no special chars): ')
+        sprint = dict()
+        sprint['commited_man_days'] = InputHelper.get_user_input(
+            'Give me the number of commited man days for this sprint: ',
+            float
+        )
 
-        nb_mandays = float(raw_input('Give me the number of commited man days for this sprint: '))
-        sprint['commited_man_days'] = nb_mandays
+        # add zebra/jira data
+        sprint['zebra'] = self._get_zebra_data()
+        sprint['jira'] = self._get_jira_data()
 
-        # add zebra data
-        start = raw_input('Give me the sprint start date (as 2013.02.25): ')
-        [y,m,d] = map(int, start.split('.'))
-        start_date = datetime.date(y,m,d)
-        end = raw_input('Give me the sprint end date (as 2013.02.25): ')
-        [y,m,d] = map(int, end.split('.'))
-        end_date = datetime.date(y,m,d)
+        # write to config file
+        AppContainer.config.create_sprint(name, sprint)
+
+    def _get_zebra_data(self):
+        start_date = InputHelper.get_user_input('Give me the sprint start date (as 2013.02.25): ', 'date')
+        end_date = InputHelper.get_user_input('Give me the sprint end date (as 2013.02.25): ', 'date')
 
         # todo: improve this part
-        client = raw_input('Give me the zebra project id (if you use Taxi, just do `taxi search client_name` else check in Zebra. It should be a four digit integer): ')
-        client_id = int(client)
+        client_id = InputHelper.get_user_input(
+            'Give me the zebra project id (if you use Taxi, just do `taxi search client_name` else check in Zebra. It should be a four digit integer): ',
+            int
+        )
 
-        zebra_data = {}
+        zebra_data = dict()
         zebra_data['activities'] = '*'
         zebra_data['users'] = '*'
         zebra_data['start_date'] = start_date
         zebra_data['end_date'] = end_date
         zebra_data['client_id'] = client_id
-        sprint['zebra'] = zebra_data
+
+        return zebra_data
+
+    def _get_jira_data(self):
+        story = InputHelper.get_user_input(
+            'Give me the jira id of any story in your sprint (something like \'jlc-110\'): ',
+            str
+        ).upper()
+        story_data = self.get_story_data(story)
 
         jira_data = {}
-        story = raw_input('Give me the jira id of any story in your sprint (something like \'jlc-110\'): ').upper()
-        command = RetrieveJiraInformationForConfigCommand()
-        story_data = command.get_story_data(story)
-
         jira_data['project_id'] = int(story_data['project_id'])
         jira_data['sprint_name'] = story_data['clean_sprint_name']
-        sprint['jira'] = jira_data
 
-        # write to config file
-        AppContainer.config.create_sprint(name, sprint)
+        return jira_data
+
 
 class RetrieveJiraInformationForConfigCommand(BaseCommand):
     """
-    Usage: jira-config-helper [story-id] (ie: get-project-id JLC-1)
+    Usage: jira-config-helper [story-id] (ie: jira-config-helper jlc-112)
 
     """
     def run(self, args):
-        story_id = args.optional_argument[0].upper()
+        try:
+            story_id = args.optional_argument[0].upper()
+        except:
+            raise InputParametersError('Specify a story id, something like \'jira-config-helper jlc-112\'')
+
+        # retrieve data from jira
         story_data = self.get_story_data(story_id)
 
         print ''
@@ -304,13 +354,6 @@ class RetrieveJiraInformationForConfigCommand(BaseCommand):
         print 'sprint name: %s' % (story_data['sprint_name'])
         print 'sprint name for config: %s' % (story_data['clean_sprint_name'])
 
-    def get_story_data(self, story_id):
-        jira = JiraRemote(self.secret.get_jira('url'), self.secret.get_jira('username'), self.secret.get_jira('password'))
-        url = jira.get_url_for_project_lookup(story_id)
-        xml_data = jira.get_data(url)
-        story_data = jira.parse_story(xml_data)
-        story_data['clean_sprint_name'] = story_data['sprint_name'].replace(' ', '+')
-        return story_data
 
 class ListCommand(BaseCommand):
     """
@@ -378,20 +421,26 @@ class TestInstallCommand(BaseCommand):
         print file_content
         print 'end'
 
+
 class SprintBurnUpCommand(BaseCommand):
     """
     Usage:  sprint-burnup [sprint_name]
+            sprint-burnup [sprint_name] [-d 2013.01.25]
+            sprint-burnup (if _current is set)
+
+            date defaults to yesterday
 
     """
 
     def run(self, args):
-        # make sure the sprint specified exist in config
-        user_sprint_name = args.optional_argument[0]
-        sprint = self.config.get_sprint(user_sprint_name)
+        sprint_name = self.get_sprint_name_from_args_or_current(args.optional_argument)
+        sprint = self.ensure_sprint_in_config(sprint_name)
+
+        # end date for the graph
         try:
-            print "Sprint %s found in config" % (sprint.name)
+            graph_end_date = dateutil.parser.parse(args.date[0]).date()
         except:
-            raise SyntaxError("Sprint %s not found. Make sure it's defined in your settings file" % (user_sprint_name))
+            graph_end_date = datetime.date.today() - datetime.timedelta(days = 1)
 
         # start fetching zebra data
         print 'Start fetching Zebra'
@@ -453,11 +502,12 @@ class SprintBurnUpCommand(BaseCommand):
         print ''
         print 'Zebra output per day:'
 
-        # get all sprint days until today
-        days = sprint.get_all_days(True)
+        # get all sprint days
+        days = sprint.get_all_days(False)
         for date in days:
             total_time = 0
             time_without_forced = 0
+
             try:
                 zebra_day = zebra_days[str(date)]
                 print date
@@ -488,14 +538,17 @@ class SprintBurnUpCommand(BaseCommand):
                 print ''
 
             # get jira achievement for this day (bv/sp done)
-            jira_data = jira_entries.get_achievement_for_day(str(date));
+            jira_data = jira_entries.get_achievement_for_day(str(date))
 
             # if we have some time, story closed for this day or planned time, add it to graph data
             if jira_data is not None or total_time != 0 or planned_time is not None:
                 graph_entry = GraphEntry()
-                graph_entry.time = total_time
+                graph_entry.date = date
+
                 if planned_time is not None:
                     graph_entry.planned_time = planned_time
+
+                graph_entry.time = total_time
                 try:
                     graph_entry.story_points = jira_data['sp']
                     graph_entry.business_value = jira_data['bv']
@@ -503,7 +556,7 @@ class SprintBurnUpCommand(BaseCommand):
                     pass
                 graph_entries[str(date)] = graph_entry
 
-        data = graph_entries.get_ordered_data()
+        data = graph_entries.get_ordered_data(graph_end_date)
 
         # values needed to build the graph
         commited_values = {}
@@ -511,12 +564,41 @@ class SprintBurnUpCommand(BaseCommand):
         commited_values['businessValue'] = jira_entries.get_commited_business_value()
         commited_values['manDays'] = sprint.commited_man_days
 
+
         # values needed to build the graph
         sprint_data = {}
         sprint_data['startDate'] = sprint.get_zebra_data('start_date').strftime('%Y-%m-%d')
         sprint_data['endDate'] = sprint.get_zebra_data('end_date').strftime('%Y-%m-%d')
+        sprint_data['graphEndDate'] = graph_end_date.strftime('%Y-%m-%d')
 
         # write the graph
         print 'Starting output'
         output = SprintBurnUpOutput(AppContainer.secret.get_output_dir())
         output.output(sprint.name, data, commited_values, sprint_data)
+
+
+class GetLastZebraDayCommand(BaseCommand):
+    """
+    Usage:  get-last-zebra-day [sprint_name]
+
+    """
+
+    def run(self, args):
+        sprint_name = self.get_sprint_name_from_args_or_current(args.optional_argument)
+        sprint = self.ensure_sprint_in_config(sprint_name)
+
+        url = ZebraHelper.get_zebra_url_for_sprint_last_day(sprint)
+
+        # fetch zebra data
+        last_zebra_entry = self.get_last_zebra_entry(url)
+
+        # get last entry and return its date
+        print ''
+        print 'last date in sprint \'%s\': %s' % (sprint.name, last_zebra_entry.readable_date())
+
+    def get_last_zebra_entry(self, url):
+        zebra = self.get_zebra_remote()
+        zebra_json_result = zebra.get_data(url)
+        zebra_entries = zebra.parse_entries(zebra_json_result)
+        return zebra_entries[-1]
+

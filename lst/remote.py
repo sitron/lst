@@ -36,9 +36,6 @@ class JiraRemote(Remote):
         self.username = username
         self.password = password
 
-    def get_url_for_project_lookup(self, story_id):
-        return "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=key+%3D+'" + str(story_id) + "'&tempMax=1000"
-
     def _get_request(self, url, body = None, headers = {}):
         if 'User-Agent' not in headers:
             headers['User-Agent'] = 'LST Jira Client';

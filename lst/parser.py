@@ -3,21 +3,32 @@ import datetime
 import dateutil
 import os
 
-from models import Sprint
-from models import AppContainer
+from models import Sprint, AppContainer
+from errors import FileNotFoundError, SyntaxError
 
 class SecretParser:
-    def __init__(self, url):
+    def __init__(self):
+        self.zebra_data = None
+        self.jira_data = None
+        self.output_dir = None
+
+    def parse(self, url):
         try:
             data_file = open(url)
             settings = yaml.load(data_file)
             data_file.close()
+        except IOError as e:
+            raise FileNotFoundError('Please make sure you have a file called .lst-secret.yml in your home directory (see README, setup section)')
 
+        self.extract_data(settings)
+
+    def extract_data(self, settings):
+        try:
             self.zebra_data = settings['zebra']
             self.jira_data = settings['jira']
             self.output_dir = settings['output_dir']
-        except IOError as e:
-            raise Exception('Please make sure you have a file called .lst-secret.yml in your home directory (see README, setup section)')
+        except KeyError as e:
+            raise SyntaxError('Your .lst-secret.yml does not contain all necessary information (key problem: %s)' % (e))
 
     def get_zebra(self, key):
         return self.zebra_data[key]
@@ -86,13 +97,21 @@ class ConfigParser:
             pass
         return sprint
 
-    def get_sprint(self, name):
+    def get_sprint(self, name = None):
         sprint = None
-        for k,v in self.data['sprints'].items():
-            if k == name:
-                sprint = self.parse_sprint(k, v)
-                break
+        if name is None:
+            name = self.get_current_sprint_name()
+
+        if name is not None:
+            for k,v in self.data['sprints'].items():
+                if k == name:
+                    sprint = self.parse_sprint(k, v)
+                    break
         return sprint
+
+    def get_current_sprint_name(self):
+        sprint_name = self.data.get('_current')
+        return sprint_name
 
     def get_sprints(self):
         return self.data['sprints']

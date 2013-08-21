@@ -1,13 +1,182 @@
+/**
+ * Manage data for charts (pies, lines) and results
+ *
+ * @return {Object} public methods.
+ */
+var DataManager = function() {
+    var fullData,
+        commitedValues;
+
+    /**
+     * Set data
+     *
+     * @param {array} data Full list of data objects.
+     */
+    function setData(data) {
+        fullData = data;
+    }
+
+    /**
+     * Get full data list
+     *
+     * @return {Array} full data list.
+     */
+    function getData() {
+        return fullData;
+    }
+
+    /**
+     * Set commited values
+     *
+     * @param {object} values Object of commited values.
+     */
+    function setCommitedValues(values) {
+        commitedValues = values;
+    }
+
+    /**
+     * Get commited values
+     *
+     * @return {Object} commited values.
+     */
+    function getCommitedValues() {
+        return commitedValues;
+    }
+
+    /**
+     * Return an array with only data for the corresponding 'valueName'
+     * Needed as we don't want all the graphs to stop at the same x point
+     *
+     * @param {string} valueName Name of the value to map.
+     * @return {array} list of data objects with only the specific values.
+     */
+    function getDataPerGraph(valueName) {
+        specificData = [];
+        for (var i = 0; i < fullData.length; i++) {
+            if (typeof(fullData[i][valueName]) != 'undefined') {
+                specificData.push({
+                    'date': fullData[i].date,
+                    'value': fullData[i][valueName]
+                });
+            }
+        }
+        return specificData;
+    }
+
+    /**
+     * Get the max value for a specific graph
+     *
+     * @param {String} valueName Name of property to consider.
+     * @return {Integer} max value.
+     */
+    function getMaxPerGraph(valueName) {
+        var values = fullData.map(function(d) {
+            return d[valueName];
+        });
+        return d3.max(values);
+    }
+
+    /**
+     * Get the result for a specific graph
+     *
+     * @param {String} valueName Name of property to consider.
+     * @return {Integer} result.
+     */
+    function getResultPerGraph(valueName) {
+        return getMaxPerGraph(valueName) / commitedValues[valueName];
+    }
+
+    /**
+     * Get the result in percent for a specific graph
+     *
+     * @param {String} valueName Name of property to consider.
+     * @return {Integer} result in percent.
+     */
+    function getRoundedResultPerGraph(valueName) {
+        return Math.round(getResultPerGraph(valueName) * 100);
+    }
+
+    /**
+     * Extract date data from fullData
+     *
+     * @return {Array} List of dates.
+     */
+    function getDates() {
+        return fullData.map(function(d) {
+            return d.date;
+        });
+    }
+
+    /**
+     * Get biggest result ratio
+     * only used if more than 100% achieved
+     *
+     * @return {number} best result.
+     */
+    function getBiggestRatio() {
+        var biggestRatio =
+            Math.max(
+                Math.max(
+                    getResultPerGraph('manDays'),
+                    getResultPerGraph('storyPoints')
+                ),
+                getResultPerGraph('businessValue')
+            );
+        return biggestRatio;
+    }
+
+    /**
+     * Get max date
+     *
+     * @return {date} max date.
+     */
+    function getMaxDate() {
+        return new Date(d3.max(getDates()));
+    }
+
+    /**
+     * check if specific graph is empty
+     *
+     * @param {String} valueName Name of property to consider.
+     * @return {Boolean} true is empty.
+     */
+    function isGraphEmpty(valueName) {
+        return getMaxPerGraph(valueName) == 0;
+    }
+
+    return {
+        'setData': setData,
+        'getData': getData,
+        'setCommitedValues': setCommitedValues,
+        'getCommitedValues': getCommitedValues,
+        'getDataPerGraph': getDataPerGraph,
+        'getMaxPerGraph': getMaxPerGraph,
+        'getResultPerGraph': getResultPerGraph,
+        'getRoundedResultPerGraph': getRoundedResultPerGraph,
+        'getMaxDate': getMaxDate,
+        'getDates': getDates,
+        'getBiggestRatio': getBiggestRatio,
+        'isGraphEmpty': isGraphEmpty
+    };
+
+}();
+
+/**
+ * BurnupChart Object
+ *
+ * @return {Object}  public methods.
+ */
 var BurnupChart = function() {
-    function create(data, commitedValues) {
-        data.unshift({'storyPoints': 0, 'manDays': 0, 'date': '0'});
+
+    /**
+     * Create the chart
+     */
+    function create() {
         var key = function(d) {return d.manDays},
-            dataToDates = function(d) {return d.date},
-            dates = data.map(dataToDates),
             height = 800,
             width = 800,
-            maxDate = new Date(d3.max(dates)),
             endDate = new Date(sprint.endDate),
+            graphEndDate = new Date(sprint.graphEndDate),
             dateFormat = d3.time.format('%a %d'),
             dateLongFormat = d3.time.format('%Y-%m-%d');
 
@@ -21,8 +190,9 @@ var BurnupChart = function() {
 
         // to show a nicer graph we draw all days till the end of the sprint
         // not only past ones
-        allDates = dates.slice(0);
-        if (maxDate < endDate) {
+        allDates = DataManager.getDates().slice(0);
+        if (DataManager.getMaxDate() < endDate) {
+            maxDate = DataManager.getMaxDate();
             while (maxDate < endDate) {
                 maxDate.setDate(maxDate.getDate() + 1);
                 if (maxDate.getDay() != 6 && maxDate.getDay() != 0) {
@@ -30,6 +200,8 @@ var BurnupChart = function() {
                 }
             }
         }
+        // add x-axis origin
+        allDates.unshift('0');
 
         xScale = d3.scale.ordinal()
             .domain(allDates)
@@ -60,94 +232,73 @@ var BurnupChart = function() {
             .attr('transform', 'translate(0, ' + height + ')')
             .call(xAxis);
 
+        var commitedValues = DataManager.getCommitedValues();
 
-        // final results and biggestRatio calculation
-        // biggest ratio used if more than 100% was achieved
-        // (in either BV, SP, MD)
-        result = data[data.length - 1];
-        biggestRatio =
-            Math.max(
-                Math.max(
-                    (result.manDays / commitedValues.manDays),
-                    (result.storyPoints / commitedValues.storyPoints)
-                ),
-                (result.businessValue / commitedValues.businessValue)
-            );
-
-        // add planned graph only if necessary
-        if (result.planned != 0) {
+        // by default there is no commited result for "planned"
+        if (!DataManager.isGraphEmpty('planned')) {
             commitedValues.planned = commitedValues.manDays;
-
-            _addGraph(
-                data,
-                'planned',
-                'planned',
-                chart,
-                'right',
-                axisContainer,
-                height,
-                xScale,
-                undefined,
-                commitedValues,
-                biggestRatio);
         }
 
-        // add MD graph
-        _addGraph(
-            data,
-            'manDays',
-            'man-days',
-            chart,
-            'left',
-            axisContainer,
-            height,
-            xScale,
-            0,
-            commitedValues,
-            biggestRatio);
+        var graphsProps = [
+            {
+                'prop': 'planned',
+                'graphName': 'planned',
+                'orientation': 'right',
+                'position': undefined
+            },
+            {
+                'prop': 'manDays',
+                'graphName': 'man-days',
+                'orientation': 'left',
+                'position': 0
+            },
+            {
+                'prop': 'storyPoints',
+                'graphName': 'story-points',
+                'orientation': 'left',
+                'position': width
+            },
+            {
+                'prop': 'businessValue',
+                'graphName': 'business-value',
+                'orientation': 'right',
+                'position': width
+            }
+        ];
 
-        // add SP graph
-        _addGraph(
-            data,
-            'storyPoints',
-            'story-points',
-            chart,
-            'left',
-            axisContainer,
-            height,
-            xScale,
-            width,
-            commitedValues,
-            biggestRatio);
-
-        // add BV graph
-        _addGraph(
-            data,
-            'businessValue',
-            'business-value',
-            chart,
-            'right',
-            axisContainer,
-            height,
-            xScale,
-            width,
-            commitedValues,
-            biggestRatio);
+        // add all graphs
+        for (var i = 0; i < graphsProps.length; i++) {
+            if (!DataManager.isGraphEmpty(graphsProps[i].prop)) {
+                _addGraph(
+                    DataManager.getDataPerGraph(graphsProps[i].prop),
+                    graphsProps[i].prop,
+                    graphsProps[i].graphName,
+                    chart,
+                    graphsProps[i].orientation,
+                    axisContainer,
+                    height,
+                    xScale,
+                    graphsProps[i].position,
+                    commitedValues,
+                    DataManager.getBiggestRatio()
+                );
+            }
+        }
     };
 
     /**
      * Add a new line graph and corresponding y axis
      *
-     * @param {Array}    data (contains all data, for all graphs).
-     * @param {String}   prop data property to use for graph population.
-     * @param {String}   name graph name (used for css classes).
-     * @param {Svg}      chart svg container for chart.
-     * @param {String}   orientation axis labels orientation.
-     * @param {Svg}      axisContainer svg container for axis.
-     * @param {Integer}  height of the graph (to create scale).
-     * @param {Function} xScale mapping on x axis.
+     * @param {Array}    data List of data objects.
+     * @param {String}   prop Data property to use for graph population.
+     * @param {String}   name Graph name (used for css classes).
+     * @param {Svg}      chart Svg container for chart.
+     * @param {String}   orientation Axis labels orientation.
+     * @param {Svg}      axisContainer Svg container for axis.
+     * @param {Integer}  height Height of the graph (to create scale).
+     * @param {Function} xScale xScale mapping on x axis.
      * @param {Number}   position x position of the axis.
-     * @param {Object}   object commited values.
+     * @param {Object}   commitedValues commited values.
      * @param {Number}   biggestRatio ratio of the most successful axe
      *                   (only important if sprint result > 100%).
      */
@@ -164,11 +315,17 @@ var BurnupChart = function() {
             commitedValues,
             biggestRatio) {
 
-        var max = biggestRatio > 1 ?
-                biggestRatio * commitedValues[prop] : commitedValues[prop],
-            yScale,
+        var yScale,
             graph,
-            yAxis;
+            yAxis,
+            max = biggestRatio > 1 ?
+                biggestRatio * commitedValues[prop] : commitedValues[prop];
+
+        // add y-axis origin
+        data.unshift({
+            'value': 0,
+            'date': '0'
+        });
 
         yScale = d3.scale.linear()
             .domain([0, max])
@@ -182,7 +339,7 @@ var BurnupChart = function() {
             .attr('class', 'chart-line ' + name)
             .attr('d', d3.svg.line()
                 .x(function(d) { return xScale(d.date); })
-                .y(function(d) { return yScale(d[prop] || 0); })
+                .y(function(d) { return yScale(d.value || 0); })
             );
 
         graph.selectAll('.point')
@@ -191,7 +348,7 @@ var BurnupChart = function() {
             .attr('class', 'point')
             .attr('r', 4)
             .attr('cx', function(d) {return xScale(d.date);})
-            .attr('cy', function(d) {return yScale(d[prop] || 0);});
+            .attr('cy', function(d) {return yScale(d.value || 0);});
 
         if (position != undefined) {
             yAxis = d3.svg.axis()
@@ -205,7 +362,9 @@ var BurnupChart = function() {
         }
     }
 
-    return {'create': create};
+    return {
+        'create': create
+    };
 }();
 
 
@@ -248,14 +407,18 @@ var PieChart = function() {
             .attr('d', arc);
     }
 
-    function displayResult(result, selector) {
+    function displayPercentResult(result, selector) {
         $(selector).text(result + ' %');
     }
 
+    function displayResult(result, commit, selector) {
+        $(selector).text(result + ' / ' + commit);
+    }
 
     return {
         'create': create,
-        'displayResult': displayResult
+        'displayResult': displayResult,
+        'displayPercentResult': displayPercentResult
     };
 }();
 
@@ -273,32 +436,48 @@ var SprintVelocity = function() {
 }();
 
 $(function() {
-    var last,
-        mdResult,
+    var mdResult,
         spResult,
         bvResult;
 
-    last = data[data.length - 1];
-    mdResult = Math.round(
-        (last.manDays / commitedValues.manDays) * 100
+    DataManager.setData(data);
+    DataManager.setCommitedValues(commitedValues);
+
+    mdResult = DataManager.getRoundedResultPerGraph(
+        'manDays'
     );
-    spResult = Math.round(
-        (last.storyPoints / commitedValues.storyPoints) * 100
+    spResult = DataManager.getRoundedResultPerGraph(
+        'storyPoints'
     );
-    bvResult = Math.round(
-        (last.businessValue / commitedValues.businessValue) * 100
+    bvResult = DataManager.getRoundedResultPerGraph(
+        'businessValue'
     );
 
     // create the main chart
-    BurnupChart.create(data, commitedValues);
+    BurnupChart.create();
 
     // create the 3 result pie charts on top
     PieChart.create(mdResult, '#graph-results .man-days .chart');
-    PieChart.displayResult(mdResult, '#graph-results .man-days .value');
+    PieChart.displayPercentResult(mdResult, '#graph-results .man-days .value-percent');
+    PieChart.displayResult(
+        DataManager.getMaxPerGraph('manDays').toFixed(1),
+        parseInt(DataManager.getCommitedValues()['manDays']),
+        '#graph-results .man-days .value'
+    );
     PieChart.create(spResult, '#graph-results .story-points .chart');
-    PieChart.displayResult(spResult, '#graph-results .story-points .value');
+    PieChart.displayPercentResult(spResult, '#graph-results .story-points .value-percent');
+    PieChart.displayResult(
+        DataManager.getMaxPerGraph('storyPoints'),
+        DataManager.getCommitedValues()['storyPoints'],
+        '#graph-results .story-points .value'
+    );
     PieChart.create(bvResult, '#graph-results .business-value .chart');
-    PieChart.displayResult(bvResult, '#graph-results .business-value .value');
+    PieChart.displayPercentResult(bvResult, '#graph-results .business-value .value-percent');
+    PieChart.displayResult(
+        DataManager.getMaxPerGraph('businessValue'),
+        DataManager.getCommitedValues()['businessValue'],
+        '#graph-results .business-value .value'
+    );
 
     // display velocity on top
     SprintVelocity.display(
