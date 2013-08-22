@@ -9,25 +9,25 @@ var ResultPerStoryChart = function() {
      * Create the chart
      */
     function create() {
-        var key = function(d) {return d.manDays},
+        var
             height = 400,
             width = 800,
-            barWidth = 25,
+            barWidth = 30,
+            barSpace = 2,
             xScale,
+            yScale,
             chart,
             xAxis,
+            yAxis,
             axisContainer,
-            result;
+            storyIds = data.map(function(d) {return d.id;}),
+            storyBurnt = data.map(function(d) {return d.hours_burnt;}),
+            storyPlanned = data.map(function(d) {return d.hours_planned;}),
+            maxBurnt = d3.max(storyBurnt),
+            maxPlanned = d3.max(storyPlanned),
+            max = Math.max(maxBurnt, maxPlanned);
 
-        console.log(data);
-
-        storyIds = data.map(function(d) {return d.id;});
-        storyBurnt = data.map(function(d) {return d.hours_burnt;});
-        storyPlanned = data.map(function(d) {return d.hours_planned;});
-        maxBurnt = d3.max(storyBurnt);
-        maxPlanned = d3.max(storyPlanned);
-        max = Math.max(maxBurnt, maxPlanned);
-
+        // scales
         xScale = d3.scale.ordinal()
             .domain(storyIds)
             .rangePoints([0, width], 1)
@@ -36,6 +36,7 @@ var ResultPerStoryChart = function() {
             .domain([0, max])
             .range([height, '0'])
 
+        // chart container
         chart = d3.select('#graph').append('svg')
             .attr('class', 'chart')
             .attr('width', width + 100)
@@ -43,6 +44,7 @@ var ResultPerStoryChart = function() {
             .append('g')
             .attr('transform', 'translate(40, 20)');
 
+        // axis
         xAxis = d3.svg.axis()
             .scale(xScale)
             .orient('bottom');
@@ -63,39 +65,34 @@ var ResultPerStoryChart = function() {
             .attr('class', 'axis')
             .call(yAxis);
 
-        chart.selectAll('rect .burnt')
-            .data(data)
-            .enter().append('svg:rect')
-            .attr('class', 'rect burnt')
-            .attr('x', function(d) {return xScale(d.id) - (barWidth + 1);})
-            .attr('y', function(d) {return yScale(d.hours_burnt);})
-            .attr('width', barWidth)
-            .attr('height', function(d) {return height - yScale(d.hours_burnt)});
+        // series
+        var properties = [
+            {name: 'hours_burnt', position: -(barWidth + barSpace)},
+            {name: 'hours_planned', position: barSpace}
+        ];
 
-        chart.selectAll('rect .planned')
-            .data(data)
-            .enter().append('svg:rect')
-            .attr('class', 'rect planned')
-            .attr('x', function(d) {return xScale(d.id) + 1})
-            .attr('y', function(d) {return yScale(d.hours_planned);})
-            .attr('width', barWidth)
-            .attr('height', function(d) {return height - yScale(d.hours_planned)});
+        properties.forEach(function(item) {
+            container = chart.selectAll('.bar-container.' + item.name)
+                .data(data)
+                .enter().append('svg:g')
+                .attr('class', 'bar-container ' + item.name)
+                .attr('transform', function(d) {return 'translate(' + (xScale(d.id) + item.position) + ', ' + height + ')'});
 
-        chart.selectAll('text .planned')
-            .data(data)
-            .enter().append('text')
-            .attr('class', 'label planned')
-            .attr('x', function(d) {return xScale(d.id) + 4})
-            .attr('y', height - 5)
-            .text(function(d) {return d3.round(d.hours_planned)});
+            container
+                .append('svg:rect')
+                .attr('class', 'rect ' + item.name)
+                .attr('width', barWidth)
+                .attr('height', function(d) {return height - yScale(d[item.name]);})
+                .attr('y', function(d) {return - (height - yScale(d[item.name]));});
 
-        chart.selectAll('text .burnt')
-            .data(data)
-            .enter().append('text')
-            .attr('class', 'label planned')
-            .attr('x', function(d) {return xScale(d.id) - barWidth + 3})
-            .attr('y', height - 5)
-            .text(function(d) {return d3.round(d.hours_burnt)});
+            container
+                .append('text')
+                .attr('class', 'label ' + item.name)
+                .attr('x', barWidth / 2)
+                .attr('y', -10)
+                .attr('text-anchor', 'middle')
+                .text(function(d) {return d3.round(d[item.name])});
+        });
     }
 
     return {

@@ -87,18 +87,13 @@
 }
 
 /* Result per story */
-.chart rect.burnt {
-    fill: #333;
+.chart rect.hours_burnt {
+    fill: orange;
 }
-.chart rect.planned {
-    fill: #999;
+.chart rect.hours_planned {
+    fill: lightgrey;
 }
 .chart text.label {
-    fill: #fff;
+    fill: #333;
     font-weight: bold;
 }
-.chart text.label.burnt {
-    fill: #fff;
-    font-weight: bold;
-}
-
