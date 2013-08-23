@@ -44,27 +44,6 @@ var ResultPerStoryChart = function() {
             .append('g')
             .attr('transform', 'translate(40, 20)');
 
-        // axis
-        xAxis = d3.svg.axis()
-            .scale(xScale)
-            .orient('bottom');
-
-        yAxis = d3.svg.axis()
-            .scale(yScale)
-            .orient('left');
-
-        axisContainer = chart.append('g')
-            .attr('class', 'axis-container');
-
-        axisContainer.append('g')
-            .attr('class', 'axis')
-            .attr('transform', 'translate(0, ' + height + ')')
-            .call(xAxis);
-
-        axisContainer.append('g')
-            .attr('class', 'axis')
-            .call(yAxis);
-
         // series
         var properties = [
             {name: 'hours_burnt', position: -(barWidth + barSpace)},
@@ -93,6 +72,27 @@ var ResultPerStoryChart = function() {
                 .attr('text-anchor', 'middle')
                 .text(function(d) {return d3.round(d[item.name])});
         });
+
+        // axis
+        xAxis = d3.svg.axis()
+            .scale(xScale)
+            .orient('bottom');
+
+        yAxis = d3.svg.axis()
+            .scale(yScale)
+            .orient('left');
+
+        axisContainer = chart.append('g')
+            .attr('class', 'axis-container');
+
+        axisContainer.append('g')
+            .attr('class', 'axis')
+            .attr('transform', 'translate(0, ' + height + ')')
+            .call(xAxis);
+
+        axisContainer.append('g')
+            .attr('class', 'axis')
+            .call(yAxis);
     }
 
     return {
