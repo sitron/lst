@@ -164,58 +164,58 @@ class ResultPerStoryCommand(BaseCommand):
         if len(zebra_entries) == 0:
             return
 
-        # group results by story
-        results = {}
+        # group zebra results by story
+        zebra_values = {}
         total_hours = 0
         for entry in zebra_entries:
-            story = None if regex.match(entry.description) is None else regex.findall(entry.description)[0]
-            if story is None:
-                try:
-                    results['other'] += entry.time
-                except KeyError:
-                    results['other'] = entry.time
-            else:
-                try:
-                    results[str(story)] += entry.time
-                except KeyError:
-                    results[str(story)] = entry.time
+            story_id = None if regex.match(entry.description) is None else regex.findall(entry.description)[0]
+            if story_id is None:
+                story_id = 'other'
+            try:
+                zebra_values[str(story_id)] += entry.time
+            except KeyError:
+                zebra_values[str(story_id)] = entry.time
             total_hours += entry.time
 
-        # sort results
-        result_list = sorted([(k, v) for (k, v) in results.items()], key = lambda x: x[1], reverse = True)
+        # merge zebra/jira data
+        jira_keys = jira_values.keys()
+        zebra_keys = zebra_values.keys()
+        all_keys = jira_keys + list(set(zebra_keys) - set(jira_keys))
 
-        data = [];
+        # create an object to hold all values for js
+        js_data = [];
+
         print ''
         print 'Results (planned velocity %s):' % (str(velocity))
-        for story in result_list:
-            md_burnt = story[1] / 8
-            try:
+        for story_id in all_keys:
+            hours_burnt = zebra_values.get(story_id, 0)
+            md_burnt = hours_burnt / 8
+            planned_story_points = jira_values.get(story_id, 0)
+            planned_md = planned_story_points / velocity
+            planned_hours = planned_md * 8
 
-                planned_md = jira_values[story[0]] / velocity
-                planned_hours = planned_md * 8
-                result_percent = (md_burnt / planned_md) * 100
-            except KeyError:
-                planned_md = 0
-                planned_hours = 0
-                result_percent = 0
-            print '%s \t%.2f/%.1f MD\t(%d/%d hours)\t%d%%' % (story[0], md_burnt, planned_md, story[1], planned_hours, result_percent)
-            o = {
-                'id': story[0],
+            result_percent = 0 if planned_md == 0 else (md_burnt / planned_md) * 100
+
+            print '%s \t%.2f/%.1f MD\t(%d/%d hours)\t%d%%' % (story_id, md_burnt, planned_md, hours_burnt, planned_hours, result_percent)
+
+            # add to js data object
+            js_data.append({
+                'id': story_id,
                 'md_burnt': md_burnt,
                 'md_planned': planned_md,
-                'hours_burnt': story[1],
+                'hours_burnt': hours_burnt,
                 'hours_planned': planned_hours,
                 'result_percent': result_percent
-            }
-            data.append(o)
+            })
 
         print ''
         print 'Total\t%.2f/%.1f MD\t(%d/%d hours)\t%d%%' % (total_hours / 8, commit, total_hours, commit * 8, (total_hours / (commit * 8)) * 100)
+        print ''
 
         # write the graph
         print 'Starting chart output'
         output = ResultPerStoryOutput(AppContainer.secret.get_output_dir())
-        output.output(sprint.name, data)
+        output.output(sprint.name, js_data)
 
 
 class CheckHoursCommand(BaseCommand):
