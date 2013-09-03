@@ -9,7 +9,7 @@ template_dir = os.path.join(distutils.sysconfig.get_python_lib(), 'lst', 'html_t
 
 setup(
     name = 'lst',
-    version = '0.0.4',
+    version = '1.2.0',
     packages = ['lst'],
     description = 'Liip Scrum Toolbox',
     author = 'sitron',
@@ -17,9 +17,9 @@ setup(
     url = 'https://github.com/sitron/lst',
     scripts = ['bin/lst'],
     data_files = [
-        (template_dir, ['lst/html_templates/sprint_burnup.html', 'lst/html_templates/test.html']),
+        (template_dir, ['lst/html_templates/sprint_burnup.html', 'lst/html_templates/test.html', 'lst/html_templates/result_per_story.html']),
         (os.path.join(template_dir, 'css'), ['lst/html_templates/css/graph.css']),
-        (os.path.join(template_dir, 'js'), ['lst/html_templates/js/sprint_burnup.js']),
+        (os.path.join(template_dir, 'js'), ['lst/html_templates/js/sprint_burnup.js', 'lst/html_templates/js/result_per_story.js']),
         (os.path.join(template_dir, 'js', 'vendors'), ['lst/html_templates/js/vendors/d3.v2.js', 'lst/html_templates/js/vendors/jquery.js']),
     ]
 )

@@ -1,6 +1,8 @@
 include lst/html_templates/css/graph.css
 include lst/html_templates/js/sprint_burnup.js
+include lst/html_templates/js/result_per_story.js
 include lst/html_templates/js/vendors/d3.v2.js
 include lst/html_templates/js/vendors/jquery.js
 include lst/html_templates/sprint_burnup.html
+include lst/html_templates/result_per_story.html
 include lst/html_templates/test.html
