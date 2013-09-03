@@ -118,13 +118,8 @@ class ResultPerStoryCommand(BaseCommand):
 
     """
     def run(self, args):
-        # make sure the sprint specified exist in config
-        user_sprint_name = args.optional_argument[0]
-        sprint = self.config.get_sprint(user_sprint_name)
-        try:
-            print "Sprint %s found in config" % (sprint.name)
-        except:
-            raise SyntaxError("Sprint %s not found. Make sure it's defined in your settings file" % (user_sprint_name))
+        sprint_name = self.get_sprint_name_from_args_or_current(args.optional_argument)
+        sprint = self.ensure_sprint_in_config(sprint_name)
 
         # make sure a commit prefix is defined
         prefix = sprint.get_zebra_data('commit_prefix')
