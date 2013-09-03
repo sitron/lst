@@ -181,26 +181,9 @@ sprints:
             closed_statuses:
                 {6: closed, 10008: For PO Review} # optional, what status you consider as 'closed' (used to check if a story is "closed" and to know on what date it was closed reading the story activity stream)
             ignored: ['XXX-501', 'XXX-505'] # optional, list of stories that should be ignored
-```
-If you prefer a text version:  
-the config file is a sprint dictionary, keyed by sprint name. Each sprint is defined by:
 
-* a name: it can be anything. It's just a shortcut that you'll use to run all commands (which need a sprint name)
-* a number of commited man days (integer). Self explanatory.
-* some Zebra specific settings:
-      * the zebra client id (check in Zebra, usually a 4 digits integer). You can also easily find it by running `taxi search [project_name]` if you have Taxi installed (you should!)
-      * a list of Zebra activitity ids (check Zebra) or put '*' (including the quotes) to use all activities
-      * a list of Zebra user ids (3 digits integer). You can run `lst get-user-id my_last_name` to get ids out of Zebra
-      * a start date (like 2013-01-21)
-      * a end date (like 2013-01-22)
-      * optional: you can force some static data for Zebra: for example we have an external employee that does not log any hour in Zebra and works 100%. So i know that i need to add 8 hours of work for each day. I can use a date range '2013-01-21/2013-01-25' and '+8' as time to add 8 hours to all days within the date range.
-* some Jira specific settings:
-      * optional: you can add your forecast, day by day. This is very useful if you have non linear MD consumption (everybody is off on Wednesday for ex.) so that you know if your MD consumption corresponds to reality. You can use a date range '2013-01-21/2013-01-25' or a list of dates [2013-01-21,2013-01-23] or a single date 2013-01-21 and a time value (int) in planned hours
-      * the Jira project id, usually a 5 digits integer. Run `lst jira-config-helper my_story_id` to get its project id
-      * the sprint name: the FixVersion name as seen in Jira Query Builder. Run `lst jira-config-helper my_story_id` to get its sprint name
-      * optional, nice\_identifier: if you have "Nice to have" stories in your sprint, you can specify how to recognize them (we use '(NICE)' in the story title)
-      * optional, closed_statuses: the jira statuses to consider as 'closed'. During the sprint the stories are usually not closed, so your graph would be flat until the very last day. For example we use "For PO Review" as the "closed" status. Specified as a dictionary where the keys are the status codes, and the values the status names. See the "Advanced config" in [.lst_dist.yml](.lst_dist.yml) to see how it's structured.
-      * optional, ignored: a list of stories to ignore. Specify their ids in a list ['XXX-134', 'XXX-119']. Very often we have stories in the sprint that should not be considered for the graph (closed before the sprint, out of scope.. whatever)
+_current: my_project_sprint_2 # specify default sprint to use
+```
 
 ## Power tips
 * create a _current entry at root level specifying the name of your current sprint `_current: my_sprint_name (<- this
