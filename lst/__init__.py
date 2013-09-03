@@ -20,7 +20,8 @@ available commands:
   jira-config-helper\tRetrieve some useful information about a Jira project and sprint from a story id (ie. XX-12)
   add-sprint\t\tAdds a sprint to your config file
   check-hours\t\tRetrieve all Zebra hours for a date/user(s). User is optional and can be multiple. Date is optional defaults to yesterday. If 2 dates are specified then min = start date, max = end date
-  get-last-zebra-day\tRetrieve the last Zebra day that contains a commit for this project"""
+  get-last-zebra-day\tRetrieve the last Zebra day that contains a commit for this project
+  result-per-story\t\tPrint the actual time used per story"""
 
         SETTINGS_PATH = os.path.expanduser('~/.lst.yml')
         SECRET_PATH = os.path.expanduser('~/.lst-secret.yml')
@@ -34,6 +35,7 @@ available commands:
             'add-sprint': commands.AddSprintCommand,
             'check-hours': commands.CheckHoursCommand,
             'get-last-zebra-day': commands.GetLastZebraDayCommand,
+            'result-per-story': commands.ResultPerStoryCommand,
         }
 
         # define arguments and options

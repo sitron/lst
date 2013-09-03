@@ -9,6 +9,7 @@ from datetime import datetime
 
 from models import AppContainer
 
+
 class BaseOutput(object):
     """Base class for all output classes"""
 
@@ -27,6 +28,7 @@ class BaseOutput(object):
         data_output.write(json.dumps(data))
         data_output.close()
 
+
 class TemplatedOutput(BaseOutput):
     """Base class for output which need access to predefined html templates"""
 
@@ -43,6 +45,7 @@ class TemplatedOutput(BaseOutput):
         graph_str = graph_file.read()
         graph_file.close()
         return graph_str
+
 
 class SprintBurnUpOutput(TemplatedOutput):
     """Generates sprint burnup chart"""
@@ -67,10 +70,43 @@ class SprintBurnUpOutput(TemplatedOutput):
             output_file_absolute = os.path.abspath(self.get_output_path(path))
             stream.write(
                 template.safe_substitute(
-                    template_dir_path = self.abs_template_dir_path,
+                    template_dir_path=self.abs_template_dir_path,
                     data=json.dumps(data),
                     commited_values=json.dumps(commited_values),
                     sprint=json.dumps(sprint_data)
+                )
+            )
+            stream.close()
+            print 'Check your new graph at ' + output_file_absolute
+        except Exception as e:
+            print 'Problem with the generation of the graph file', e
+
+
+class ResultPerStoryOutput(TemplatedOutput):
+    """Generates bar graph for each sprint story's result"""
+
+    def __init__(self, output_dir):
+        super(ResultPerStoryOutput, self).__init__(output_dir)
+
+    def output(self, sprint_name, data):
+        print 'Retrieving base graph'
+        try:
+            template = Template(self.get_template('result_per_story.html'))
+        except Exception as e:
+            print 'Couldnt find the base html file to print result per story', e
+
+        print 'Writing graph'
+        try:
+            path = 'result_per_story-%s-%s.html' % (
+                Helper.slugify(sprint_name),
+                datetime.now().strftime("%Y%m%d")
+            )
+            stream = self.get_output_stream(self.get_output_path(path))
+            output_file_absolute = os.path.abspath(self.get_output_path(path))
+            stream.write(
+                template.safe_substitute(
+                    template_dir_path=self.abs_template_dir_path,
+                    data=json.dumps(data),
                 )
             )
             stream.close()

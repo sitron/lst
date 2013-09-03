@@ -1,6 +1,6 @@
 from remote import ZebraRemote, JiraRemote
 from models import *
-from output import SprintBurnUpOutput
+from output import *
 from processors import SprintBurnUpJiraProcessor
 from errors import *
 from helpers import *
@@ -9,6 +9,8 @@ import sys
 import distutils.sysconfig
 import datetime
 import dateutil
+import re
+from pprint import pprint
 
 
 class BaseCommand:
@@ -95,6 +97,125 @@ class BaseCommand:
             sprint_name = self.config.get_current_sprint_name()
 
         return sprint_name
+
+    def _get_zebra_url_for_sprint_burnup(self, sprint):
+        users = sprint.get_zebra_data('users')
+        client_id = sprint.get_zebra_data('client_id')
+        activities = sprint.get_zebra_data('activities')
+        start_date = sprint.get_zebra_data('start_date')
+        end_date = sprint.get_zebra_data('end_date')
+
+        return ZebraHelper.get_zebra_url_for_activities(start_date, end_date, client_id, users, activities)
+
+    def _get_jira_url_for_sprint_burnup(self, sprint):
+        return "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=project+%3D+'" + str(sprint.get_jira_data('project_id')) + "'+and+fixVersion+%3D+'" + sprint.get_jira_data('sprint_name') + "'&tempMax=1000"
+
+
+class ResultPerStoryCommand(BaseCommand):
+    """
+    Command to check how many hours were burnt per story (within a sprint)
+    Usage:  result-per-story  [sprint-name]
+
+    """
+    def run(self, args):
+        # make sure the sprint specified exist in config
+        user_sprint_name = args.optional_argument[0]
+        sprint = self.config.get_sprint(user_sprint_name)
+        try:
+            print "Sprint %s found in config" % (sprint.name)
+        except:
+            raise SyntaxError("Sprint %s not found. Make sure it's defined in your settings file" % (user_sprint_name))
+
+        # make sure a commit prefix is defined
+        prefix = sprint.get_zebra_data('commit_prefix')
+        try:
+            regex = re.compile("^" + prefix + "(\d+)",re.IGNORECASE)
+        except:
+            raise SyntaxError("No commit prefix found in config. Make sure it's defined in your settings file")
+
+        # retrieve jira data
+        # to compare estimated story_points to actual MD consumption
+        jira = self.get_jira_remote()
+        jira_url = self._get_jira_url_for_sprint_burnup(sprint)
+        jira_xml_result = jira.get_data(jira_url)
+        jira_entries = jira.parse_stories(
+            jira_xml_result,
+            ignored = sprint.get_jira_data('ignored')
+        )
+
+        # extract the integer from the story id
+        jira_id_only_regex = re.compile("-(\d+)$")
+        jira_values = {}
+        max_story_points = 0
+        for entry in jira_entries:
+            story_id = jira_id_only_regex.findall(entry.id)[0]
+            jira_values[story_id] = entry.story_points
+            max_story_points += entry.story_points
+
+        # calculate the ideal velocity
+        commit = float(sprint.commited_man_days)
+        velocity = max_story_points / commit
+
+        # retrieve zebra data
+        zebra = ZebraRemote(self.secret.get_zebra('url'), self.secret.get_zebra('username'), self.secret.get_zebra('password'))
+        report_url = self._get_zebra_url_for_sprint_burnup(sprint)
+        zebra_json_result = zebra.get_data(report_url)
+        zebra_entries = zebra.parse_entries(zebra_json_result)
+        if len(zebra_entries) == 0:
+            return
+
+        # group zebra results by story
+        zebra_values = {}
+        total_hours = 0
+        for entry in zebra_entries:
+            story_id = None if regex.match(entry.description) is None else regex.findall(entry.description)[0]
+            if story_id is None:
+                story_id = 'other'
+            try:
+                zebra_values[str(story_id)] += entry.time
+            except KeyError:
+                zebra_values[str(story_id)] = entry.time
+            total_hours += entry.time
+
+        # merge zebra/jira data
+        jira_keys = jira_values.keys()
+        zebra_keys = zebra_values.keys()
+        all_keys = jira_keys + list(set(zebra_keys) - set(jira_keys))
+
+        # create an object to hold all values for js
+        js_data = [];
+
+        print ''
+        print 'Results (planned velocity %s):' % (str(velocity))
+        for story_id in all_keys:
+            hours_burnt = zebra_values.get(story_id, 0)
+            md_burnt = hours_burnt / 8
+            planned_story_points = jira_values.get(story_id, 0)
+            planned_md = planned_story_points / velocity
+            planned_hours = planned_md * 8
+
+            result_percent = 0 if planned_md == 0 else (md_burnt / planned_md) * 100
+
+            print '%s \t%.2f/%.1f MD\t(%d/%d hours)\t%d%%' % (story_id, md_burnt, planned_md, hours_burnt, planned_hours, result_percent)
+
+            # add to js data object
+            js_data.append({
+                'id': story_id,
+                'md_burnt': md_burnt,
+                'md_planned': planned_md,
+                'hours_burnt': hours_burnt,
+                'hours_planned': planned_hours,
+                'result_percent': result_percent
+            })
+
+        print ''
+        print 'Total\t%.2f/%.1f MD\t(%d/%d hours)\t%d%%' % (total_hours / 8, commit, total_hours, commit * 8, (total_hours / (commit * 8)) * 100)
+        print ''
+
+        # write the graph
+        print 'Starting chart output'
+        output = ResultPerStoryOutput(AppContainer.secret.get_output_dir())
+        output.output(sprint.name, js_data)
 
 
 class CheckHoursCommand(BaseCommand):
@@ -471,18 +592,6 @@ class SprintBurnUpCommand(BaseCommand):
         output = SprintBurnUpOutput(AppContainer.secret.get_output_dir())
         output.output(sprint.name, data, commited_values, sprint_data)
 
-    def _get_zebra_url_for_sprint_burnup(self, sprint):
-        users = sprint.get_zebra_data('users')
-        client_id = sprint.get_zebra_data('client_id')
-        activities = sprint.get_zebra_data('activities')
-        start_date = sprint.get_zebra_data('start_date')
-        end_date = sprint.get_zebra_data('end_date')
-
-        return ZebraHelper.get_zebra_url_for_activities(start_date, end_date, client_id, users, activities)
-
-    def _get_jira_url_for_sprint_burnup(self, sprint):
-        return "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=project+%3D+'" + str(sprint.get_jira_data('project_id')) + "'+and+fixVersion+%3D+'" + sprint.get_jira_data('sprint_name') + "'&tempMax=1000"
-
 
 class GetLastZebraDayCommand(BaseCommand):
     """
@@ -508,3 +617,4 @@ class GetLastZebraDayCommand(BaseCommand):
         zebra_json_result = zebra.get_data(url)
         zebra_entries = zebra.parse_entries(zebra_json_result)
         return zebra_entries[-1]
+

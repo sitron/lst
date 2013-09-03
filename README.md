@@ -10,6 +10,7 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 * team knows how the sprint is going on
 * PO knows how the sprint is going on (bis)
 * no more "oh sh@@ i just noticed xxx pushed all his hours on a wrong project!"
+* helps to improve estimation by displaying on what stories time was spent
 * easy installation (Python (and pip) is your friend)
 * easy setup (aka _no_ setup)
 * easy configuration (edit a yml file)
@@ -17,7 +18,7 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 * new! add MD forecast day by day with the new "planned" config param
 
 ## Installation
-* `sudo pip install git+git://github.com/sitron/lst@v1.1.1`
+* `sudo pip install git+git://github.com/sitron/lst@v1.2.0`
 * `sudo pip install -r https://raw.github.com/sitron/lst/master/requirements.txt`
 * copy the [.lst-secret_dist.yml](.lst-secret_dist.yml) file to you home (yes, click on the [link](.lst-secret_dist.yml)!), rename it to .lst-secret.yml and change your jira/zebra credentials (watch out for the file name: it's [dot]lst-secret.yml
 * create a directory somewhere on your machine where you want your graphs to be output and add its path to .lst-secret.yml 
@@ -29,6 +30,16 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 * answer the questions. This will update your config using the default settings.
 * run `lst sprint-burnup my_sprint_name` and enjoy your first graph!
 * if you want to customize your config (to limit the Zebra users to take into account, or override a value or...) have a look at the Settings section below
+
+## Check estimates correctness
+* make sure you have at least 1 sprint defined in your config (see "create your first burnup graph" above)
+* add a line `commit_prefix: xxx` in your config right under the zebra key.
+```
+zebra:
+    commit_prefix: jlc-
+    // where jlc- is how you prefix all your recorded time in Zebra
+```
+* run `lst result-per-story my_sprint_name` and enjoy a nice graph
 
 ## Check that your team mates didn't charge a wrong project
 * run `lst check-hours to get all hours pushed by all users yesterday
@@ -42,7 +53,7 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 
 ## Upgrade
 if by any chance you already installed LST before, just run:
-* `sudo pip install git+git://github.com/sitron/lst@v1.1.1 --upgrade`
+* `sudo pip install git+git://github.com/sitron/lst@v1.2.0 --upgrade`
 * special instructions for pre-0.9x users: config has changed. There is no "project" level anymore. You can easily update your config by removing the project level, and renaming your sprint index with a name property.
 
 before (prior to 0.9.0):
@@ -97,6 +108,8 @@ force:
 `lst sprint-burnup my_sprint_name -d 2013.05.01
 ### Add a sprint to your config (interactive command)
 `lst add-sprint`
+### Fetch data and display how well your stories were estimated compared to actual results
+`lst result-per-story my_sprint_name`
 ### Check that your team mates didn't charge wrong projects (date defaults to yesterday)
 `lst check-hours -u user1_id user2_id -d 23.03.2013`
 ### Test LST installation
@@ -141,6 +154,7 @@ sprints:
     my_project_sprint_2: # this is the name you'll specify when running any command
         commited_man_days: 30
         zebra:
+            commit_prefix: jlc- # prefix that you use for all hours pushed to zebra, to identify stories
             client_id: 111 # integer, zebra client id
             activities: '*' # can be either '*' (all activities) or a list of activity ids [1,2,3]
             users: [100,101,102] # can be either '*' (all users) or a list of zebra users id [1,2,3]
