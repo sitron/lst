@@ -407,14 +407,18 @@ var PieChart = function() {
             .attr('d', arc);
     }
 
-    function displayResult(result, selector) {
+    function displayPercentResult(result, selector) {
         $(selector).text(result + ' %');
     }
 
+    function displayResult(result, commit, selector) {
+        $(selector).text(result + ' / ' + commit);
+    }
 
     return {
         'create': create,
-        'displayResult': displayResult
+        'displayResult': displayResult,
+        'displayPercentResult': displayPercentResult
     };
 }();
 
@@ -454,11 +458,26 @@ $(function() {
 
     // create the 3 result pie charts on top
     PieChart.create(mdResult, '#graph-results .man-days .chart');
-    PieChart.displayResult(mdResult, '#graph-results .man-days .value');
+    PieChart.displayPercentResult(mdResult, '#graph-results .man-days .value-percent');
+    PieChart.displayResult(
+        DataManager.getMaxPerGraph('manDays').toFixed(1),
+        parseInt(DataManager.getCommitedValues()['manDays']),
+        '#graph-results .man-days .value'
+    );
     PieChart.create(spResult, '#graph-results .story-points .chart');
-    PieChart.displayResult(spResult, '#graph-results .story-points .value');
+    PieChart.displayPercentResult(spResult, '#graph-results .story-points .value-percent');
+    PieChart.displayResult(
+        DataManager.getMaxPerGraph('storyPoints'),
+        DataManager.getCommitedValues()['storyPoints'],
+        '#graph-results .story-points .value'
+    );
     PieChart.create(bvResult, '#graph-results .business-value .chart');
-    PieChart.displayResult(bvResult, '#graph-results .business-value .value');
+    PieChart.displayPercentResult(bvResult, '#graph-results .business-value .value-percent');
+    PieChart.displayResult(
+        DataManager.getMaxPerGraph('businessValue'),
+        DataManager.getCommitedValues()['businessValue'],
+        '#graph-results .business-value .value'
+    );
 
     // display velocity on top
     SprintVelocity.display(

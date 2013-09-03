@@ -1,5 +1,5 @@
 import datetime
-import dateutil
+
 
 class AppContainer(object):
     config = None
@@ -7,6 +7,27 @@ class AppContainer(object):
     dev_mode = False
     user_args = None
     pass
+
+
+class ZebraManager(object):
+
+    @classmethod
+    def group_by_project(cls, entries):
+        """
+        Group zebra entries by project id
+        :param entries:list of zebra entries as returned by ZebraRemote.parse_entries
+        :return:
+        """
+        projects = {}
+        for zebra_entry in entries:
+
+            if zebra_entry.project not in projects:
+                projects[zebra_entry.project] = []
+
+            projects[zebra_entry.project].append(zebra_entry)
+
+        return projects
+
 
 class ZebraEntry:
     def __init__(self):
@@ -20,8 +41,10 @@ class ZebraEntry:
     def readable_date(self):
         return self.date.strftime('%Y-%m-%d')
 
+
 class ZebraDays(dict):
-    def __init__(self):
+    def __init__(self, *args):
+        dict.__init__(self, args)
         self.ordered_dates = None
 
     def get_ordered_dates(self):
@@ -29,11 +52,12 @@ class ZebraDays(dict):
             self.ordered_dates = sorted(set(self.keys()))
         return self.ordered_dates
 
+
 class ZebraDay:
     def __init__(self):
         self.time = 0
-        self.entries = list() # list of ZebraEntry
-        self.day = '' # readable day (2012-07-31)
+        self.entries = list()  # list of ZebraEntry
+        self.day = ''  # readable day (2012-07-31)
         self.entries_per_user = None
 
     def get_entries_per_user(self):
@@ -42,9 +66,10 @@ class ZebraDay:
             for entry in self.entries:
                 try:
                     self.entries_per_user[entry.username] += entry.time
-                except KeyError, e:
+                except KeyError:
                     self.entries_per_user[entry.username] = entry.time
         return self.entries_per_user
+
 
 class JiraEntry:
     # status codes considered as closed
@@ -64,6 +89,7 @@ class JiraEntry:
 
     def get_close_day(self):
         return self.close_date.strftime('%Y-%m-%d')
+
 
 class JiraEntries(list):
     def __init__(self):
@@ -118,6 +144,7 @@ class JiraEntries(list):
                 self.achieved_business_value += s.business_value
         return self.achieved_business_value
 
+
 class Sprint:
     def __init__(self):
         self.name = ''
@@ -128,7 +155,7 @@ class Sprint:
         self.jira_data = None
         self.zebra_data = None
         self.raw = None
-        self.default_closed_statuses = {6:'closed'}
+        self.default_closed_statuses = {6: 'closed'}
 
     def get_closed_statuses(self):
         statuses = self.get_jira_data('closed_statuses')
@@ -157,8 +184,8 @@ class Sprint:
     def get_jira_data(self, key):
         return self.jira_data.get(key)
 
-    def get_all_days(self, max_today = True):
-        ''' return all days from sprint start to sprint end or today (depending on the max_today value) '''
+    def get_all_days(self, max_today=True):
+        """return all days from sprint start to sprint end or today (depending on the max_today value)"""
         start = self.get_zebra_data('start_date')
         end = self.get_zebra_data('end_date')
         all_days = list()
@@ -171,13 +198,14 @@ class Sprint:
         dateDelta = end - start
 
         for i in range(dateDelta.days + 1):
-            date = start + datetime.timedelta(days = i)
+            date = start + datetime.timedelta(days=i)
             all_days.append(date)
         return all_days
 
+
 class GraphEntries(dict):
-    ''' keeps all the graph entries '''
-    def get_ordered_data(self, date_limit = None):
+    """keeps all the graph entries"""
+    def get_ordered_data(self, date_limit=None):
         data = list()
         cumulated_bv = 0
         cumulated_sp = 0
@@ -202,6 +230,7 @@ class GraphEntries(dict):
                 value.time = None
             data.append(value.to_json())
         return data
+
 
 class GraphEntry:
     date = None

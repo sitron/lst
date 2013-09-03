@@ -86,3 +86,14 @@
     fill: #f1f1f1;
 }
 
+/* Result per story */
+.chart rect.hours_burnt {
+    fill: orange;
+}
+.chart rect.hours_planned {
+    fill: lightgrey;
+}
+.chart text.label {
+    fill: #333;
+    font-weight: bold;
+}
