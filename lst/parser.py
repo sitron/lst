@@ -87,14 +87,10 @@ class ConfigParser:
         sprint.jira_data = data['jira']
         sprint.zebra_data = data['zebra']
         sprint.commited_man_days = unicode(data['commited_man_days'])
-        try:
+        if 'force' in data['zebra']:
             sprint.forced = self.parse_forced(data['zebra']['force'])
-        except:
-            pass
-        try:
-            sprint.planned = self.parse_planned(data['zebra']['planned'], settings['zebra']['start_date'], settings['zebra']['end_date'])
-        except:
-            pass
+        if 'planned' in data['zebra']:
+            sprint.planned = self.parse_planned(data['zebra']['planned'], data['zebra']['start_date'], data['zebra']['end_date'])
         return sprint
 
     def get_sprint(self, name = None):
