@@ -92,7 +92,7 @@ class ConfigParser:
         except:
             pass
         try:
-            sprint.planned = self.parse_planned(data['zebra']['planned'])
+            sprint.planned = self.parse_planned(data['zebra']['planned'], settings['zebra']['start_date'], settings['zebra']['end_date'])
         except:
             pass
         return sprint
@@ -126,9 +126,26 @@ class ConfigParser:
                 forced[d.strftime("%Y-%m-%d")] = time
         return forced
 
-    def parse_planned(self, plan):
+    def parse_planned(self, plan, start_date, end_date):
         dates = dict()
         planned = dict()
+
+        # Check for single value list (like [1,2,3])
+        if type(plan[0]) is int:
+            d = start_date
+            position = 0
+            while d <= end_date:
+                if d.isoweekday() <> 6 and d.isoweekday() <> 7:
+                    if position >= len(plan):
+                        raise SyntaxError( "The planned list must contain one value per business day, there is not enough values")
+                    planned[d.strftime("%Y-%m-%d")] = plan[position]
+                    position += 1
+                d += datetime.timedelta(days=1)
+            if position < len(plan):
+                raise SyntaxError( "The planned list must contain one value per business day, there is too much values")
+            return planned
+
+        # Check for date list
         for f in plan:
             dates = self.parse_date(f['date'])
             time = f['time']
