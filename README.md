@@ -54,52 +54,7 @@ zebra:
 ## Upgrade
 if by any chance you already installed LST before, just run:
 * `sudo pip install git+git://github.com/sitron/lst@v1.2.0 --upgrade`
-* special instructions for pre-0.9x users: config has changed. There is no "project" level anymore. You can easily update your config by removing the project level, and renaming your sprint index with a name property.
-
-before (prior to 0.9.0):
-```
-projects:
-    - project:
-        name: jlc_col
-        sprints:
-            - sprint:
-                index: 3
-```
-after (from 1.0.0):
-```
-sprints:
-    jlc_col_3:
-        commited_man_days: xxx
-```
-* special instructions for 0.9.0 users: config has changed again! In the main config, the sprint list is now a dictionary, keyed by sprint name. Just change your config as following:
-
-before (in 0.9.0):
-```
-sprints:
-- name: jlc_col_3
-  commited_man_days: xxx
-```
-after (from 1.0.0):
-```
-sprints:
-    jlc_col_3:
-        commited_man_days: xxx
-```
-* special instructions for 1.0.0 users using the obscure "force" parameter. Its syntax is now easier:
-
-before (in 1.0.0):
-```
-force:
-  - static:
-        date: 2013-04-17
-        time: xxx
-```
-after (from 1.0.1):
-```
-force:
-  - date: 2013-04-17
-    time: xxx
-```
+* for old users who want to keep (and upgrade) their config please check the [dedicated wiki page](./wiki/Upgrade)
 
 ## Available commands
 ### Fetch data and display a chart (by default displays values up to yesterday)
