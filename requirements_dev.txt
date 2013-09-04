@@ -1,0 +1,5 @@
+PyYAML>=3.10
+argparse>=1.2.1
+python-dateutil>=2.1
+six>=1.2.0
+mock>=1.0.1
