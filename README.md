@@ -54,7 +54,7 @@ zebra:
 ## Upgrade
 if by any chance you already installed LST before, just run:
 * `sudo pip install git+git://github.com/sitron/lst@v1.2.0 --upgrade`
-* for old users who want to keep (and upgrade) their config please check the [dedicated wiki page](./wiki/Upgrade)
+* for old users (prior to 1.1) who want to keep (and upgrade) their config please check the [dedicated wiki page](https://github.com/sitron/lst/wiki/Upgrade)
 
 ## Available commands
 ### Fetch data and display a chart (by default displays values up to yesterday)
