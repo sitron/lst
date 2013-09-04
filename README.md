@@ -31,7 +31,7 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 * run `lst sprint-burnup my_sprint_name` and enjoy your first graph!
 * if you want to customize your config (to limit the Zebra users to take into account, or override a value or...) have a look at the Settings section below
 
-## Check estimates correctness
+## Check estimates accuracy
 * make sure you have at least 1 sprint defined in your config (see "create your first burnup graph" above)
 * add a line `commit_prefix: xxx` in your config right under the zebra key.
 ```
