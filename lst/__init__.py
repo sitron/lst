@@ -17,6 +17,7 @@ available commands:
   test-install\t\tTest the installation
   get-user-id\t\tRetrieve a Zebra user id from his/her last name
   ls \t\t\tList all sprints defined in config
+  edit \t\t\tOpen the config in edit mode
   jira-config-helper\tRetrieve some useful information about a Jira project and sprint from a story id (ie. XX-12)
   add-sprint\t\tAdds a sprint to your config file
   check-hours\t\tRetrieve all Zebra hours for a date/user(s). User is optional and can be multiple. Date is optional defaults to yesterday. If 2 dates are specified then min = start date, max = end date
@@ -31,6 +32,7 @@ available commands:
             'test-install' : commands.TestInstallCommand,
             'get-user-id' : commands.RetrieveUserIdCommand,
             'ls' : commands.ListCommand,
+            'edit': commands.EditCommand,
             'jira-config-helper': commands.RetrieveJiraInformationForConfigCommand,
             'add-sprint': commands.AddSprintCommand,
             'check-hours': commands.CheckHoursCommand,

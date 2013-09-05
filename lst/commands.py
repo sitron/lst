@@ -11,6 +11,7 @@ import datetime
 import dateutil
 import re
 from pprint import pprint
+from parser import ConfigParser
 
 
 class BaseCommand:
@@ -613,3 +614,9 @@ class GetLastZebraDayCommand(BaseCommand):
         zebra_entries = zebra.parse_entries(zebra_json_result)
         return zebra_entries[-1]
 
+class EditCommand(BaseCommand):
+    def run(self, args):
+        os.system("vi "+ AppContainer.SETTINGS_PATH)
+        parser = ConfigParser()
+        parser.load_config(AppContainer.SETTINGS_PATH)
+        print 'Well done, no error detected!'
