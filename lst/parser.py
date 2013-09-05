@@ -130,15 +130,17 @@ class ConfigParser:
         if type(plan[0]) is int:
             d = start_date
             position = 0
+            businessDayCount = 0
             while d <= end_date:
                 if d.isoweekday() <> 6 and d.isoweekday() <> 7:
+                    businessDayCount += 1
                     if position >= len(plan):
-                        raise SyntaxError( "The planned list must contain one value per business day, there is not enough values")
+                        raise SyntaxError( "The planned list must contain one value per business days (" + `businessDayCount` + "), there is not enough values("+`len(plan)`+")")
                     planned[d.strftime("%Y-%m-%d")] = plan[position]
                     position += 1
                 d += datetime.timedelta(days=1)
             if position < len(plan):
-                raise SyntaxError( "The planned list must contain one value per business day, there is too much values")
+                raise SyntaxError( "The planned list must contain one value per business days (" + `businessDayCount` + "), there is too much values ("+`len(plan)`+")")
             return planned
 
         # Check for date list
