@@ -59,7 +59,7 @@ class ConfigParser:
             self.data = yaml.load(data_file)
             data_file.close()
         except:
-            raise Exception('Couldn\'t load your setup file (.lst.yml) check that it exists and that it is yaml compliant')
+            raise Exception('Couldn\'t load your setup file (.lst.yml) check that it is yaml compliant')
 
     def create_sprint(self, name, sprint):
         if self.data is None:

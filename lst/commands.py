@@ -616,7 +616,25 @@ class GetLastZebraDayCommand(BaseCommand):
 
 class EditCommand(BaseCommand):
     def run(self, args):
+
+        # Open the config file
         os.system("vi "+ AppContainer.SETTINGS_PATH)
+
+        # Validate it
+        print "Start validation"
         parser = ConfigParser()
         parser.load_config(AppContainer.SETTINGS_PATH)
-        print 'Well done, no error detected!'
+        sprints = self.config.get_sprints()
+        error = False
+        if len(sprints) == 0:
+            print 'No sprints defined'
+            error = True
+        else:
+            for name, data in sprints.items():
+                try:
+                    parser.parse_sprint(name, data)
+                except Exception as e:
+                    print "Error in sprint [" + name + "] definition: ", e
+                    error = True
+        if error is False:
+            print 'Well done, no error detected!'
