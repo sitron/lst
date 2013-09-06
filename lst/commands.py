@@ -618,7 +618,7 @@ class EditCommand(BaseCommand):
     def run(self, args):
 
         # Open the config file
-        os.system("vi "+ AppContainer.SETTINGS_PATH)
+        FileHelper.open_for_edit(AppContainer.SETTINGS_PATH)
 
         # Validate it
         print "Start validation"

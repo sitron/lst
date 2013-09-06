@@ -1,6 +1,9 @@
 from errors import *
 import datetime
 import dateutil
+import os
+import shlex
+import subprocess
 
 
 class InputHelper(object):
@@ -186,3 +189,28 @@ class JiraHelper(object):
         :return:string
         """
         return sprint_name.replace(' ', '+')
+
+class FileHelper(object):
+
+    @classmethod
+    def open_for_edit(cls, filepath, editor=None):
+        """
+        Launch the edition of the requested file
+        Cherry picked from taxi: https://github.com/sephii/taxi/blob/master/taxi/utils/file.py#L14-L30
+        """
+        if editor is None:
+            editor = 'sensible-editor'
+
+        editor = shlex.split(editor)
+        editor.append(filepath)
+
+        try:
+            subprocess.call(editor)
+        except OSError:
+            if 'EDITOR' not in os.environ:
+                raise Exception("Can't find any suitable editor. Check your EDITOR "
+                                " env var.")
+
+            editor = shlex.split(os.environ['EDITOR'])
+            editor.append(filepath)
+            subprocess.call(editor)
