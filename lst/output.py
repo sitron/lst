@@ -53,7 +53,7 @@ class SprintBurnUpOutput(TemplatedOutput):
     def __init__(self, output_dir):
         super(SprintBurnUpOutput, self).__init__(output_dir)
 
-    def output(self, sprint_name, data, commited_values, sprint_data):
+    def output(self, sprint_name, data, commited_values, sprint_data, title):
         print 'Retrieving base graph'
         try:
             template = Template(self.get_template('sprint_burnup.html'))
@@ -73,7 +73,8 @@ class SprintBurnUpOutput(TemplatedOutput):
                     template_dir_path=self.abs_template_dir_path,
                     data=json.dumps(data),
                     commited_values=json.dumps(commited_values),
-                    sprint=json.dumps(sprint_data)
+                    sprint=json.dumps(sprint_data),
+                    sprint_title= title
                 )
             )
             stream.close()
