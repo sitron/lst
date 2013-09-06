@@ -585,7 +585,7 @@ class SprintBurnUpCommand(BaseCommand):
         # write the graph
         print 'Starting output'
         output = SprintBurnUpOutput(AppContainer.secret.get_output_dir())
-        output.output(sprint.name, data, commited_values, sprint_data)
+        output.output(sprint.name, data, commited_values, sprint_data, sprint.get_title())
 
 
 class GetLastZebraDayCommand(BaseCommand):
