@@ -129,6 +129,7 @@ sprints:
                 time: 24
               - date: '2013-04-09/2013-04-11' # ...or a date range (str separated by /)
                 time: 24
+            planned: [16, 24, 0, 16] # The planned section can also be filled by providing a value for every business day of the sprint
         jira:
             project_id: 12345 # Run `lst jira-config-helper jlc-100` to get its project id (change jlc-100 by the id of a story in your current sprint
             sprint_name: "Fix+Version+As+Specified+In+Jira" # as seen in jira query builder (usually blanks are to be replaced with + in jira). Run `lst jira-config-helper jlc-100` to get its sprint name (replace jlc-100 by the id of a story in your current sprint

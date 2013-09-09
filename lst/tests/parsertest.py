@@ -1,6 +1,8 @@
 from ..parser import SecretParser
+from ..parser import ConfigParser
 from ..errors import FileNotFoundError, SyntaxError
 import unittest
+from datetime import date
 
 class ParserTest(unittest.TestCase):
     """Unit tests for parser.py"""
@@ -31,3 +33,14 @@ class ParserTest(unittest.TestCase):
         config = {'zebra': 'xx', 'jira': 'xx', 'output_dir': 'xx'}
         secret.extract_data(config)
         self.assertEquals('xx/', secret.get_output_dir())
+
+    def testParsingPlannedSection(self):
+        parser = ConfigParser()
+        config = [1,2,0,3]
+        result = parser.parse_planned(config, date(2005, 1, 5), date(2005, 1, 10))
+        self.assertEquals({'2005-01-05': 1, '2005-01-06': 2, '2005-01-07': 0, '2005-01-10': 3}, result)
+        with self.assertRaises(SyntaxError):
+            parser.parse_planned([1,2,3], date(2005, 1, 5), date(2005, 1, 10))
+        with self.assertRaises(SyntaxError):
+            parser.parse_planned([1,2,3,4,5], date(2005, 1, 5), date(2005, 1, 10))
+
