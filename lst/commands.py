@@ -11,6 +11,7 @@ import datetime
 import dateutil
 import re
 from pprint import pprint
+from parser import ConfigParser
 
 
 class BaseCommand:
@@ -613,3 +614,27 @@ class GetLastZebraDayCommand(BaseCommand):
         zebra_entries = zebra.parse_entries(zebra_json_result)
         return zebra_entries[-1]
 
+class EditCommand(BaseCommand):
+    def run(self, args):
+
+        # Open the config file
+        FileHelper.open_for_edit(AppContainer.SETTINGS_PATH)
+
+        # Validate it
+        print "Start validation"
+        parser = ConfigParser()
+        parser.load_config(AppContainer.SETTINGS_PATH)
+        sprints = self.config.get_sprints()
+        error = False
+        if len(sprints) == 0:
+            print 'No sprints defined'
+            error = True
+        else:
+            for name, data in sprints.items():
+                try:
+                    parser.parse_sprint(name, data)
+                except Exception as e:
+                    print "Error in sprint [" + name + "] definition: ", e
+                    error = True
+        if error is False:
+            print 'Well done, no error detected!'
