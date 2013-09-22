@@ -46,11 +46,15 @@ available commands:
             formatter_class=argparse.RawDescriptionHelpFormatter,
             usage=usage
         )
-        parser.add_argument("command", help="command to execute (see available commands above)")
-        parser.add_argument("optional_argument", nargs='*', help="depends on the command to execute")
-        parser.add_argument("--dev-mode", action="store_true", help="development mode")
-        parser.add_argument("-u", "--user", nargs='*', help="specify user id(s). Optional, multiple argument (multiple syntax: -u 111 123 145)")
-        parser.add_argument("-d", "--date", nargs='*', help="specify date(s). Optional, multiple argument (syntax: -d 22.03.2013)")
+
+        # add arguments for all commands
+        subparsers = parser.add_subparsers(dest='command')
+        for name,command in available_actions.items():
+            action = command()
+            # add specific args
+            subparser = action.add_command_arguments(subparsers)
+            # add common args
+            action.add_common_arguments(subparser)
 
         # read command line arguments
         args = parser.parse_args()
