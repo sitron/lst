@@ -17,6 +17,7 @@ available commands:
   test-install\t\tTest the installation
   get-user-id\t\tRetrieve a Zebra user id from his/her last name
   ls \t\t\tList all sprints defined in config
+  edit \t\t\tOpen the config in edit mode
   jira-config-helper\tRetrieve some useful information about a Jira project and sprint from a story id (ie. XX-12)
   add-sprint\t\tAdds a sprint to your config file
   check-hours\t\tRetrieve all Zebra hours for a date/user(s). User is optional and can be multiple. Date is optional defaults to yesterday. If 2 dates are specified then min = start date, max = end date
@@ -31,6 +32,7 @@ available commands:
             'test-install' : commands.TestInstallCommand,
             'get-user-id' : commands.RetrieveUserIdCommand,
             'ls' : commands.ListCommand,
+            'edit': commands.EditCommand,
             'jira-config-helper': commands.RetrieveJiraInformationForConfigCommand,
             'add-sprint': commands.AddSprintCommand,
             'check-hours': commands.CheckHoursCommand,
@@ -44,11 +46,15 @@ available commands:
             formatter_class=argparse.RawDescriptionHelpFormatter,
             usage=usage
         )
-        parser.add_argument("command", help="command to execute (see available commands above)")
-        parser.add_argument("optional_argument", nargs='*', help="depends on the command to execute")
-        parser.add_argument("--dev-mode", action="store_true", help="development mode")
-        parser.add_argument("-u", "--user", nargs='*', help="specify user id(s). Optional, multiple argument (multiple syntax: -u 111 123 145)")
-        parser.add_argument("-d", "--date", nargs='*', help="specify date(s). Optional, multiple argument (syntax: -d 22.03.2013)")
+
+        # add arguments for all commands
+        subparsers = parser.add_subparsers(dest='command')
+        for name,command in available_actions.items():
+            action = command()
+            # add specific args
+            subparser = action.add_command_arguments(subparsers)
+            # add common args
+            action.add_common_arguments(subparser)
 
         # read command line arguments
         args = parser.parse_args()

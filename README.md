@@ -31,7 +31,7 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 * run `lst sprint-burnup my_sprint_name` and enjoy your first graph!
 * if you want to customize your config (to limit the Zebra users to take into account, or override a value or...) have a look at the Settings section below
 
-## Check estimates correctness
+## Check estimates accuracy
 * make sure you have at least 1 sprint defined in your config (see "create your first burnup graph" above)
 * add a line `commit_prefix: xxx` in your config right under the zebra key.
 ```
@@ -54,52 +54,7 @@ zebra:
 ## Upgrade
 if by any chance you already installed LST before, just run:
 * `sudo pip install git+git://github.com/sitron/lst@v1.2.0 --upgrade`
-* special instructions for pre-0.9x users: config has changed. There is no "project" level anymore. You can easily update your config by removing the project level, and renaming your sprint index with a name property.
-
-before (prior to 0.9.0):
-```
-projects:
-    - project:
-        name: jlc_col
-        sprints:
-            - sprint:
-                index: 3
-```
-after (from 1.0.0):
-```
-sprints:
-    jlc_col_3:
-        commited_man_days: xxx
-```
-* special instructions for 0.9.0 users: config has changed again! In the main config, the sprint list is now a dictionary, keyed by sprint name. Just change your config as following:
-
-before (in 0.9.0):
-```
-sprints:
-- name: jlc_col_3
-  commited_man_days: xxx
-```
-after (from 1.0.0):
-```
-sprints:
-    jlc_col_3:
-        commited_man_days: xxx
-```
-* special instructions for 1.0.0 users using the obscure "force" parameter. Its syntax is now easier:
-
-before (in 1.0.0):
-```
-force:
-  - static:
-        date: 2013-04-17
-        time: xxx
-```
-after (from 1.0.1):
-```
-force:
-  - date: 2013-04-17
-    time: xxx
-```
+* for old users (prior to 1.1) who want to keep (and upgrade) their config please check the [dedicated wiki page](https://github.com/sitron/lst/wiki/Upgrade)
 
 ## Available commands
 ### Fetch data and display a chart (by default displays values up to yesterday)
@@ -174,6 +129,7 @@ sprints:
                 time: 24
               - date: '2013-04-09/2013-04-11' # ...or a date range (str separated by /)
                 time: 24
+            planned: [16, 24, 0, 16] # The planned section can also be filled by providing a value for every business day of the sprint
         jira:
             project_id: 12345 # Run `lst jira-config-helper jlc-100` to get its project id (change jlc-100 by the id of a story in your current sprint
             sprint_name: "Fix+Version+As+Specified+In+Jira" # as seen in jira query builder (usually blanks are to be replaced with + in jira). Run `lst jira-config-helper jlc-100` to get its sprint name (replace jlc-100 by the id of a story in your current sprint

@@ -202,6 +202,9 @@ class Sprint:
             all_days.append(date)
         return all_days
 
+    def get_title(self):
+        return self.jira_data.get('sprint_name').replace('+', ' ') + ' (' + self.name + ')'
+
 
 class GraphEntries(dict):
     """keeps all the graph entries"""

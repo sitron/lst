@@ -59,7 +59,7 @@ class ConfigParser:
             self.data = yaml.load(data_file)
             data_file.close()
         except:
-            raise Exception('Couldn\'t load your setup file (.lst.yml) check that it exists and that it is yaml compliant')
+            raise Exception('Couldn\'t load your setup file (.lst.yml) check that it is yaml compliant')
 
     def create_sprint(self, name, sprint):
         if self.data is None:
@@ -87,14 +87,10 @@ class ConfigParser:
         sprint.jira_data = data['jira']
         sprint.zebra_data = data['zebra']
         sprint.commited_man_days = unicode(data['commited_man_days'])
-        try:
+        if 'force' in data['zebra']:
             sprint.forced = self.parse_forced(data['zebra']['force'])
-        except:
-            pass
-        try:
-            sprint.planned = self.parse_planned(data['zebra']['planned'])
-        except:
-            pass
+        if 'planned' in data['zebra']:
+            sprint.planned = self.parse_planned(data['zebra']['planned'], data['zebra']['start_date'], data['zebra']['end_date'])
         return sprint
 
     def get_sprint(self, name = None):
@@ -126,9 +122,28 @@ class ConfigParser:
                 forced[d.strftime("%Y-%m-%d")] = time
         return forced
 
-    def parse_planned(self, plan):
+    def parse_planned(self, plan, start_date, end_date):
         dates = dict()
         planned = dict()
+
+        # Check for single value list (like [1,2,3])
+        if type(plan[0]) is int:
+            d = start_date
+            position = 0
+            businessDayCount = 0
+            while d <= end_date:
+                if d.isoweekday() <> 6 and d.isoweekday() <> 7:
+                    businessDayCount += 1
+                    if position >= len(plan):
+                        raise SyntaxError( "The planned list must contain one value per business days (" + `businessDayCount` + "), there is not enough values("+`len(plan)`+")")
+                    planned[d.strftime("%Y-%m-%d")] = plan[position]
+                    position += 1
+                d += datetime.timedelta(days=1)
+            if position < len(plan):
+                raise SyntaxError( "The planned list must contain one value per business days (" + `businessDayCount` + "), there is too much values ("+`len(plan)`+")")
+            return planned
+
+        # Check for date list
         for f in plan:
             dates = self.parse_date(f['date'])
             time = f['time']

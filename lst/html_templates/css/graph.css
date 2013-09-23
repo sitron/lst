@@ -1,3 +1,8 @@
+h1.graph-title {
+    display: block;
+    text-align: center;
+    margin: 10px;
+}
 .chart rect {
     stroke: white;
     fill: blue;

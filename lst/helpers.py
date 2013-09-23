@@ -1,6 +1,9 @@
 from errors import *
 import datetime
 import dateutil
+import os
+import shlex
+import subprocess
 
 
 class InputHelper(object):
@@ -186,3 +189,47 @@ class JiraHelper(object):
         :return:string
         """
         return sprint_name.replace(' ', '+')
+
+class FileHelper(object):
+
+    @classmethod
+    def open_for_edit(cls, filepath, editor=None):
+        """
+        Launch the edition of the requested file
+        Cherry picked from taxi: https://github.com/sephii/taxi/blob/master/taxi/utils/file.py#L14-L30
+        """
+        if editor is None:
+            editor = 'sensible-editor'
+
+        editor = shlex.split(editor)
+        editor.append(filepath)
+
+        try:
+            subprocess.call(editor)
+        except OSError:
+            if 'EDITOR' not in os.environ:
+                raise Exception("Can't find any suitable editor. Check your EDITOR "
+                                " env var.")
+
+            editor = shlex.split(os.environ['EDITOR'])
+            editor.append(filepath)
+            subprocess.call(editor)
+
+
+class ArgParseHelper(object):
+
+    @classmethod
+    def add_sprint_name_argument(cls, parser):
+        parser.add_argument("sprint_name", nargs='*', help="name of the sprint (from your config)")
+
+    @classmethod
+    def add_date_argument(cls, parser):
+        parser.add_argument("-d", "--date", nargs='*', help="specify date(s). Optional, multiple argument (syntax: -d 22.03.2013)")
+
+    @classmethod
+    def add_user_argument(cls, parser):
+        parser.add_argument("-u", "--user", nargs='*', help="specify user id(s). Optional, multiple argument (multiple syntax: -u 111 123 145)")
+
+    @classmethod
+    def add_user_story_id_argument(cls, parser):
+        parser.add_argument("story_id", help="specify user story id (ie. jlc-111)")

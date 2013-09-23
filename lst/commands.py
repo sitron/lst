@@ -11,13 +11,25 @@ import datetime
 import dateutil
 import re
 from pprint import pprint
+from parser import ConfigParser
 
 
-class BaseCommand:
+class BaseCommand(object):
     def __init__(self):
         self.secret = AppContainer.secret
         self.config = AppContainer.config
         self.dev_mode = AppContainer.dev_mode
+
+    def add_common_arguments(self, parser):
+        parser.add_argument("--dev-mode", action="store_true", help="development mode")
+        return parser
+
+    def add_command_arguments(self, subparsers):
+        # has to be implemented in all actions
+        # the minimum being:
+        #   parser = subparsers.add_parser('my-command-name')
+        #   return parser
+        raise DevelopmentError('Method add_command_arguments must be implemented in all commands')
 
     def run(self, args):
         pass
@@ -80,10 +92,6 @@ class BaseCommand:
 
         return sprint
 
-    def ensure_optional_argument_is_present(self, optional_arguments, message='Missing parameter'):
-        if type(optional_arguments) != list or len(optional_arguments) == 0:
-            raise InputParametersError(message)
-
     def get_sprint_name_from_args_or_current(self, optional_argument):
         """
         get a sprint name by parsing command args or by using _current sprint in config
@@ -117,8 +125,13 @@ class ResultPerStoryCommand(BaseCommand):
     Usage:  result-per-story  [sprint-name]
 
     """
+    def add_command_arguments(self, subparsers):
+        parser = subparsers.add_parser('result-per-story')
+        ArgParseHelper.add_sprint_name_argument(parser)
+        return parser
+
     def run(self, args):
-        sprint_name = self.get_sprint_name_from_args_or_current(args.optional_argument)
+        sprint_name = self.get_sprint_name_from_args_or_current(args.sprint_name)
         sprint = self.ensure_sprint_in_config(sprint_name)
 
         # make sure a commit prefix is defined
@@ -152,7 +165,7 @@ class ResultPerStoryCommand(BaseCommand):
         velocity = max_story_points / commit
 
         # retrieve zebra data
-        zebra = ZebraRemote(self.secret.get_zebra('url'), self.secret.get_zebra('username'), self.secret.get_zebra('password'))
+        zebra = self.get_zebra_remote()
         report_url = self._get_zebra_url_for_sprint_burnup(sprint)
         zebra_json_result = zebra.get_data(report_url)
         zebra_entries = zebra.parse_entries(zebra_json_result)
@@ -222,6 +235,12 @@ class CheckHoursCommand(BaseCommand):
             check-hours [-d date]
 
     """
+    def add_command_arguments(self, subparsers):
+        parser = subparsers.add_parser('check-hours')
+        ArgParseHelper.add_date_argument(parser)
+        ArgParseHelper.add_user_argument(parser)
+        return parser
+
     def run(self, args):
         # parse and verify user arguments
         users = InputHelper.sanitize_users(args.user)
@@ -291,6 +310,10 @@ class AddSprintCommand(BaseCommand):
     Usage: add-sprint
 
     """
+    def add_command_arguments(self, subparsers):
+        parser = subparsers.add_parser('add-sprint')
+        return parser
+
     # @todo: to be tested
     def run(self, args):
         name = InputHelper.get_user_input(
@@ -349,11 +372,13 @@ class RetrieveJiraInformationForConfigCommand(BaseCommand):
     Usage: jira-config-helper [story-id] (ie: jira-config-helper jlc-112)
 
     """
+    def add_command_arguments(self, subparsers):
+        parser = subparsers.add_parser('jira-config-helper')
+        ArgParseHelper.add_user_story_id_argument(parser)
+        return parser
+
     def run(self, args):
-        try:
-            story_id = args.optional_argument[0].upper()
-        except:
-            raise InputParametersError('Specify a story id, something like \'jira-config-helper jlc-112\'')
+        story_id = args.story_id.upper()
 
         # retrieve data from jira
         story_data = self.get_story_data(story_id)
@@ -371,6 +396,9 @@ class ListCommand(BaseCommand):
     Usage:  ls lists all sprints defined in config
 
     """
+    def add_command_arguments(self, subparsers):
+        parser = subparsers.add_parser('ls')
+        return parser
 
     def run(self, args):
         print ''
@@ -384,17 +412,18 @@ class ListCommand(BaseCommand):
 
 class RetrieveUserIdCommand(BaseCommand):
     """
-    Usage: get-user-id [-n last_name] Retrieves the Zebra user id from his/her last name
+    Usage: get-user-id [last_name] Retrieves the Zebra user id from his/her last name
     """
 
-    def run(self, args):
-        # interactive command to retrieve a user id from his/her lastname
-        if len(args.optional_argument) == 0:
-            raise SyntaxError("To get a user id you need to specify his/her last name (ie: 'lst get-user-id last_name')")
+    def add_command_arguments(self, subparsers):
+        parser = subparsers.add_parser('get-user-id')
+        parser.add_argument("lastname", nargs='+', help="user(s) lastname")
+        return parser
 
-        names = [x.lower() for x in args.optional_argument]
+    def run(self, args):
+        names = [x.lower() for x in args.lastname]
         report_url = 'user/.json'
-        zebra = ZebraRemote(self.secret.get_zebra('url'), self.secret.get_zebra('username'), self.secret.get_zebra('password'))
+        zebra = self.get_zebra_remote()
         zebra_json_result = zebra.get_data(report_url)
         zebra_users = zebra.parse_users(zebra_json_result)
         if len(zebra_users) == 0:
@@ -408,12 +437,16 @@ class RetrieveUserIdCommand(BaseCommand):
         if len(users) == 0:
             print 'No user found with lastname %s' % (args.optional_argument)
 
+
 class TestInstallCommand(BaseCommand):
     """
     Usage:  test-install
             will test the access to static files (html templates)
 
     """
+    def add_command_arguments(self, subparsers):
+        parser = subparsers.add_parser('test-install')
+        return parser
 
     def run(self, args):
         print 'Will dump some useful variable to debug'
@@ -443,8 +476,14 @@ class SprintBurnUpCommand(BaseCommand):
 
     """
 
+    def add_command_arguments(self, subparsers):
+        parser = subparsers.add_parser('sprint-burnup')
+        ArgParseHelper.add_sprint_name_argument(parser)
+        ArgParseHelper.add_date_argument(parser)
+        return parser
+
     def run(self, args):
-        sprint_name = self.get_sprint_name_from_args_or_current(args.optional_argument)
+        sprint_name = self.get_sprint_name_from_args_or_current(args.sprint_name)
         sprint = self.ensure_sprint_in_config(sprint_name)
 
         # end date for the graph
@@ -456,7 +495,7 @@ class SprintBurnUpCommand(BaseCommand):
         # start fetching zebra data
         print 'Start fetching Zebra'
 
-        zebra = ZebraRemote(self.secret.get_zebra('url'), self.secret.get_zebra('username'), self.secret.get_zebra('password'))
+        zebra = self.get_zebra_remote()
 
         report_url = self._get_zebra_url_for_sprint_burnup(sprint)
         zebra_json_result = zebra.get_data(report_url)
@@ -485,7 +524,7 @@ class SprintBurnUpCommand(BaseCommand):
         print 'Start fetching Jira'
 
         JiraEntry.closed_status_ids = sprint.get_closed_status_codes()
-        jira = JiraRemote(self.secret.get_jira('url'), self.secret.get_jira('username'), self.secret.get_jira('password'))
+        jira = self.get_jira_remote()
 
         jira_url = self._get_jira_url_for_sprint_burnup(sprint)
         nice_identifier = sprint.get_jira_data('nice_identifier')
@@ -585,7 +624,7 @@ class SprintBurnUpCommand(BaseCommand):
         # write the graph
         print 'Starting output'
         output = SprintBurnUpOutput(AppContainer.secret.get_output_dir())
-        output.output(sprint.name, data, commited_values, sprint_data)
+        output.output(sprint.name, data, commited_values, sprint_data, sprint.get_title())
 
 
 class GetLastZebraDayCommand(BaseCommand):
@@ -593,9 +632,13 @@ class GetLastZebraDayCommand(BaseCommand):
     Usage:  get-last-zebra-day [sprint_name]
 
     """
+    def add_command_arguments(self, subparsers):
+        parser = subparsers.add_parser('get-last-zebra-day')
+        ArgParseHelper.add_sprint_name_argument(parser)
+        return parser
 
     def run(self, args):
-        sprint_name = self.get_sprint_name_from_args_or_current(args.optional_argument)
+        sprint_name = self.get_sprint_name_from_args_or_current(args.sprint_name)
         sprint = self.ensure_sprint_in_config(sprint_name)
 
         url = ZebraHelper.get_zebra_url_for_sprint_last_day(sprint)
@@ -612,4 +655,34 @@ class GetLastZebraDayCommand(BaseCommand):
         zebra_json_result = zebra.get_data(url)
         zebra_entries = zebra.parse_entries(zebra_json_result)
         return zebra_entries[-1]
+
+class EditCommand(BaseCommand):
+
+    def add_command_arguments(self, subparsers):
+        parser = subparsers.add_parser('edit')
+        return parser
+
+    def run(self, args):
+
+        # Open the config file
+        FileHelper.open_for_edit(AppContainer.SETTINGS_PATH)
+
+        # Validate it
+        print "Start validation"
+        parser = ConfigParser()
+        parser.load_config(AppContainer.SETTINGS_PATH)
+        sprints = self.config.get_sprints()
+        error = False
+        if len(sprints) == 0:
+            print 'No sprints defined'
+            error = True
+        else:
+            for name, data in sprints.items():
+                try:
+                    parser.parse_sprint(name, data)
+                except Exception as e:
+                    print "Error in sprint [" + name + "] definition: ", e
+                    error = True
+        if error is False:
+            print 'Well done, no error detected!'
 
