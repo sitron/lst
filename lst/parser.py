@@ -93,7 +93,7 @@ class ConfigParser:
             sprint.planned = self.parse_planned(data['zebra']['planned'], data['zebra']['start_date'], data['zebra']['end_date'])
         return sprint
 
-    def get_sprint(self, name = None):
+    def get_sprint(self, name=None, raw=False):
         sprint = None
         if name is None:
             name = self.get_current_sprint_name()
@@ -101,7 +101,7 @@ class ConfigParser:
         if name is not None:
             for k,v in self.data['sprints'].items():
                 if k == name:
-                    sprint = self.parse_sprint(k, v)
+                    sprint = self.parse_sprint(k, v) if raw == False else v
                     break
         return sprint
 

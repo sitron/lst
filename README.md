@@ -47,6 +47,9 @@ zebra:
 * optionally specify a date `lst check-hours -d 23.03.2013` to get hours for that date (defaults to yesterday)
 * optionally specify an end date by adding a second date `lst check-hours -d 20.03.2013 22.03.2013` to get hours in this date range
 
+## Share a specific sprint config with your team mates
+* run `lst dump-sprint-config my_sprint_name` and copy the output to the wiki
+
 ## Install troubleshooting
 * run `lst test-install` to test your install. It should dump some html and finish by 'end'
 * get in touch with support :)
@@ -75,6 +78,8 @@ if by any chance you already installed LST before, just run:
 `lst get-user-id my_last_name`
 ### Search multiple Zebra user ids by employees last name
 `lst get-user-id my_last_name his_last_name her_last_name`
+### Share a sprint config
+`lst dump-sprint-config my_sprint_name`
 ### Get Jira info for config (helper)
 `lst jira-config-helper my_story_id`
 Useful to fill the Jira part of the config. Give it a story id (JLC-xx) and it will retrieve it's project id and sprint name
@@ -138,6 +143,7 @@ sprints:
                 {6: closed, 10008: For PO Review} # optional, what status you consider as 'closed' (used to check if a story is "closed" and to know on what date it was closed reading the story activity stream)
             ignored: ['XXX-501', 'XXX-505'] # optional, list of stories that should be ignored
 
+# Power tip! see below
 _current: my_project_sprint_2 # specify default sprint to use
 ```
 
