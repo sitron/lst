@@ -22,7 +22,8 @@ available commands:
   add-sprint\t\tAdds a sprint to your config file
   check-hours\t\tRetrieve all Zebra hours for a date/user(s). User is optional and can be multiple. Date is optional defaults to yesterday. If 2 dates are specified then min = start date, max = end date
   get-last-zebra-day\tRetrieve the last Zebra day that contains a commit for this project
-  result-per-story\t\tPrint the actual time used per story"""
+  result-per-story\t\tPrint the actual time used per story
+  dump-sprint-config\t\tOutput your config for a specific sprint"""
 
         SETTINGS_PATH = os.path.expanduser('~/.lst.yml')
         SECRET_PATH = os.path.expanduser('~/.lst-secret.yml')
@@ -38,6 +39,7 @@ available commands:
             'check-hours': commands.CheckHoursCommand,
             'get-last-zebra-day': commands.GetLastZebraDayCommand,
             'result-per-story': commands.ResultPerStoryCommand,
+            'dump-sprint-config': commands.DumpSprintConfigCommand,
         }
 
         # define arguments and options
