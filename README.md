@@ -18,7 +18,7 @@ It's main advantage is its ease of use: just edit a yml config file so that it k
 * new! add MD forecast day by day with the new "planned" config param
 
 ## Installation
-* `sudo pip install git+git://github.com/sitron/lst@v1.2.0`
+* `sudo pip install git+git://github.com/sitron/lst@master`
 * `sudo pip install -r https://raw.github.com/sitron/lst/master/requirements.txt`
 * copy the [.lst-secret_dist.yml](.lst-secret_dist.yml) file to you home (yes, click on the [link](.lst-secret_dist.yml)!), rename it to .lst-secret.yml and change your jira/zebra credentials (watch out for the file name: it's [dot]lst-secret.yml
 * create a directory somewhere on your machine where you want your graphs to be output and add its path to .lst-secret.yml 
@@ -56,7 +56,7 @@ zebra:
 
 ## Upgrade
 if by any chance you already installed LST before, just run:
-* `sudo pip install git+git://github.com/sitron/lst@v1.2.0 --upgrade`
+* `sudo pip install git+git://github.com/sitron/lst@master --upgrade`
 * for old users (prior to 1.1) who want to keep (and upgrade) their config please check the [dedicated wiki page](https://github.com/sitron/lst/wiki/Upgrade)
 
 ## Available commands
