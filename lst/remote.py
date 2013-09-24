@@ -140,7 +140,7 @@ class JiraRemote(Remote):
         if len(close_dates) == 0:
             return None
 
-        return dateutil.parser.parse(min(close_dates))
+        return dateutil.parser.parse(min(close_dates), dayfirst=True)
 
 class ZebraRemote(Remote):
     def __init__(self, base_url, username, password):
@@ -228,7 +228,7 @@ class ZebraRemote(Remote):
         zebra_entry.username = str(entry['username'].encode('utf-8'))
         zebra_entry.time = float(entry['time'])
         zebra_entry.project = (entry['project'].encode('utf-8'))
-        zebra_entry.date = dateutil.parser.parse(entry['date'])
+        zebra_entry.date = dateutil.parser.parse(entry['date'], dayfirst=True)
         zebra_entry.id = int(entry['tid'])
         zebra_entry.description = str(entry['description'].encode('utf-8'))
         return zebra_entry

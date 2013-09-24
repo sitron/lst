@@ -42,7 +42,7 @@ class BaseCommand(object):
         :param dates:list of dates
         :return:tuple (start,end)
         """
-        date_objects = [dateutil.parser.parse(d) for d in dates]
+        date_objects = [dateutil.parser.parse(d, dayfirst=True) for d in dates]
 
         # default values is None for end_date and last week-day for start_date
         start_date = None
@@ -238,7 +238,9 @@ class CheckHoursCommand(BaseCommand):
     """
     def add_command_arguments(self, subparsers):
         parser = subparsers.add_parser('check-hours')
-        ArgParseHelper.add_date_argument(parser)
+        parser.add_argument(
+            "-d", "--date", nargs='*', help="format: -d dd.mm.yyyy. specify either one or two dates (-d start end)"
+        )
         ArgParseHelper.add_user_argument(parser)
         return parser
 
@@ -489,7 +491,7 @@ class SprintBurnUpCommand(BaseCommand):
 
         # end date for the graph
         try:
-            graph_end_date = dateutil.parser.parse(args.date[0]).date()
+            graph_end_date = dateutil.parser.parse(args.date[0], dayfirst=True).date()
         except:
             graph_end_date = datetime.date.today() - datetime.timedelta(days = 1)
 
