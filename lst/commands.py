@@ -268,7 +268,8 @@ class CheckHoursCommand(BaseCommand):
         self._output(
             self._sort_groups_alphabetically(
                 self._group_entries_by_project(zebra_entries)
-            )
+            ),
+            users
         )
 
     def _get_zebra_entries(self, report_url):
@@ -286,10 +287,11 @@ class CheckHoursCommand(BaseCommand):
         """sort grouped entries alphabetically"""
         return sorted(projects.items(), key=lambda kv: kv[0])
 
-    def _output(self, projects):
+    def _output(self, projects, users=None):
         # formated output
         print ''
         print 'Projects:'
+        found_users = []
         zebra_url = self.secret.get_zebra('url')
         for name,entries in projects:
             print '- %s' % (name)
@@ -300,6 +302,8 @@ class CheckHoursCommand(BaseCommand):
                 d = dict()
                 d['time'] = str(entry.time) + ' hours'
                 d['username'] = entry.username
+                if entry.username not in found_users:
+                    found_users.append(entry.username)
                 d['description'] = entry.description[:44]
                 d['url'] = ZebraHelper.get_activity_url(zebra_url, entry.id)
                 print template.format(**d)
@@ -307,6 +311,13 @@ class CheckHoursCommand(BaseCommand):
 
             print '  Total: %s' % (total)
             print ''
+
+        if users is not None:
+            if len(users) == len(found_users):
+                print '(found entries for all users)'
+            else:
+                print 'Found entries for %d out of %d users (%s)' % \
+                      (len(found_users), len(users), ','.join(found_users))
 
 class AddSprintCommand(BaseCommand):
     """
