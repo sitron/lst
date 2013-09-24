@@ -49,12 +49,6 @@ class BaseCommandTest(unittest.TestCase):
         self.assertEquals('Sprint name', story_data['sprint_name'])
         self.assertEquals('Sprint+name', story_data['clean_sprint_name'])
 
-    def testEnsureOptionalArgumentIsPresent(self):
-        command = BaseCommand()
-        self.assertRaises(InputParametersError, command.ensure_optional_argument_is_present, None)
-        self.assertRaises(InputParametersError, command.ensure_optional_argument_is_present, [])
-        command.ensure_optional_argument_is_present(['should not raise any error'])
-
     def testEnsureSprintInConfig(self):
         mock_helper = MockHelper()
         command = BaseCommand()
@@ -137,21 +131,6 @@ class CheckHoursTest(unittest.TestCase):
         self.assertTrue(grouped_entries.has_key('Project 1'), 'should have a group Project 1')
         self.assertEquals(2, len(grouped_entries['Project 2']), 'project 2 should have 2 entries')
         self.assertEquals(1, len(grouped_entries['Project 1']), 'project 1 should have 1 entry')
-
-
-class RetrieveJiraInformationForConfigTest(unittest.TestCase):
-    """Unit tests for jira-config-helper command in commands.py"""
-
-    def testRunWithoutArgs(self):
-        # mock_helper has no optional args
-        mock_helper = MockHelper()
-        command = RetrieveJiraInformationForConfigCommand()
-        self.assertRaises(InputParametersError, command.run, mock_helper)
-
-        # mock_helper optional argument is an empty list
-        mock_helper = MockHelper()
-        mock_helper.optional_argument = list
-        self.assertRaises(InputParametersError, command.run, mock_helper)
 
 
 class GetLastZebraEntryTest(unittest.TestCase):

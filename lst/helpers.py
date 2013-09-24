@@ -55,7 +55,7 @@ class DateHelper(object):
     @classmethod
     def sanitize_date(cls, date):
         """From a user input string date returns a date object"""
-        return dateutil.parser.parse(date).date()
+        return dateutil.parser.parse(date, dayfirst=True).date()
 
     @classmethod
     def get_last_week_day(cls, today=None):
@@ -214,3 +214,22 @@ class FileHelper(object):
             editor = shlex.split(os.environ['EDITOR'])
             editor.append(filepath)
             subprocess.call(editor)
+
+
+class ArgParseHelper(object):
+
+    @classmethod
+    def add_sprint_name_argument(cls, parser):
+        parser.add_argument("sprint_name", nargs='*', help="name of the sprint (from your config)")
+
+    @classmethod
+    def add_date_argument(cls, parser):
+        parser.add_argument("-d", "--date", nargs='*', help="specify date(s). Optional, multiple argument (syntax: -d dd.mm.yyyy or yyyy.mm.dd)")
+
+    @classmethod
+    def add_user_argument(cls, parser):
+        parser.add_argument("-u", "--user", nargs='*', help="specify user id(s). Optional, multiple argument (multiple syntax: -u 111 123 145)")
+
+    @classmethod
+    def add_user_story_id_argument(cls, parser):
+        parser.add_argument("story_id", help="specify user story id (ie. jlc-111)")
