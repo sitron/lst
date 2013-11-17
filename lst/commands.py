@@ -516,21 +516,8 @@ class SprintBurnUpCommand(BaseCommand):
         # parse response
         zebra_entries = zebra.parse_entries(zebra_json_result)
 
-        # group entries by date
-        zebra_days = ZebraDays()
-
-        for zebra_entry in zebra_entries:
-            readable_date = zebra_entry.readable_date()
-
-            if readable_date in zebra_days:
-                zebra_days[readable_date].entries.append(zebra_entry)
-                zebra_days[readable_date].time += zebra_entry.time
-            else:
-                day = ZebraDay()
-                day.time = zebra_entry.time
-                day.day = readable_date
-                day.entries.append(zebra_entry)
-                zebra_days[readable_date] = day
+        # group entries in ZebraDay(s)
+        zebra_days = ZebraManager.group_as_zebra_days(zebra_entries)
 
         print 'End Zebra'
 
@@ -561,84 +548,96 @@ class SprintBurnUpCommand(BaseCommand):
 
         print 'Mixing retrieved values'
 
-        graph_entries = GraphEntries()
-
-        print ''
-        print 'Zebra output per day:'
-
         # get all sprint days
         days = sprint.get_all_days(False)
+
+        dates = []
+
+        # define all y series
+        series = collections.OrderedDict()
+        series['md'] = []
+        series['sp'] = []
+        series['bv'] = []
+        series['planned'] = []
+
+        # loop through all days and gather values
         for date in days:
-            total_time = 0
             time_without_forced = 0
 
-            try:
-                zebra_day = zebra_days[str(date)]
+            zebra_day = zebra_days.get(str(date))
+
+            if (zebra_day is not None):
+                time_without_forced = zebra_day.time
+
+            # check for forced zebra values
+            total_time = sprint.get_forced_data(str(date), time_without_forced)
+
+            planned_time = sprint.get_planned_data(str(date))
+
+            # output data for this day to the console (useful but not necessary for this command
+            if total_time != 0:
                 print date
 
-                # output nb of hours for each person for this day
                 entries_per_user = zebra_day.get_entries_per_user()
                 for user,time in entries_per_user.items():
                     print "%s : %s" % (user, time)
-                time_without_forced = zebra_day.time
-                # check for forced zebra values
-                total_time = sprint.get_forced_data(str(date), zebra_day.time)
 
-            except KeyError, e:
-                total_time = sprint.get_forced_data(str(date), 0)
-                if total_time != 0:
-                    print date
+                planned_str = '' if planned_time is None else '(Planned: ' + str(planned_time) + ')'
 
-            planned_time = sprint.get_planned_data(str(date))
-            planned_str = '' if planned_time is None else '(Planned: ' + str(planned_time) + ')'
-
-            # print total time per day (with and/or without forced values)
-            if total_time != 0:
+                # print total time per day (with and/or without forced values)
                 if time_without_forced == total_time:
                     print 'Total: %s %s' % (total_time, planned_str)
                 else:
                     print 'Total (without forced data): %s' % (time_without_forced)
                     print 'Total including forced data: %s %s' % (total_time, planned_str)
                 print ''
+            # end of output
 
             # get jira achievement for this day (bv/sp done)
             jira_data = jira_entries.get_achievement_for_day(str(date))
 
             # if we have some time, story closed for this day or planned time, add it to graph data
             if jira_data is not None or total_time != 0 or planned_time is not None:
-                graph_entry = GraphEntry()
-                graph_entry.date = date
+                dates.append(date)
 
-                if planned_time is not None:
-                    graph_entry.planned_time = planned_time
+                for key,entries in series.items():
+                    if key == 'planned':
+                        entries.append(self.cumulate(entries, planned_time))
+                    elif key == 'md':
+                        entries.append(self.cumulate(entries, total_time))
+                    else:
+                        entries.append(
+                            self.cumulate(entries, None if jira_data is None else jira_data[key])
+                        )
 
-                graph_entry.time = total_time
-                try:
-                    graph_entry.story_points = jira_data['sp']
-                    graph_entry.business_value = jira_data['bv']
-                except TypeError, e:
-                    pass
-                graph_entries[str(date)] = graph_entry
+        graph_series = collections.OrderedDict()
 
-        data = graph_entries.get_ordered_data(graph_end_date)
+        # get max for each serie and map serie values to percents before adding it to graph
+        for key,entries in series.items():
+            if key == 'planned':
+                max_value = entries[-1]
+            elif key == 'md':
+                max_value = max(float(sprint.commited_man_days) * 8, entries[-1])
+            else:
+                max_value = max(jira_entries.get_commited(key), entries[-1])
 
-        # values needed to build the graph
-        commited_values = {}
-        commited_values['storyPoints'] = jira_entries.get_commited_story_points()
-        commited_values['businessValue'] = jira_entries.get_commited_business_value()
-        commited_values['manDays'] = sprint.commited_man_days
+            if max_value != 0:
+                percent_values = MathHelper.get_values_as_percent(entries, (0, max_value))
+                graph_series[key] = percent_values
 
+        # output the graph
+        output = SprintBurnUpOutputPygal()
+        output.output(dates, graph_series)
 
-        # values needed to build the graph
-        sprint_data = {}
-        sprint_data['startDate'] = sprint.get_zebra_data('start_date').strftime('%Y-%m-%d')
-        sprint_data['endDate'] = sprint.get_zebra_data('end_date').strftime('%Y-%m-%d')
-        sprint_data['graphEndDate'] = graph_end_date.strftime('%Y-%m-%d')
-
-        # write the graph
-        print 'Starting output'
-        output = SprintBurnUpOutput(AppContainer.secret.get_output_dir())
-        output.output(sprint.name, data, commited_values, sprint_data, sprint.get_title())
+    def cumulate(self, serie, new):
+        """
+        Returns the last serie value + the new one. Works also if serie is empty and/or the new element is None
+        """
+        last = 0 if len(serie) == 0 else serie[-1]
+        if new is None:
+            return last
+        else:
+            return last + new
 
 
 class GetLastZebraDayCommand(BaseCommand):

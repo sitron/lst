@@ -9,6 +9,8 @@ class AppContainer(object):
     pass
 
 
+import collections
+
 class ZebraManager(object):
 
     @classmethod
@@ -16,7 +18,7 @@ class ZebraManager(object):
         """
         Group zebra entries by project id
         :param entries:list of zebra entries as returned by ZebraRemote.parse_entries
-        :return:
+        :return: dictionary of projects
         """
         projects = {}
         for zebra_entry in entries:
@@ -27,6 +29,24 @@ class ZebraManager(object):
             projects[zebra_entry.project].append(zebra_entry)
 
         return projects
+
+    @classmethod
+    def group_as_zebra_days(cls, entries):
+        """
+        Group zebra entries by date
+        :param entries:list of ZebraEntry as returned by ZebraRemote.parse_entries
+        :return: orderedDict of ZebraDay
+        """
+        zebra_days = collections.OrderedDict()
+
+        for entry in entries:
+            readable_date = entry.readable_date()
+
+            zebra_day = zebra_days.get(readable_date, ZebraDay())
+            zebra_day.add_entry(entry)
+            zebra_days[readable_date] = zebra_day
+
+        return zebra_days
 
 
 class ZebraEntry:
@@ -59,6 +79,11 @@ class ZebraDay:
         self.entries = list()  # list of ZebraEntry
         self.day = ''  # readable day (2012-07-31)
         self.entries_per_user = None
+
+    def add_entry(self, entry):
+        self.entries.append(entry)
+        self.time += entry.time
+        self.day = entry.readable_date()
 
     def get_entries_per_user(self):
         if self.entries_per_user is None:
@@ -118,12 +143,24 @@ class JiraEntries(list):
     def get_achievement_for_day(self, day):
         return self.get_achievement_by_day().get(str(day))
 
+    def get_commited(self, value_name):
+        """
+        Alias to get_commited_story_points and get_commited_business_value
+        :param value_name: sp or bv
+        """
+        if value_name == 'bv':
+            return self.get_commited_business_value()
+        else:
+            return self.get_commited_story_points()
+
+
     def get_commited_story_points(self):
+        total = 0
         for s in self:
             if s.is_nice:
                 continue
-            self.total_story_points += s.story_points
-        return self.total_story_points
+            total += s.story_points
+        return total
 
     def get_achieved_story_points(self):
         for s in self:
@@ -132,11 +169,12 @@ class JiraEntries(list):
         return self.achieved_story_points
 
     def get_commited_business_value(self):
+        total = 0
         for s in self:
             if s.is_nice:
                 continue
-            self.total_business_value += s.business_value
-        return self.total_business_value
+            total += s.business_value
+        return total
 
     def get_achieved_business_value(self):
         for s in self:
@@ -208,6 +246,7 @@ class Sprint:
 
 class GraphEntries(dict):
     """keeps all the graph entries"""
+
     def get_ordered_data(self, date_limit=None):
         data = list()
         cumulated_bv = 0
@@ -231,8 +270,33 @@ class GraphEntries(dict):
                 value.business_value = None
                 value.story_points = None
                 value.time = None
-            data.append(value.to_json())
+            data.append(value)
+            # data.append(value.to_json())
         return data
+
+    def get_range(self, value_name, ideal=None, ordered_data=None):
+        """
+        Returns the data for a certain value type (story points, business value or man days as a range
+        min will usually be 0 but max could be more than 100%
+
+        :param value_name: story_points, business_value, time
+        :param ideal: the commited MD, SP or BV (depending on value_name)
+        :param ordered_data: defaults to self.ordered_data
+        :return: a tuple (min, max)
+        """
+        if ordered_data is None:
+            ordered_data = self.get_ordered_data()
+
+        maximum = getattr(ordered_data[-1], value_name)
+        if ideal is not None:
+            maximum = max(maximum, ideal)
+
+        return (0, float(maximum))
+
+    def get_result_ratio(self, ideal, result):
+        print ideal
+        print result
+        return float(result)/float(ideal)
 
 
 class GraphEntry:
@@ -241,6 +305,9 @@ class GraphEntry:
     story_points = 0
     time = 0
     planned_time = 0
+
+    def to_range(self, current_range, new_range):
+        pass
 
     def to_json(self):
         o = {

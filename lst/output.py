@@ -83,6 +83,50 @@ class SprintBurnUpOutput(TemplatedOutput):
             print 'Problem with the generation of the graph file', e
 
 
+import pygal
+from pygal.style import LightColorizedStyle
+import io
+
+
+class SprintBurnUpOutputPygal(object):
+    def output(self, dates, series, graph_title='Results in %'):
+
+        biggest_y_value = 100
+        for values in series.values():
+            biggest_y_value = max(biggest_y_value, values[-1])
+
+        chart = pygal.Line(x_label_rotation=20,
+                           include_x_axis=True,
+                           range=(0, biggest_y_value),
+                           style=LightColorizedStyle,
+                           title=graph_title,
+                           disable_xml_declaration=True)
+
+        chart.x_labels = map(str, dates)
+        for key,entries in series.items():
+            chart.add(key, entries)
+
+        html_str = u"""
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title>my graph</title>
+                <script type="text/javascript" src="http://kozea.github.com/pygal.js/javascripts/svg.jquery.js"></script>
+                <script type="text/javascript" src="http://kozea.github.com/pygal.js/javascripts/pygal-tooltips.js"></script>
+            </head>
+            <body>
+                <figure>
+                    {graph}
+                </figure>
+            </body>
+        </html>
+        """.format(graph=chart.render(is_unicode=True))
+
+        # todo: change this to output in user defined folder as sprint_day.html
+        with io.open("mytest.html", 'w', encoding='utf-8') as f:
+            f.write(html_str)
+
+
 class ResultPerStoryOutput(TemplatedOutput):
     """Generates bar graph for each sprint story's result"""
 

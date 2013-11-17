@@ -233,3 +233,15 @@ class ArgParseHelper(object):
     @classmethod
     def add_user_story_id_argument(cls, parser):
         parser.add_argument("story_id", help="specify user story id (ie. jlc-111)")
+
+
+class MathHelper(object):
+
+    @classmethod
+    def get_values_as_percent(self, values, old_range):
+        new_range = (0, 100)
+        ranged = []
+        for value in values:
+            if value is not None:
+                ranged.append((((value - old_range[0]) * (new_range[1] - new_range[0]) / (old_range[1] - old_range[0]))) + new_range[0])
+        return ranged
