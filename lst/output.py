@@ -91,6 +91,7 @@ import io
 class SprintBurnUpOutputPygal(object):
     def output(self, dates, series, graph_title='Results in %'):
 
+        biggest_y_value = 100
         for values in series.values():
             biggest_y_value = max(biggest_y_value, values[-1])
 
