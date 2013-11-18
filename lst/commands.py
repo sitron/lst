@@ -627,7 +627,8 @@ class SprintBurnUpCommand(BaseCommand):
 
         # output the graph
         output = SprintBurnUpOutputPygal()
-        output.output(dates, graph_series)
+        graph = output.output(dates, graph_series)
+        print 'Your graph is available at %s' % (graph)
 
     def cumulate(self, serie, new):
         """

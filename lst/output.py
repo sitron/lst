@@ -88,8 +88,28 @@ from pygal.style import LightColorizedStyle
 import io
 
 
+class OutputHelper(object):
+    @classmethod
+    def get_base_html_structure(cls):
+        html_str = u"""
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title>my graph</title>
+                <script type="text/javascript" src="http://kozea.github.com/pygal.js/javascripts/svg.jquery.js"></script>
+                <script type="text/javascript" src="http://kozea.github.com/pygal.js/javascripts/pygal-tooltips.js"></script>
+            </head>
+            <body>
+                <figure>
+                    {graph}
+                </figure>
+            </body>
+        </html>"""
+        return html_str
+
+
 class SprintBurnUpOutputPygal(object):
-    def output(self, dates, series, graph_title='Results in %'):
+    def output(self, dates, series, graph_title='Results in %', sprint_name=u'name'):
 
         biggest_y_value = 100
         for values in series.values():
@@ -106,25 +126,17 @@ class SprintBurnUpOutputPygal(object):
         for key,entries in series.items():
             chart.add(key, entries)
 
-        html_str = u"""
-        <!DOCTYPE html>
-        <html>
-            <head>
-                <title>my graph</title>
-                <script type="text/javascript" src="http://kozea.github.com/pygal.js/javascripts/svg.jquery.js"></script>
-                <script type="text/javascript" src="http://kozea.github.com/pygal.js/javascripts/pygal-tooltips.js"></script>
-            </head>
-            <body>
-                <figure>
-                    {graph}
-                </figure>
-            </body>
-        </html>
-        """.format(graph=chart.render(is_unicode=True))
+        output = OutputHelper.get_base_html_structure().format(graph=chart.render(is_unicode=True))
 
-        # todo: change this to output in user defined folder as sprint_day.html
-        with io.open("mytest.html", 'w', encoding='utf-8') as f:
-            f.write(html_str)
+        path = 'sprint_burnup-%s-%s.html' % (
+            Helper.slugify(sprint_name),
+            datetime.now().strftime("%Y%m%d")
+        )
+        output_file_absolute = os.path.abspath(AppContainer.secret.get_output_dir() + path)
+        with io.open(output_file_absolute, 'w', encoding='utf-8') as f:
+            f.write(output)
+
+        return output_file_absolute
 
 
 class ResultPerStoryOutput(TemplatedOutput):
@@ -158,6 +170,7 @@ class ResultPerStoryOutput(TemplatedOutput):
             print 'Check your new graph at ' + output_file_absolute
         except Exception as e:
             print 'Problem with the generation of the graph file', e
+
 
 class Helper(object):
     @staticmethod
