@@ -560,6 +560,12 @@ class SprintBurnUpCommand(BaseCommand):
         series['bv'] = []
         series['planned'] = []
 
+        max_values = {
+            'md': float(sprint.commited_man_days) * 8,
+            'sp': jira_entries.get_commited('sp'),
+            'bv': jira_entries.get_commited('bv'),
+        }
+
         # loop through all days and gather values
         for date in days:
             time_without_forced = 0
@@ -614,21 +620,44 @@ class SprintBurnUpCommand(BaseCommand):
 
         # get max for each serie and map serie values to percents before adding it to graph
         for key,entries in series.items():
-            if key == 'planned':
-                max_value = entries[-1]
-            elif key == 'md':
-                max_value = max(float(sprint.commited_man_days) * 8, entries[-1])
-            else:
-                max_value = max(jira_entries.get_commited(key), entries[-1])
+            max_value = max_values.get(key, entries[-1])
+            max_with_results = max(max_value, entries[-1])
+            max_values[key] = max_with_results
 
-            if max_value != 0:
-                percent_values = MathHelper.get_values_as_percent(entries, (0, max_value))
+            if max_with_results != 0:
+                percent_values = MathHelper.get_values_as_percent(entries, (0, max_with_results))
                 graph_series[key] = percent_values
 
-        # output the graph
-        output = SprintBurnUpOutputPygal()
-        graph = output.output(dates, graph_series)
-        print 'Your graph is available at %s' % (graph)
+        # get and output the graph
+        chart = SprintBurnUpChart.get_chart(dates, graph_series)
+
+        results = {}
+        for key,entries in series.items():
+            if key in ['md','sp','bv']:
+                results[key] = ResultPerValuePie.get_chart((entries[-1], max_values[key]), '%s results' % (key))
+
+        # collect all needed values for graph output
+        args = []
+        for serie in graph_series:
+            args.append('{value} {percent:.0f}% ({result:.0f}/{max_value:.0f})'.format(
+                value=serie.upper(),
+                percent=series[serie][-1]/max_values[serie] * 100,
+                result=series[serie][-1],
+                max_value=max_values[serie],
+            ))
+            args.append(results[serie].render(is_unicode=True))
+        args.append(chart.render(is_unicode=True))
+
+        # embed the graphs in html
+        content = SprintBurnUpChart.get_sprint_burnup_html_structure(graph_series).format(*args)
+
+        # write the graph to file
+        path = 'sprint_burnup-%s-%s.html' % (
+            Helper.slugify(sprint.name),
+            datetime.datetime.now().strftime("%Y%m%d")
+        )
+        graph_location = OutputHelper.output(path, content)
+        print 'Your graph is available at %s' % (graph_location)
 
     def cumulate(self, serie, new):
         """

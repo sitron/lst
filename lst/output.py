@@ -86,13 +86,13 @@ class SprintBurnUpOutput(TemplatedOutput):
 import pygal
 from pygal.style import LightColorizedStyle
 import io
+from bs4 import BeautifulSoup
 
 
 class OutputHelper(object):
     @classmethod
     def get_base_html_structure(cls):
         html_str = u"""
-        <!DOCTYPE html>
         <html>
             <head>
                 <title>my graph</title>
@@ -100,17 +100,28 @@ class OutputHelper(object):
                 <script type="text/javascript" src="http://kozea.github.com/pygal.js/javascripts/pygal-tooltips.js"></script>
             </head>
             <body>
-                <figure>
-                    {graph}
-                </figure>
+                <div class="main-graph">
+                    <figure>
+                        {}
+                    </figure>
+                </div>
             </body>
-        </html>"""
+        </html>
+        """
         return html_str
 
+    @classmethod
+    def output(cls, path, content):
+        output_file_absolute = os.path.abspath(AppContainer.secret.get_output_dir() + path)
+        with io.open(output_file_absolute, 'w', encoding='utf-8') as f:
+            f.write(content)
 
-class SprintBurnUpOutputPygal(object):
-    def output(self, dates, series, graph_title='Results in %', sprint_name=u'name'):
+        return output_file_absolute
 
+
+class SprintBurnUpChart(object):
+    @classmethod
+    def get_chart(cls, dates, series, graph_title='Results in %'):
         biggest_y_value = 100
         for values in series.values():
             biggest_y_value = max(biggest_y_value, values[-1])
@@ -119,24 +130,60 @@ class SprintBurnUpOutputPygal(object):
                            include_x_axis=True,
                            range=(0, biggest_y_value),
                            style=LightColorizedStyle,
-                           title=graph_title,
+                           explicit_size=True,
+                           height=700,
+                           css=['style.css', 'graph.css', '/home/sitron/projects/lst/lst/css/charts.css'],
+                           print_values=False,
                            disable_xml_declaration=True)
 
         chart.x_labels = map(str, dates)
         for key,entries in series.items():
             chart.add(key, entries)
 
-        output = OutputHelper.get_base_html_structure().format(graph=chart.render(is_unicode=True))
+        return chart
 
-        path = 'sprint_burnup-%s-%s.html' % (
-            Helper.slugify(sprint_name),
-            datetime.now().strftime("%Y%m%d")
-        )
-        output_file_absolute = os.path.abspath(AppContainer.secret.get_output_dir() + path)
-        with io.open(output_file_absolute, 'w', encoding='utf-8') as f:
-            f.write(output)
+    @classmethod
+    def get_sprint_burnup_html_structure(cls, series):
+        html = BeautifulSoup(OutputHelper.get_base_html_structure())
+        body = html.find("body")
+        top_graphs_container = html.new_tag('div')
+        top_graphs_container['class'] = 'top-graphs'
+        body.insert(0, top_graphs_container)
+        for serie in series:
+            figure = html.new_tag('figure')
+            figure.string = '{}'
+            caption = html.new_tag('figcaption')
+            caption.string = '{}'
+            figure.insert(0, caption)
+            top_graphs_container.append(figure)
+        return html.prettify()
 
-        return output_file_absolute
+
+class ResultPerValuePie(object):
+    @classmethod
+    def get_chart(cls, result, graph_title='Result in %'):
+        """
+        Get a pie chart for sprint results
+
+        :param result: tuple (actual, ideal)
+        :param graph_title: title
+        """
+        percent = (result[0] / result[1]) * 100
+        chart = pygal.Pie(x_label_rotation=20,
+                          show_legend=False,
+                          background=False,
+                          explicit_size=True,
+                          width=200,
+                          height=200,
+                          include_x_axis=False,
+                          style=LightColorizedStyle,
+                          print_values=False,
+                          css=['style.css', 'graph.css', '/home/sitron/projects/lst/lst/css/charts.css'],
+                          disable_xml_declaration=True)
+        chart.add('Result', percent)
+        chart.add('Remaining ', 100-percent if percent <= 100 else 0)
+
+        return chart
 
 
 class ResultPerStoryOutput(TemplatedOutput):
