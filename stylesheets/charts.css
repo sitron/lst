@@ -1,0 +1,11 @@
+figure {
+    margin: 0;
+}
+
+.top-graphs figure {
+    float: left;
+}
+
+.top-graphs {
+    overflow: hidden;
+}
