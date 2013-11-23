@@ -1,9 +1,22 @@
+body {
+    text-align: center;
+    font-family: "courier new";
+}
+
+.content {
+    text-align: center;
+}
+
 .main-graph .graph .background {
     fill: white;
 }
 
 figure {
     margin: 0;
+}
+
+.top-graphs {
+    display: inline-block;
 }
 
 .top-graphs figure {

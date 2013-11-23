@@ -565,6 +565,7 @@ class SprintBurnUpCommand(BaseCommand):
             'sp': jira_entries.get_commited('sp'),
             'bv': jira_entries.get_commited('bv'),
         }
+        expected_velocity =  max_values['sp'] / (max_values['md'] / 8)
 
         # loop through all days and gather values
         for date in days:
@@ -616,6 +617,8 @@ class SprintBurnUpCommand(BaseCommand):
                             self.cumulate(entries, None if jira_data is None else jira_data[key])
                         )
 
+        actual_velocity = series['sp'][-1] / (series['md'][-1] / 8)
+
         graph_series = collections.OrderedDict()
 
         # get max for each serie and map serie values to percents before adding it to graph
@@ -638,6 +641,8 @@ class SprintBurnUpCommand(BaseCommand):
 
         # collect all needed values for graph output
         args = []
+        args.append('{} ({})'.format(sprint.get_jira_data('sprint_name').replace('+', ' '), sprint.name))
+        args.append('Velocity: actual: {:.2f} expected: {:.2f}'.format(actual_velocity, expected_velocity))
         for serie in graph_series:
             args.append('{value} {percent:.0f}%<br/>({result:.0f}/{max_value:.0f})'.format(
                 value=serie.upper(),

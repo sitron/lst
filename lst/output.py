@@ -95,15 +95,18 @@ class OutputHelper(object):
         html_str = u"""
         <html>
             <head>
-                <title>my graph</title>
+                <title>LST graph</title>
                 <script type="text/javascript" src="http://kozea.github.com/pygal.js/javascripts/svg.jquery.js"></script>
                 <script type="text/javascript" src="http://kozea.github.com/pygal.js/javascripts/pygal-tooltips.js"></script>
             </head>
             <body>
-                <div class="main-graph">
-                    <figure>
-                        {}
-                    </figure>
+                <h1>{}</h1>
+                <div class="content">
+                    <div class="main-graph">
+                        <figure>
+                            {}
+                        </figure>
+                    </div>
                 </div>
             </body>
         </html>
@@ -148,10 +151,10 @@ class SprintBurnUpChart(object):
         html = BeautifulSoup(OutputHelper.get_base_html_structure())
 
         # top graph container
-        body = html.find("body")
+        content = html.find(class_="content")
         top_graphs_container = html.new_tag('div')
         top_graphs_container['class'] = 'top-graphs'
-        body.insert(0, top_graphs_container)
+        content.insert(0, top_graphs_container)
 
         # top graphs
         for serie in series:
@@ -162,6 +165,12 @@ class SprintBurnUpChart(object):
             caption.string = '{}'
             figure.insert(0, caption)
             top_graphs_container.append(figure)
+
+        # velocity container
+        velocity = html.new_tag('p')
+        velocity['class'] = 'velocity'
+        velocity.string = '{}'
+        content.insert(0, velocity)
 
         # custom css
         css_url = 'http://sitron.github.io/lst/stylesheets/charts.css'
