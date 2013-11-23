@@ -639,7 +639,7 @@ class SprintBurnUpCommand(BaseCommand):
         # collect all needed values for graph output
         args = []
         for serie in graph_series:
-            args.append('{value} {percent:.0f}% ({result:.0f}/{max_value:.0f})'.format(
+            args.append('{value} {percent:.0f}%<br/>({result:.0f}/{max_value:.0f})'.format(
                 value=serie.upper(),
                 percent=series[serie][-1]/max_values[serie] * 100,
                 result=series[serie][-1],

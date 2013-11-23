@@ -132,7 +132,6 @@ class SprintBurnUpChart(object):
                            style=LightColorizedStyle,
                            explicit_size=True,
                            height=700,
-                           css=['style.css', 'graph.css', '/home/sitron/projects/lst/lst/css/charts.css'],
                            print_values=False,
                            disable_xml_declaration=True)
 
@@ -145,10 +144,14 @@ class SprintBurnUpChart(object):
     @classmethod
     def get_sprint_burnup_html_structure(cls, series):
         html = BeautifulSoup(OutputHelper.get_base_html_structure())
+
+        # top graph container
         body = html.find("body")
         top_graphs_container = html.new_tag('div')
         top_graphs_container['class'] = 'top-graphs'
         body.insert(0, top_graphs_container)
+
+        # top graphs
         for serie in series:
             figure = html.new_tag('figure')
             figure.string = '{}'
@@ -156,6 +159,14 @@ class SprintBurnUpChart(object):
             caption.string = '{}'
             figure.insert(0, caption)
             top_graphs_container.append(figure)
+
+        # custom css
+        css_url = 'http://sitron.github.io/lst/stylesheets/charts.css'
+        if AppContainer.dev_mode:
+            css_url = os.path.abspath('lst/css/charts.css')
+        custom_css = html.new_tag('link', href=css_url, rel='stylesheet')
+        html.head.insert(2, custom_css)
+
         return html.prettify()
 
 
@@ -169,16 +180,17 @@ class ResultPerValuePie(object):
         :param graph_title: title
         """
         percent = (result[0] / result[1]) * 100
+
         chart = pygal.Pie(x_label_rotation=20,
                           show_legend=False,
                           background=False,
                           explicit_size=True,
                           width=200,
                           height=200,
+                          margin=0,
                           include_x_axis=False,
                           style=LightColorizedStyle,
                           print_values=False,
-                          css=['style.css', 'graph.css', '/home/sitron/projects/lst/lst/css/charts.css'],
                           disable_xml_declaration=True)
         chart.add('Result', percent)
         chart.add('Remaining ', 100-percent if percent <= 100 else 0)

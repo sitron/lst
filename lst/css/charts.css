@@ -1,0 +1,15 @@
+figure {
+    margin: 0;
+}
+
+figcaption {
+    text-align: center;
+}
+
+.top-graphs figure {
+    float: left;
+}
+
+.top-graphs {
+    overflow: hidden;
+}
