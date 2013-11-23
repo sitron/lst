@@ -133,6 +133,8 @@ class SprintBurnUpChart(object):
                            explicit_size=True,
                            height=700,
                            print_values=False,
+                           no_prefix=True,
+                           background=False,
                            disable_xml_declaration=True)
 
         chart.x_labels = map(str, dates)
@@ -155,6 +157,7 @@ class SprintBurnUpChart(object):
         for serie in series:
             figure = html.new_tag('figure')
             figure.string = '{}'
+            figure['class'] = serie
             caption = html.new_tag('figcaption')
             caption.string = '{}'
             figure.insert(0, caption)
@@ -187,6 +190,7 @@ class ResultPerValuePie(object):
                           explicit_size=True,
                           width=200,
                           height=200,
+                          no_prefix=True,
                           margin=0,
                           include_x_axis=False,
                           style=LightColorizedStyle,
