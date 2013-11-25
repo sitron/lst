@@ -50,17 +50,6 @@ class TimeSheetCollection(list):
         return projects
 
 
-class ZebraDays(dict):
-    def __init__(self, *args):
-        dict.__init__(self, args)
-        self.ordered_dates = None
-
-    def get_ordered_dates(self):
-        if self.ordered_dates is None:
-            self.ordered_dates = sorted(set(self.keys()))
-        return self.ordered_dates
-
-
 class ZebraDay:
     def __init__(self):
         self.time = 0
