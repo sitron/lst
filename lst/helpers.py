@@ -1,9 +1,10 @@
-from errors import *
 import datetime
 import dateutil
 import os
 import shlex
 import subprocess
+
+from errors import *
 
 
 class InputHelper(object):
@@ -68,89 +69,6 @@ class DateHelper(object):
 class ZebraHelper(object):
 
     @classmethod
-    def get_zebra_url_for_activities(
-            cls,
-            start_date,
-            end_date = None,
-            projects = None,
-            users = None,
-            activities = None,
-            internal_projects = None,
-            project_type_to_consider = 'external'
-    ):
-        """
-        Get zebra url to retrieve project's activities
-
-        :param start_date: date string
-        :param end_date:  date string
-        :param projects: list of project ids
-        :param users: list of user ids
-        :param activities: list of activity ids (project is divided in multiple activities
-        :param internal_projects: list of internal project ids
-        :param project_type_to_consider: external/internal/all. Zebra stores internal/external projects differently
-        :return: string Zebra url
-        """
-        report_url = 'timesheet/report/.json?option_selector='
-
-        if end_date is None:
-            end_date = start_date
-
-        if users is None:
-            report_url += '&users[]=*'
-        elif type(users) == list:
-            for user in users:
-                report_url += '&users[]=' + str(user)
-        else:
-            report_url += '&users[]=' + str(users)
-
-        if activities is None:
-            report_url += '&activities[]=*'
-        elif type(activities) == list:
-            for activity in activities:
-                report_url += '&activities[]=' + `activity`
-        else:
-            report_url += '&activities[]=' + str(activities)
-
-        if project_type_to_consider != 'internal':
-            if projects is None:
-                report_url += '&projects[]=*'
-            elif type(projects) == list:
-                for project in projects:
-                    report_url += '&projects[]=' + `project`
-            else:
-                report_url += '&projects[]=' + str(projects)
-
-        if project_type_to_consider != 'external':
-            if internal_projects is None:
-                report_url += '&internal[]=*'
-            elif type(internal_projects) == list:
-                for internal_project in internal_projects:
-                    report_url += '&internal[]=' + `internal_project`
-            else:
-                report_url += '&internal[]=' + str(internal_projects)
-
-        report_url += '&start=' + str(start_date)
-        report_url += '&end=' + str(end_date)
-
-        return report_url
-
-    @classmethod
-    def get_zebra_url_for_sprint_last_day(cls, sprint):
-        """
-        Returns zebra url to retrieve all sprint days from start date to today
-
-        :param sprint:Sprint
-        :return:string url to call on zebra remote
-        """
-        users = sprint.get_zebra_data('users')
-        client_id = sprint.get_zebra_data('client_id')
-        activities = sprint.get_zebra_data('activities')
-        start_date = sprint.get_zebra_data('start_date')
-        end_date = datetime.date.today()
-
-        return cls.get_zebra_url_for_activities(start_date, end_date, client_id, users, activities)
-
-    @classmethod
     def zebra_date(cls, date_object):
         """
         Returns a Zebra compatible date string from a Date object
@@ -173,12 +91,6 @@ class ZebraHelper(object):
 
 
 class JiraHelper(object):
-
-    @classmethod
-    def get_url_for_project_lookup_by_story_id(cls, story_id):
-        return "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml" \
-               "?jqlQuery=key+%3D+'" + str(story_id) + "'" \
-               "&tempMax=1000"
 
     @classmethod
     def sanitize_sprint_name(cls, sprint_name):
