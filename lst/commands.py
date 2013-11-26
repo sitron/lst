@@ -88,6 +88,12 @@ class BaseCommand(object):
 
         return sprint_name
 
+    def get_jira_manager(self):
+        return JiraManager(AppContainer)
+
+    def get_zebra_manager(self):
+        return ZebraManager(AppContainer)
+
 
 class ResultPerStoryCommand(BaseCommand):
     """
@@ -113,7 +119,7 @@ class ResultPerStoryCommand(BaseCommand):
 
         # retrieve jira data
         # to compare estimated story_points to actual MD consumption
-        jira_manager = JiraManager(AppContainer)
+        jira_manager = self.get_jira_manager()
         jira_entries = jira_manager.get_stories_for_sprint(sprint)
 
         # extract the integer from the story id
@@ -130,7 +136,7 @@ class ResultPerStoryCommand(BaseCommand):
         velocity = max_story_points / commit
 
         # retrieve zebra data
-        zebra_manager = ZebraManager(AppContainer)
+        zebra_manager = self.get_zebra_manager()
         zebra_entries = zebra_manager.get_timesheets_for_sprint(sprint)
         if len(zebra_entries) == 0:
             return
@@ -214,7 +220,7 @@ class CheckHoursCommand(BaseCommand):
         start_date, end_date = self.get_start_and_end_date(dates)
 
         # retrieve zebra data
-        zebra_manager = ZebraManager(AppContainer)
+        zebra_manager = self.get_zebra_manager()
         zebra_entries = zebra_manager.get_all_timesheets(
             start_date=start_date,
             end_date=end_date,
@@ -343,7 +349,7 @@ class RetrieveJiraInformationForConfigCommand(BaseCommand):
     def run(self, args):
         story_id = args.story_id.upper()
 
-        jira_manager = JiraManager(AppContainer)
+        jira_manager = self.get_jira_manager()
         story = jira_manager.get_story(story_id)
         clean_sprint_name = JiraHelper.sanitize_sprint_name(story.sprint_name)
 
@@ -390,7 +396,7 @@ class RetrieveUserIdCommand(BaseCommand):
     def run(self, args):
         names = [x.lower() for x in args.lastname]
 
-        zebra_manager = ZebraManager(AppContainer)
+        zebra_manager = self.get_zebra_manager()
         all_users = zebra_manager.get_all_users()
         if len(all_users) == 0:
             raise SyntaxError(
@@ -462,15 +468,14 @@ class SprintBurnUpCommand(BaseCommand):
 
         # start fetching zebra data
         print 'Start fetching Zebra'
-        zebra_manager = ZebraManager(AppContainer)
+        zebra_manager = self.get_zebra_manager()
         timesheets = zebra_manager.get_timesheets_for_sprint(sprint)
         zebra_days = timesheets.group_by_day()
         print 'End Zebra'
 
         # start fetching jira data
         print 'Start fetching Jira'
-        JiraEntry.closed_status_ids = sprint.get_closed_status_codes()
-        jira_manager = JiraManager(AppContainer)
+        jira_manager = self.get_jira_manager()
         jira_entries = jira_manager.get_stories_for_sprint_with_end_date(sprint)
         print 'End Jira'
 
@@ -621,7 +626,7 @@ class GetLastZebraDayCommand(BaseCommand):
         end_date = datetime.date.today()
         sprint.zebra_data['end_date'] = end_date
 
-        zebra_manager = ZebraManager(AppContainer)
+        zebra_manager = self.get_zebra_manager()
         zebra_entries = zebra_manager.get_timesheets_for_sprint(sprint)
         last_entry = zebra_entries[-1]
 
