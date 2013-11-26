@@ -1,4 +1,4 @@
-class JiraEntry:
+class Story:
     # status codes considered as closed
     closed_status_ids = set()
 
@@ -15,13 +15,13 @@ class JiraEntry:
         self.sprint_name = None
 
     def is_over(self):
-        return self.status in JiraEntry.closed_status_ids
+        return self.status in Story.closed_status_ids
 
     def get_close_day(self):
         return self.close_date.strftime('%Y-%m-%d')
 
 
-class JiraEntries(list):
+class StoryCollection(list):
     def __init__(self):
         list.__init__([])
         self.total_story_points = 0
@@ -57,7 +57,6 @@ class JiraEntries(list):
             return self.get_commited_business_value()
         else:
             return self.get_commited_story_points()
-
 
     def get_commited_story_points(self):
         total = 0

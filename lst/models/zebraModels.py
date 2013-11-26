@@ -1,7 +1,7 @@
 import collections
 
 
-class ZebraEntry:
+class TimeSheet:
     def __init__(self):
         self.username = None
         self.time = 0
@@ -15,10 +15,9 @@ class ZebraEntry:
 
 
 class TimeSheetCollection(list):
-
     def group_by_day(self):
         """
-        Group zebra entries by date
+        Group zebra timesheets by date
         :rtype : collections.OrderedDict
         :return: orderedDict of ZebraDay(s)
         """
@@ -35,9 +34,9 @@ class TimeSheetCollection(list):
 
     def group_by_project(self):
         """
-        Group zebra entries by project id
+        Group zebra timesheets by project id
         :rtype : dict
-        :return: dictionary of projects (key=project name, values=list of entries)
+        :return: dictionary of projects (key=project name, values=list of timesheets)
         """
         projects = {}
 
@@ -53,7 +52,7 @@ class TimeSheetCollection(list):
 class ZebraDay:
     def __init__(self):
         self.time = 0
-        self.entries = list()  # list of ZebraEntry
+        self.entries = list()  # list of timesheets
         self.day = ''  # readable day (2012-07-31)
         self.entries_per_user = None
 
@@ -71,5 +70,3 @@ class ZebraDay:
                 except KeyError:
                     self.entries_per_user[entry.username] = entry.time
         return self.entries_per_user
-
-

@@ -20,8 +20,8 @@ class Sprint:
         self.zebra_data = None
         self.raw = None
         self.default_closed_statuses = {6: 'closed'}
-        self.timesheets = None # TimeSheetCollection
-        self.stories = None # JiraEntries
+        self.timesheets = None  # TimeSheetCollection
+        self.stories = None  # StoryCollection
 
     def get_closed_statuses(self):
         statuses = self.get_jira_data('closed_statuses')

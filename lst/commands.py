@@ -475,6 +475,7 @@ class SprintBurnUpCommand(BaseCommand):
 
         # start fetching jira data
         print 'Start fetching Jira'
+        Story.closed_status_ids = sprint.get_closed_status_codes()
         jira_manager = self.get_jira_manager()
         jira_entries = jira_manager.get_stories_for_sprint_with_end_date(sprint)
         print 'End Jira'

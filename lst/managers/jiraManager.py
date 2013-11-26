@@ -1,6 +1,6 @@
 import pickle
 
-from models.jiraModels import JiraEntries, JiraEntry
+from models.jiraModels import StoryCollection, Story
 from remote import JiraRemote
 from processors import CloseDateProcessor
 
@@ -65,20 +65,20 @@ class JiraManager:
             post_processor=None
     ):
         """
-        Parse xml result into stories (JiraEntries)
+        Parse xml result into list of stories
 
         :param response_xml:xml xml result from remote call
         :param nice_identifier:string story title substring
         :param ignored:list list of story ids to be ignored
         :param post_processor:JiraStoryProcessor Subclass of JiraStoryProcessor
-        :return:JiraEntries list of JiraEntry(s)
+        :return:StoryCollection list of Story(s)
         """
-        stories = JiraEntries()
+        stories = StoryCollection()
 
         xml_stories = response_xml[0].findall('item')
 
         for s in xml_stories:
-            story = JiraEntry()
+            story = Story()
             story.id = s.find('key').text
 
             # check if the story should be ignored (see ignore in config)
@@ -120,10 +120,10 @@ class JiraManager:
                     continue
 
             # other attributes
-            if (s.find('project') is not None and s.find('project').get('id') is not None):
+            if s.find('project') is not None and s.find('project').get('id') is not None:
                 story.project_id = s.find('project').get('id')
                 story.project_name = s.find('project').text
-            if (s.find('fixVersion') is not None):
+            if s.find('fixVersion') is not None:
                 story.sprint_name = s.find('fixVersion').text
 
             stories.append(story)

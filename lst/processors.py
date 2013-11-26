@@ -5,7 +5,7 @@ class JiraStoryProcessor(object):
         """
         Post processing on story (check close date for ex.) for optional checks
 
-        :param story: JiraEntry
+        :param story: Story
         :return modified story or None if story should be discarted
         """
         pass

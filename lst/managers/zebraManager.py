@@ -3,7 +3,7 @@ import pickle
 
 from remote import ZebraRemote
 from helpers import ZebraHelper
-from models.zebraModels import TimeSheetCollection, ZebraEntry
+from models.zebraModels import TimeSheetCollection, TimeSheet
 
 
 class ZebraManager:
@@ -41,7 +41,7 @@ class ZebraManager:
         zebra_json_result = remote.get_data(url)
         zebra_entries = self._parse_timesheets(zebra_json_result)
 
-        return TimeSheetCollection(zebra_entries)
+        return zebra_entries
 
     def _parse_users(self, response_json):
         users = response_json['command']['users']['user']
@@ -53,7 +53,7 @@ class ZebraManager:
         Parse json response received from ZebraRemote to application data
 
         :param response_json: json data
-        :return: list of ZebraEntry(s)
+        :return:TimeSheetCollection list of TimeSheet(s)
         """
         zebra_entries = []
 
@@ -72,24 +72,24 @@ class ZebraManager:
             zebra_entry = self._parse_entry(entry)
             zebra_entries.append(zebra_entry)
 
-        return zebra_entries
+        return TimeSheetCollection(zebra_entries)
 
     def _parse_entry(self, entry):
         """
-        Parse single json node to ZebraEntry
+        Parse single json node to TimeSheet
 
         :param entry:json node
-        :return: ZebraEntry
+        :return:TimeSheet
         """
-        zebra_entry = ZebraEntry()
-        zebra_entry.username = str(entry['username'].encode('utf-8'))
-        zebra_entry.time = float(entry['time'])
-        zebra_entry.project = (entry['project'].encode('utf-8'))
-        zebra_entry.date = dateutil.parser.parse(entry['date'], dayfirst=True)
-        zebra_entry.id = int(entry['tid'])
-        zebra_entry.description = str(entry['description'].encode('utf-8'))
+        timesheet = TimeSheet()
+        timesheet.username = str(entry['username'].encode('utf-8'))
+        timesheet.time = float(entry['time'])
+        timesheet.project = (entry['project'].encode('utf-8'))
+        timesheet.date = dateutil.parser.parse(entry['date'], dayfirst=True)
+        timesheet.id = int(entry['tid'])
+        timesheet.description = str(entry['description'].encode('utf-8'))
 
-        return zebra_entry
+        return timesheet
 
     def _get_zebra_remote(self):
         return ZebraRemote(
@@ -110,12 +110,12 @@ class ZebraManager:
     def _get_zebra_url_for_activities(
             self,
             start_date,
-            end_date = None,
-            projects = None,
-            users = None,
-            activities = None,
-            internal_projects = None,
-            project_type_to_consider = 'external'
+            end_date=None,
+            projects=None,
+            users=None,
+            activities=None,
+            internal_projects=None,
+            project_type_to_consider='external'
     ):
         """
         Get zebra url to retrieve project's activities
