@@ -1,4 +1,7 @@
 import datetime
+from collections import OrderedDict
+
+from helpers import MathHelper
 
 
 class AppContainer(object):
@@ -7,6 +10,81 @@ class AppContainer(object):
     dev_mode = False
     user_args = None
     pass
+
+
+class Serie(list):
+    def __init__(self):
+        list.__init__([])
+        self.name = ''
+        self.ideal_value = None
+
+    def get_max_value(self):
+        return 0 if len(self) == 0 else self[-1]
+
+    def get_commited_value(self):
+        return self.ideal_value
+
+    def get_values_as_percent(self):
+        return MathHelper.get_values_as_percent(self, (0, self.get_commited_value()))
+
+    def get_result_as_percent(self):
+        if self.get_max_value() == 0:
+            return 0
+        return (self.get_max_value() / self.get_commited_value()) * 100
+
+    def cumulate(self, value):
+        """
+        Adds a new value which is the last serie value + the new one
+        Works also if serie is empty and/or the new element is None
+        :param value:float value to add to list
+        """
+        last = 0 if len(self) == 0 else self[-1]
+        if value is None:
+            self.append(last)
+        else:
+            self.append(last + value)
+
+
+class ManDaySerie(Serie):
+    def __init__(self):
+        super(ManDaySerie, self).__init__()
+
+    def get_max_value(self):
+        return 0 if len(self) == 0 else self[-1] / 8
+
+    def get_commited_value(self):
+        return self.ideal_value / 8
+
+    def get_values_as_percent(self):
+        values = MathHelper.get_values_as_percent(self, (0, self.ideal_value))
+        return values
+
+
+class SerieCollection(OrderedDict):
+    def __init__(self):
+        super(SerieCollection, self).__init__()
+
+    def get_series_for_chart(self):
+        series = OrderedDict()
+        for name, serie in self.items():
+            if serie.get_commited_value() != 0 and serie.get_commited_value() is not None:
+                series[name] = serie
+
+        return series
+
+
+class SprintBurnupSeries(SerieCollection):
+    def __init__(self):
+        super(SprintBurnupSeries, self).__init__()
+
+        # initialize sprint burnup series series
+        self.serie_names = ['md', 'sp', 'bv', 'planned']
+        for serie_name in self.serie_names:
+            if serie_name == 'md':
+                self[serie_name] = ManDaySerie()
+            else:
+                self[serie_name] = Serie()
+            self[serie_name].name = serie_name
 
 
 class Sprint:
@@ -20,8 +98,21 @@ class Sprint:
         self.zebra_data = None
         self.raw = None
         self.default_closed_statuses = {6: 'closed'}
-        self.timesheets = None  # TimeSheetCollection
-        self.stories = None  # StoryCollection
+        self.timesheet_collection = None  # TimeSheetCollection
+        self.story_collection = None  # StoryCollection
+        self.serie_collection = None  # SerieCollection
+
+    def get_serie(self, name):
+        if self.serie_collection is None:
+            return None
+        else:
+            return self.serie_collection.get(name)
+
+    def get_expected_velocity(self):
+        return self.get_serie('sp').get_commited_value() / self.get_serie('md').get_commited_value()
+
+    def get_actual_velocity(self):
+        return self.get_serie('sp').get_max_value() / self.get_serie('md').get_max_value()
 
     def get_closed_statuses(self):
         statuses = self.get_jira_data('closed_statuses')

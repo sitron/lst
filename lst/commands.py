@@ -113,7 +113,7 @@ class ResultPerStoryCommand(BaseCommand):
         # make sure a commit prefix is defined
         prefix = sprint.get_zebra_data('commit_prefix')
         try:
-            regex = re.compile("^" + prefix + "(\d+)",re.IGNORECASE)
+            regex = re.compile("^" + prefix + "(\d+)", re.IGNORECASE)
         except:
             raise SyntaxError("No commit prefix found in config. Make sure it's defined in your settings file")
 
@@ -248,8 +248,8 @@ class CheckHoursCommand(BaseCommand):
         print 'Projects:'
         found_users = []
         zebra_url = self.secret.get_zebra('url')
-        for name,entries in projects:
-            print '- %s' % (name)
+        for name, entries in projects:
+            print '- %s' % name
 
             total = 0
             template = "  {time:<12} {username:<23} {description:<45} ({url:<15})"
@@ -273,6 +273,7 @@ class CheckHoursCommand(BaseCommand):
             else:
                 print 'Found entries for %d out of %d users (%s)' % \
                       (len(found_users), len(users), ','.join(found_users))
+
 
 class AddSprintCommand(BaseCommand):
     """
@@ -380,8 +381,9 @@ class ListCommand(BaseCommand):
             print 'No sprints defined'
         else:
             print 'All currently defined sprints:'
-            for k,v in sprints.items():
+            for k, v in sprints.items():
                 print k
+
 
 class RetrieveUserIdCommand(BaseCommand):
     """
@@ -435,7 +437,7 @@ class TestInstallCommand(BaseCommand):
 
     def run(self, args):
         print 'Will dump some useful variable to debug'
-        print 'My sys.prefix is %s' % (sys.prefix)
+        print 'My sys.prefix is %s' % sys.prefix
         print 'My modules are installed in %s' % (distutils.sysconfig.get_python_lib())
 
 
@@ -470,6 +472,7 @@ class SprintBurnUpCommand(BaseCommand):
         print 'Start fetching Zebra'
         zebra_manager = self.get_zebra_manager()
         timesheets = zebra_manager.get_timesheets_for_sprint(sprint)
+        sprint.timesheet_collection = timesheets
         zebra_days = timesheets.group_by_day()
         print 'End Zebra'
 
@@ -477,36 +480,30 @@ class SprintBurnUpCommand(BaseCommand):
         print 'Start fetching Jira'
         Story.closed_status_ids = sprint.get_closed_status_codes()
         jira_manager = self.get_jira_manager()
-        jira_entries = jira_manager.get_stories_for_sprint_with_end_date(sprint)
+        stories = jira_manager.get_stories_for_sprint_with_end_date(sprint)
+        sprint.story_collection = stories
         print 'End Jira'
-
-        # get all sprint days
-        days = sprint.get_all_days(False)
 
         # define x serie
         dates = []
 
         # define all y series
-        series = collections.OrderedDict()
-        series['md'] = []
-        series['sp'] = []
-        series['bv'] = []
-        series['planned'] = []
+        serie_collection = SprintBurnupSeries()
+        sprint.serie_collection = serie_collection
 
-        max_values = {
-            'md': float(sprint.commited_man_days) * 8,
-            'sp': jira_entries.get_commited('sp'),
-            'bv': jira_entries.get_commited('bv'),
-        }
-        expected_velocity =  max_values['sp'] / (max_values['md'] / 8)
+        # set commited value by serie
+        serie_collection.get('md').ideal_value = float(sprint.commited_man_days) * 8
+        serie_collection.get('sp').ideal_value = stories.get_commited('sp')
+        serie_collection.get('bv').ideal_value = stories.get_commited('bv')
 
-        # loop through all days and gather values
+        # loop through all sprint days and gather values
+        days = sprint.get_all_days(False)
         for date in days:
             time_without_forced = 0
 
             zebra_day = zebra_days.get(str(date))
 
-            if (zebra_day is not None):
+            if zebra_day is not None:
                 time_without_forced = zebra_day.time
 
             # check for forced zebra values
@@ -519,7 +516,7 @@ class SprintBurnUpCommand(BaseCommand):
                 print date
 
                 entries_per_user = zebra_day.get_entries_per_user()
-                for user,time in entries_per_user.items():
+                for user, time in entries_per_user.items():
                     print "%s : %s" % (user, time)
 
                 planned_str = '' if planned_time is None else '(Planned: ' + str(planned_time) + ')'
@@ -528,62 +525,65 @@ class SprintBurnUpCommand(BaseCommand):
                 if time_without_forced == total_time:
                     print 'Total: %s %s' % (total_time, planned_str)
                 else:
-                    print 'Total (without forced data): %s' % (time_without_forced)
+                    print 'Total (without forced data): %s' % time_without_forced
                     print 'Total including forced data: %s %s' % (total_time, planned_str)
                 print ''
             # end of output
 
             # get jira achievement for this day (bv/sp done)
-            jira_data = jira_entries.get_achievement_for_day(str(date))
+            jira_data = stories.get_achievement_for_day(str(date))
 
             # if we have some time, story closed for this day or planned time, add it to graph data
             if jira_data is not None or total_time != 0 or planned_time is not None:
                 dates.append(date)
 
-                for key,entries in series.items():
-                    if key == 'planned':
-                        entries.append(self.cumulate(entries, planned_time))
-                    elif key == 'md':
-                        entries.append(self.cumulate(entries, total_time))
+                for serie in serie_collection.values():
+                    if serie.name == 'planned':
+                        serie.cumulate(planned_time)
+                    elif serie.name == 'md':
+                        serie.cumulate(total_time)
                     else:
-                        entries.append(
-                            self.cumulate(entries, None if jira_data is None else jira_data[key])
-                        )
+                        serie.cumulate(None if jira_data is None else jira_data[serie.name])
 
-        actual_velocity = series['sp'][-1] / (series['md'][-1] / 8)
+        # get only meaningfull series (ie. don't use BV if the team doesnt use it)
+        graph_series = serie_collection.get_series_for_chart()
 
-        graph_series = collections.OrderedDict()
+        self._output(sprint, dates, graph_series)
 
-        # get max for each serie and map serie values to percents before adding it to graph
-        for key,entries in series.items():
-            max_value = max_values.get(key, entries[-1])
-            max_with_results = max(max_value, entries[-1])
-            max_values[key] = max_with_results
+    def _output(self, sprint, dates, graph_series):
+        # convert all y series to percents
+        percent_series = OrderedDict()
+        for name, serie in graph_series.items():
+            percent_series[name] = serie.get_values_as_percent()
 
-            if max_with_results != 0:
-                percent_values = MathHelper.get_values_as_percent(entries, (0, max_with_results))
-                graph_series[key] = percent_values
+        # generate main graph (sprint burnup)
+        chart = SprintBurnUpChart.get_chart(dates, percent_series)
 
-        # get and output the graph
-        chart = SprintBurnUpChart.get_chart(dates, graph_series)
+        # generate top graphs (result per serie)
+        top_graph_series = ['md', 'sp', 'bv']
+        result_charts = {}
 
-        results = {}
-        for key,entries in series.items():
-            if key in ['md','sp','bv']:
-                results[key] = ResultPerValuePie.get_chart((entries[-1], max_values[key]), '%s results' % (key))
+        for name, serie in graph_series.items():
+            if name in top_graph_series:
+                result_charts[name] = ResultPerValuePie.get_chart((serie.get_max_value(), serie.get_commited_value()))
 
         # collect all needed values for graph output
-        args = []
+        args = list()
         args.append('{} ({})'.format(sprint.get_jira_data('sprint_name').replace('+', ' '), sprint.name))
-        args.append('Velocity: actual: {:.2f} expected: {:.2f}'.format(actual_velocity, expected_velocity))
-        for serie in graph_series:
-            args.append('{value} {percent:.0f}%<br/>({result:.0f}/{max_value:.0f})'.format(
-                value=serie.upper(),
-                percent=series[serie][-1]/max_values[serie] * 100,
-                result=series[serie][-1],
-                max_value=max_values[serie],
+        args.append(
+            'Velocity: actual: {:.2f} expected: {:.2f}'.format(
+                sprint.get_actual_velocity(), sprint.get_expected_velocity()
+            )
+        )
+        for name in result_charts:
+            serie = graph_series.get(name)
+            args.append('{serie_name} {percent:.0f}%<br/>({result:.0f}/{max_value:.0f})'.format(
+                serie_name=serie.name.upper(),
+                percent=serie.get_result_as_percent(),
+                result=serie.get_max_value(),
+                max_value=serie.get_commited_value(),
             ))
-            args.append(results[serie].render(is_unicode=True))
+            args.append(result_charts[name].render(is_unicode=True))
         args.append(chart.render(is_unicode=True))
 
         # embed the graphs in html
@@ -595,17 +595,7 @@ class SprintBurnUpCommand(BaseCommand):
             datetime.datetime.now().strftime("%Y%m%d")
         )
         graph_location = OutputHelper.output(path, content)
-        print 'Your graph is available at %s' % (graph_location)
-
-    def cumulate(self, serie, new):
-        """
-        Returns the last serie value + the new one. Works also if serie is empty and/or the new element is None
-        """
-        last = 0 if len(serie) == 0 else serie[-1]
-        if new is None:
-            return last
-        else:
-            return last + new
+        print 'Your graph is available at %s' % graph_location
 
 
 class GetLastZebraDayCommand(BaseCommand):

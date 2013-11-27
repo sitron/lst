@@ -124,7 +124,7 @@ class OutputHelper(object):
 
 class SprintBurnUpChart(object):
     @classmethod
-    def get_chart(cls, dates, series, graph_title='Results in %'):
+    def get_chart(cls, dates, series):
         biggest_y_value = 100
         for values in series.values():
             biggest_y_value = max(biggest_y_value, values[-1])
@@ -184,11 +184,11 @@ class SprintBurnUpChart(object):
 
 class ResultPerValuePie(object):
     @classmethod
-    def get_chart(cls, result, graph_title='Result in %'):
+    def get_chart(cls, result):
         """
         Get a pie chart for sprint results
 
-        :param result: tuple (actual, ideal)
+        :param result: tuple (actual, commited)
         :param graph_title: title
         """
         percent = (result[0] / result[1]) * 100
