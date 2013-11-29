@@ -59,6 +59,13 @@ class ManDaySerie(Serie):
         values = MathHelper.get_values_as_percent(self, (0, self.ideal_value))
         return values
 
+class PlannedSerie(Serie):
+    def __init__(self):
+        super(PlannedSerie, self).__init__()
+
+    def get_commited_value(self):
+        return self.get_max_value()
+
 
 class SerieCollection(OrderedDict):
     def __init__(self):
@@ -82,6 +89,8 @@ class SprintBurnupSeries(SerieCollection):
         for serie_name in self.serie_names:
             if serie_name == 'md':
                 self[serie_name] = ManDaySerie()
+            elif serie_name == 'planned':
+                self[serie_name] = PlannedSerie()
             else:
                 self[serie_name] = Serie()
             self[serie_name].name = serie_name
@@ -140,24 +149,6 @@ class Sprint:
 
     def get_jira_data(self, key):
         return self.jira_data.get(key)
-
-    def get_all_days(self, max_today=True):
-        """return all days from sprint start to sprint end or today (depending on the max_today value)"""
-        start = self.get_zebra_data('start_date')
-        end = self.get_zebra_data('end_date')
-        all_days = list()
-
-        if max_today:
-            today = datetime.datetime.now().date()
-            if end > today:
-                end = today
-
-        dateDelta = end - start
-
-        for i in range(dateDelta.days + 1):
-            date = start + datetime.timedelta(days=i)
-            all_days.append(date)
-        return all_days
 
     def get_title(self):
         return self.jira_data.get('sprint_name').replace('+', ' ') + ' (' + self.name + ')'

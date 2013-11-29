@@ -39,9 +39,9 @@ class ZebraManager:
     def get_timesheets_by_url(self, url):
         remote = self._get_zebra_remote()
         zebra_json_result = remote.get_data(url)
-        zebra_entries = self._parse_timesheets(zebra_json_result)
+        timesheets = self._parse_timesheets(zebra_json_result)
 
-        return zebra_entries
+        return timesheets
 
     def _parse_users(self, response_json):
         users = response_json['command']['users']['user']

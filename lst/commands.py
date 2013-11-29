@@ -461,12 +461,11 @@ class SprintBurnUpCommand(BaseCommand):
         sprint_name = self.get_sprint_name_from_args_or_current(args.sprint_name)
         sprint = self.ensure_sprint_in_config(sprint_name)
 
-        # todo: use graph end date
-        # end date for the graph defaults to yesterday
+        # end date for the graph can be specified via the --date arg. Defaults to yesterday
         try:
             graph_end_date = dateutil.parser.parse(args.date[0], dayfirst=True).date()
         except:
-            graph_end_date = datetime.date.today() - datetime.timedelta(days = 1)
+            graph_end_date = datetime.date.today() - datetime.timedelta(days=1)
 
         # start fetching zebra data
         print 'Start fetching Zebra'
@@ -497,7 +496,7 @@ class SprintBurnUpCommand(BaseCommand):
         serie_collection.get('bv').ideal_value = stories.get_commited('bv')
 
         # loop through all sprint days and gather values
-        days = sprint.get_all_days(False)
+        days = DateHelper.get_all_days(sprint.get_zebra_data('start_date'), sprint.get_zebra_data('end_date'))
         for date in days:
             time_without_forced = 0
 
@@ -538,23 +537,34 @@ class SprintBurnUpCommand(BaseCommand):
                 dates.append(date)
 
                 for serie in serie_collection.values():
+                    # only add data for dates > graph_end_date for "planned" (not md, sp, bv...)
                     if serie.name == 'planned':
                         serie.cumulate(planned_time)
                     elif serie.name == 'md':
-                        serie.cumulate(total_time)
+                        if date <= graph_end_date:  # for md, sp, bv dont add data if date is after graph_end_date
+                            serie.cumulate(total_time)
                     else:
-                        serie.cumulate(None if jira_data is None else jira_data[serie.name])
+                        if date <= graph_end_date:  # for md, sp, bv dont add data if date is after graph_end_date
+                            serie.cumulate(None if jira_data is None else jira_data[serie.name])
 
         # get only meaningfull series (ie. don't use BV if the team doesnt use it)
         graph_series = serie_collection.get_series_for_chart()
 
-        self._output(sprint, dates, graph_series)
+        self._output(sprint, dates, graph_series, graph_end_date)
 
-    def _output(self, sprint, dates, graph_series):
+    def _output(self, sprint, dates, graph_series, graph_end_date):
         # convert all y series to percents
         percent_series = OrderedDict()
         for name, serie in graph_series.items():
             percent_series[name] = serie.get_values_as_percent()
+
+        # add future days (up to graph_end_date) so that the graph looks more realistic
+        if sprint.get_zebra_data('end_date') > dates[-1]:
+            today = datetime.date.today()
+            future_dates = DateHelper.get_future_days(sprint.get_zebra_data('end_date'), dates[-1] != today, False)
+
+            for date in future_dates:
+                dates.append(date)
 
         # generate main graph (sprint burnup)
         chart = SprintBurnUpChart.get_chart(dates, percent_series)
@@ -587,7 +597,7 @@ class SprintBurnUpCommand(BaseCommand):
         args.append(chart.render(is_unicode=True))
 
         # embed the graphs in html
-        content = SprintBurnUpChart.get_sprint_burnup_html_structure(graph_series).format(*args)
+        content = SprintBurnUpChart.get_sprint_burnup_html_structure(result_charts.keys()).format(*args)
 
         # write the graph to file
         path = 'sprint_burnup-%s-%s.html' % (
