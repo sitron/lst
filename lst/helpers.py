@@ -65,6 +65,28 @@ class DateHelper(object):
         delta = 1 if today.weekday() != 0 else 3
         return today - datetime.timedelta(days=delta)
 
+    @classmethod
+    def get_all_days(cls, start_date, end_date, include_weekend=False):
+        all_days = list()
+        dateDelta = end_date - start_date
+
+        for i in range(dateDelta.days + 1):
+            date = start_date + datetime.timedelta(days=i)
+
+            if not include_weekend and (date.weekday() == 5 or date.weekday() == 6):
+                continue
+
+            all_days.append(date)
+
+        return all_days
+
+    @classmethod
+    def get_future_days(cls, end_date, include_today=True, include_weekend=False):
+        today = datetime.date.today()
+        start = today if include_today else today + datetime.timedelta(days=1)
+
+        return DateHelper.get_all_days(start, end_date, include_weekend)
+
 
 class ZebraHelper(object):
 
@@ -150,7 +172,7 @@ class ArgParseHelper(object):
 class MathHelper(object):
 
     @classmethod
-    def get_values_as_percent(self, values, old_range):
+    def get_values_as_percent(cls, values, old_range):
         new_range = (0, 100)
         ranged = []
         for value in values:
