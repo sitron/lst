@@ -14,6 +14,9 @@ class AppContainer(object):
 
 class Serie(list):
     def __init__(self):
+        """
+        Base serie. Just a list with some extra attributes for commitment and serie name
+        """
         list.__init__([])
         self.name = ''
         self.ideal_value = None
@@ -47,6 +50,9 @@ class Serie(list):
 
 class ManDaySerie(Serie):
     def __init__(self):
+        """
+        Serie for Man Days. Returns all values in MD (rather than hours)
+        """
         super(ManDaySerie, self).__init__()
 
     def get_max_value(self):
@@ -59,8 +65,12 @@ class ManDaySerie(Serie):
         values = MathHelper.get_values_as_percent(self, (0, self.ideal_value))
         return values
 
+
 class PlannedSerie(Serie):
     def __init__(self):
+        """
+        Serie for "planned" man days. Doesn't have a commit value, just use the maximum as commit
+        """
         super(PlannedSerie, self).__init__()
 
     def get_commited_value(self):
@@ -84,7 +94,7 @@ class SprintBurnupSeries(SerieCollection):
     def __init__(self):
         super(SprintBurnupSeries, self).__init__()
 
-        # initialize sprint burnup series series
+        # initialize sprint burnup series
         self.serie_names = ['md', 'sp', 'bv', 'planned']
         for serie_name in self.serie_names:
             if serie_name == 'md':
@@ -93,6 +103,17 @@ class SprintBurnupSeries(SerieCollection):
                 self[serie_name] = PlannedSerie()
             else:
                 self[serie_name] = Serie()
+            self[serie_name].name = serie_name
+
+
+class ResultPerStorySeries(SerieCollection):
+    def __init__(self):
+        super(ResultPerStorySeries, self).__init__()
+
+        # initialize result per story series
+        self.serie_names = ['planned', 'actual']
+        for serie_name in self.serie_names:
+            self[serie_name] = Serie()
             self[serie_name].name = serie_name
 
 
@@ -118,7 +139,7 @@ class Sprint:
             return self.serie_collection.get(name)
 
     def get_expected_velocity(self):
-        return self.get_serie('sp').get_commited_value() / self.get_serie('md').get_commited_value()
+        return self.story_collection.get_commited_story_points() / float(self.commited_man_days)
 
     def get_actual_velocity(self):
         return self.get_serie('sp').get_max_value() / self.get_serie('md').get_max_value()

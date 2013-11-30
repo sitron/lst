@@ -211,6 +211,27 @@ class ResultPerValuePie(object):
         return chart
 
 
+class ResultPerStoryChart(object):
+    @classmethod
+    def get_chart(cls, story_ids, series):
+
+        chart = pygal.Bar(x_label_rotation=20,
+                          include_x_axis=True,
+                          style=LightColorizedStyle,
+                          explicit_size=True,
+                          height=700,
+                          print_values=False,
+                          no_prefix=True,
+                          background=False,
+                          disable_xml_declaration=True)
+
+        chart.x_labels = map(str, story_ids)
+        for key, entries in series.items():
+            chart.add(key, entries)
+
+        return chart
+
+
 class ResultPerStoryOutput(TemplatedOutput):
     """Generates bar graph for each sprint story's result"""
 

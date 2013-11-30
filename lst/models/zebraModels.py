@@ -48,6 +48,25 @@ class TimeSheetCollection(list):
 
         return projects
 
+    def group_by_story_id(self, regex):
+        """
+        Group zebra timesheets by story id
+
+        :param regex:re regular expression to identify story id from timesheet comment
+        """
+        stories = {}
+
+        for timesheet in self:
+            story_id = None if regex.match(timesheet.description) is None else regex.findall(timesheet.description)[0]
+            if story_id is None:
+                story_id = 'other'
+            try:
+                stories[str(story_id)] += timesheet.time
+            except KeyError:
+                stories[str(story_id)] = timesheet.time
+
+        return stories
+
 
 class ZebraDay:
     def __init__(self):

@@ -13,15 +13,33 @@ class JiraManager:
         self.app_container = app_container
 
     def get_stories_for_sprint_with_end_date(self, sprint):
+        """
+        Get stories for specified sprint and retrieve each story "close" date (by running a specific post processor)
+
+        :param sprint:Sprint
+        :return:StoryCollection
+        """
         closed_status_names = sprint.get_closed_status_names()
         post_processor = CloseDateProcessor(closed_status_names, self)
 
         return self._get_stories_for_sprint(sprint, post_processor)
 
     def get_stories_for_sprint(self, sprint):
+        """
+        Get stories for specified sprint
+
+        :param sprint:Sprint
+        :return:StoryCollection
+        """
         return self._get_stories_for_sprint(sprint)
 
     def get_story(self, story_id):
+        """
+        Get a single story by id
+
+        :param story_id:string
+        :return:Story|None
+        """
         remote = self._get_jira_remote()
         url = remote.get_url_for_project_lookup_by_story_id(story_id)
         stories = self.get_stories_by_url(url)
@@ -33,6 +51,15 @@ class JiraManager:
         return stories[0]
 
     def get_stories_by_url(self, url, nice_identifier=None, ignored=None, post_processor=None):
+        """
+        Get stories by specifying a jira url
+
+        :param url:string jira url
+        :param nice_identifier:string part of story title which enables to identify "nice to have" stories
+        :param ignored:list list of story ids that should be discarded
+        :param post_processor:JiraStoryPostProcessor last action called on each story after parsing
+        :return:StoryCollection
+        """
         remote = self._get_jira_remote()
         result = remote.get_data(url)
         stories = self.parse_stories(

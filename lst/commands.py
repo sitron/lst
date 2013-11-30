@@ -121,19 +121,16 @@ class ResultPerStoryCommand(BaseCommand):
         # to compare estimated story_points to actual MD consumption
         jira_manager = self.get_jira_manager()
         jira_entries = jira_manager.get_stories_for_sprint(sprint)
+        sprint.story_collection = jira_entries
 
         # extract the integer from the story id
         jira_id_only_regex = re.compile("-(\d+)$")
         jira_values = {}
-        max_story_points = 0
         for entry in jira_entries:
             story_id = jira_id_only_regex.findall(entry.id)[0]
             jira_values[story_id] = entry.story_points
-            max_story_points += entry.story_points
 
-        # calculate the ideal velocity
-        commit = float(sprint.commited_man_days)
-        velocity = max_story_points / commit
+        expected_velocity = sprint.get_expected_velocity()
 
         # retrieve zebra data
         zebra_manager = self.get_zebra_manager()
@@ -141,58 +138,39 @@ class ResultPerStoryCommand(BaseCommand):
         if len(zebra_entries) == 0:
             return
 
-        # group zebra results by story
-        zebra_values = {}
-        total_hours = 0
-        for entry in zebra_entries:
-            story_id = None if regex.match(entry.description) is None else regex.findall(entry.description)[0]
-            if story_id is None:
-                story_id = 'other'
-            try:
-                zebra_values[str(story_id)] += entry.time
-            except KeyError:
-                zebra_values[str(story_id)] = entry.time
-            total_hours += entry.time
+        zebra_values = zebra_entries.group_by_story_id(regex)
 
-        # merge zebra/jira data
+        # get all story ids found (zebra + jira)
         jira_keys = jira_values.keys()
         zebra_keys = zebra_values.keys()
-        all_keys = jira_keys + list(set(zebra_keys) - set(jira_keys))
+        story_ids = jira_keys + list(set(zebra_keys) - set(jira_keys))
 
-        # create an object to hold all values for js
-        js_data = [];
-
-        print ''
-        print 'Results (planned velocity %s):' % (str(velocity))
-        for story_id in all_keys:
+        # compare commited (planned) to actual result for each story
+        series = ResultPerStorySeries()
+        for story_id in story_ids:
             hours_burnt = zebra_values.get(story_id, 0)
-            md_burnt = hours_burnt / 8
+            series['actual'].append(hours_burnt / 8)
             planned_story_points = jira_values.get(story_id, 0)
-            planned_md = planned_story_points / velocity
-            planned_hours = planned_md * 8
+            series['planned'].append(planned_story_points / expected_velocity)
 
-            result_percent = 0 if planned_md == 0 else (md_burnt / planned_md) * 100
+        self._output(sprint_name, story_ids, series)
 
-            print '%s \t%.2f/%.1f MD\t(%d/%d hours)\t%d%%' % (story_id, md_burnt, planned_md, hours_burnt, planned_hours, result_percent)
+    def _output(self, sprint_name, story_ids, series):
+        # generate the graph
+        chart = ResultPerStoryChart.get_chart(story_ids, series)
 
-            # add to js data object
-            js_data.append({
-                'id': story_id,
-                'md_burnt': md_burnt,
-                'md_planned': planned_md,
-                'hours_burnt': hours_burnt,
-                'hours_planned': planned_hours,
-                'result_percent': result_percent
-            })
+        content = OutputHelper.get_base_html_structure().format(
+            'graph title',
+            chart.render(is_unicode=True)
+        )
 
-        print ''
-        print 'Total\t%.2f/%.1f MD\t(%d/%d hours)\t%d%%' % (total_hours / 8, commit, total_hours, commit * 8, (total_hours / (commit * 8)) * 100)
-        print ''
-
-        # write the graph
-        print 'Starting chart output'
-        output = ResultPerStoryOutput(AppContainer.secret.get_output_dir())
-        output.output(sprint.name, js_data)
+        # write the graph to file
+        path = 'result_per_story-{}-{}.html'.format(
+            Helper.slugify(unicode(sprint_name)),
+            datetime.datetime.now().strftime("%Y%m%d")
+        )
+        graph_location = OutputHelper.output(path, content)
+        print 'Your graph is available at %s' % graph_location
 
 
 class CheckHoursCommand(BaseCommand):
