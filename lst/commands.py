@@ -159,17 +159,18 @@ class ResultPerStoryCommand(BaseCommand):
         # generate the graph
         chart = ResultPerStoryChart.get_chart(story_ids, series)
 
-        content = OutputHelper.get_base_html_structure().format(
-            'graph title',
+        html_generator = HtmlOutput()
+        html = html_generator.get_html_structure().format(
+            'Result per story',
             chart.render(is_unicode=True)
         )
 
         # write the graph to file
         path = 'result_per_story-{}-{}.html'.format(
-            Helper.slugify(unicode(sprint_name)),
+            UrlHelper.slugify(unicode(sprint_name)),
             datetime.datetime.now().strftime("%Y%m%d")
         )
-        graph_location = OutputHelper.output(path, content)
+        graph_location = OutputHelper.write_to_file(path, html)
         print 'Your graph is available at %s' % graph_location
 
 
@@ -574,15 +575,16 @@ class SprintBurnUpCommand(BaseCommand):
             args.append(result_charts[name].render(is_unicode=True))
         args.append(chart.render(is_unicode=True))
 
-        # embed the graphs in html
-        content = SprintBurnUpChart.get_sprint_burnup_html_structure(result_charts.keys()).format(*args)
+        # generate the html structure and embed all values
+        html_generator = SprintBurnupHtmlOutput(result_charts.keys())
+        html = html_generator.get_html_structure().format(*args)
 
         # write the graph to file
         path = 'sprint_burnup-%s-%s.html' % (
-            Helper.slugify(sprint.name),
+            UrlHelper.slugify(sprint.name),
             datetime.datetime.now().strftime("%Y%m%d")
         )
-        graph_location = OutputHelper.output(path, content)
+        graph_location = OutputHelper.write_to_file(path, html)
         print 'Your graph is available at %s' % graph_location
 
 

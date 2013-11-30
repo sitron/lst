@@ -3,6 +3,8 @@ import dateutil
 import os
 import shlex
 import subprocess
+import unicodedata
+import re
 
 from errors import *
 
@@ -124,6 +126,7 @@ class JiraHelper(object):
         """
         return sprint_name.replace(' ', '+')
 
+
 class FileHelper(object):
 
     @classmethod
@@ -158,11 +161,21 @@ class ArgParseHelper(object):
 
     @classmethod
     def add_date_argument(cls, parser):
-        parser.add_argument("-d", "--date", nargs='*', help="specify date(s). Optional, multiple argument (syntax: -d dd.mm.yyyy or yyyy.mm.dd)")
+        parser.add_argument(
+            "-d",
+            "--date",
+            nargs='*',
+            help="specify date(s). Optional, multiple argument (syntax: -d dd.mm.yyyy or yyyy.mm.dd)"
+        )
 
     @classmethod
     def add_user_argument(cls, parser):
-        parser.add_argument("-u", "--user", nargs='*', help="specify user id(s). Optional, multiple argument (multiple syntax: -u 111 123 145)")
+        parser.add_argument(
+            "-u",
+            "--user",
+            nargs='*',
+            help="specify user id(s). Optional, multiple argument (multiple syntax: -u 111 123 145)"
+        )
 
     @classmethod
     def add_user_story_id_argument(cls, parser):
@@ -177,5 +190,19 @@ class MathHelper(object):
         ranged = []
         for value in values:
             if value is not None:
-                ranged.append((((value - old_range[0]) * (new_range[1] - new_range[0]) / (old_range[1] - old_range[0]))) + new_range[0])
+                ranged.append(
+                    ((value - old_range[0]) * (new_range[1] - new_range[0]) / (old_range[1] - old_range[0]))
+                    + new_range[0]
+                )
         return ranged
+
+
+class UrlHelper(object):
+
+    @staticmethod
+    def slugify(s):
+        slug = unicodedata.normalize('NFKD', s)
+        slug = slug.encode('ascii', 'ignore').lower()
+        slug = re.sub(r'[^a-z0-9]+', '-', slug).strip('-')
+        slug = re.sub(r'[-]+', '-', slug)
+        return slug

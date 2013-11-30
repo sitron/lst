@@ -1,13 +1,12 @@
 import json
 import os
-import unicodedata
-import re
 import distutils.sysconfig
 
 from string import Template
 from datetime import datetime
 
 from models import AppContainer
+from helpers import UrlHelper
 
 
 class BaseOutput(object):
@@ -63,7 +62,7 @@ class SprintBurnUpOutput(TemplatedOutput):
         print 'Writing graph'
         try:
             path = 'sprint_burnup-%s-%s.html' % (
-                Helper.slugify(sprint_name),
+                UrlHelper.slugify(sprint_name),
                 datetime.now().strftime("%Y%m%d")
             )
             stream = self.get_output_stream(self.get_output_path(path))
@@ -89,15 +88,47 @@ import io
 from bs4 import BeautifulSoup
 
 
-class OutputHelper(object):
-    @classmethod
-    def get_base_html_structure(cls):
-        html_str = u"""
+class HtmlOutput(object):
+    def __init__(self):
+        self.pygal_assets_url = "http://kozea.github.com/pygal.js/javascripts/"
+        self.js_assets = [
+            '{}svg.jquery.js'.format(self.pygal_assets_url),
+            '{}pygal-tooltips.js'.format(self.pygal_assets_url),
+        ]
+        self.css_assets = []
+        self.lst_assets_url = 'http://sitron.github.io/lst'
+        self.html_soup = None
+
+    def get_lst_assets_url(self, file_name, file_type='css'):
+        url = self.lst_assets_url
+        if AppContainer.dev_mode:
+            url = os.path.abspath('lst/')
+
+        directory = 'stylesheets' if file_type == 'css' else 'javascripts'
+
+        return '{url}/{directory}/{path}'.format(url=url, directory=directory, path=file_name)
+
+    def embed_all_css(self):
+        for asset in self.get_all_css():
+            tag = self.html_soup.new_tag('link', href=asset, rel='stylesheet')
+            self.html_soup.head.insert(2, tag)
+
+    def embed_all_js(self):
+        for asset in self.get_all_js():
+            tag = self.html_soup.new_tag('script', src=asset, type='text/javascript')
+            self.html_soup.head.insert(2, tag)
+
+    def get_all_js(self):
+        return self.js_assets
+
+    def get_all_css(self):
+        return self.css_assets
+
+    def get_html_structure(self):
+        html = u"""
         <html>
             <head>
                 <title>LST graph</title>
-                <script type="text/javascript" src="http://kozea.github.com/pygal.js/javascripts/svg.jquery.js"></script>
-                <script type="text/javascript" src="http://kozea.github.com/pygal.js/javascripts/pygal-tooltips.js"></script>
             </head>
             <body>
                 <h1>{}</h1>
@@ -111,10 +142,53 @@ class OutputHelper(object):
             </body>
         </html>
         """
-        return html_str
+        self.html_soup = BeautifulSoup(html)
 
+        # lst charts css
+        self.css_assets.append(self.get_lst_assets_url('charts.css', 'css'))
+
+        self.embed_all_js()
+        self.embed_all_css()
+
+        return self.html_soup.prettify()
+
+
+class SprintBurnupHtmlOutput(HtmlOutput):
+    def __init__(self, series):
+        super(SprintBurnupHtmlOutput, self).__init__()
+        self.series = series
+
+    def get_html_structure(self):
+        super(SprintBurnupHtmlOutput, self).get_html_structure()
+
+        # top graph container
+        content = self.html_soup.find(class_="content")
+        top_graphs_container = self.html_soup.new_tag('div')
+        top_graphs_container['class'] = 'top-graphs'
+        content.insert(0, top_graphs_container)
+
+        # top graphs
+        for serie in self.series:
+            figure = self.html_soup.new_tag('figure')
+            figure.string = '{}'
+            figure['class'] = serie
+            caption = self.html_soup.new_tag('figcaption')
+            caption.string = '{}'
+            figure.insert(0, caption)
+            top_graphs_container.append(figure)
+
+        # velocity container
+        velocity = self.html_soup.new_tag('p')
+        velocity['class'] = 'velocity'
+        velocity.string = '{}'
+        content.insert(0, velocity)
+
+        return self.html_soup.prettify()
+
+
+class OutputHelper(object):
     @classmethod
-    def output(cls, path, content):
+    def write_to_file(cls, path, content):
         output_file_absolute = os.path.abspath(AppContainer.secret.get_output_dir() + path)
         with io.open(output_file_absolute, 'w', encoding='utf-8') as f:
             f.write(content)
@@ -141,45 +215,10 @@ class SprintBurnUpChart(object):
                            disable_xml_declaration=True)
 
         chart.x_labels = map(str, dates)
-        for key,entries in series.items():
+        for key, entries in series.items():
             chart.add(key, entries)
 
         return chart
-
-    @classmethod
-    def get_sprint_burnup_html_structure(cls, series):
-        html = BeautifulSoup(OutputHelper.get_base_html_structure())
-
-        # top graph container
-        content = html.find(class_="content")
-        top_graphs_container = html.new_tag('div')
-        top_graphs_container['class'] = 'top-graphs'
-        content.insert(0, top_graphs_container)
-
-        # top graphs
-        for serie in series:
-            figure = html.new_tag('figure')
-            figure.string = '{}'
-            figure['class'] = serie
-            caption = html.new_tag('figcaption')
-            caption.string = '{}'
-            figure.insert(0, caption)
-            top_graphs_container.append(figure)
-
-        # velocity container
-        velocity = html.new_tag('p')
-        velocity['class'] = 'velocity'
-        velocity.string = '{}'
-        content.insert(0, velocity)
-
-        # custom css
-        css_url = 'http://sitron.github.io/lst/stylesheets/charts.css'
-        if AppContainer.dev_mode:
-            css_url = os.path.abspath('lst/css/charts.css')
-        custom_css = html.new_tag('link', href=css_url, rel='stylesheet')
-        html.head.insert(2, custom_css)
-
-        return html.prettify()
 
 
 class ResultPerValuePie(object):
@@ -248,7 +287,7 @@ class ResultPerStoryOutput(TemplatedOutput):
         print 'Writing graph'
         try:
             path = 'result_per_story-%s-%s.html' % (
-                Helper.slugify(sprint_name),
+                UrlHelper.slugify(sprint_name),
                 datetime.now().strftime("%Y%m%d")
             )
             stream = self.get_output_stream(self.get_output_path(path))
@@ -265,11 +304,3 @@ class ResultPerStoryOutput(TemplatedOutput):
             print 'Problem with the generation of the graph file', e
 
 
-class Helper(object):
-    @staticmethod
-    def slugify(s):
-        slug = unicodedata.normalize('NFKD', s)
-        slug = slug.encode('ascii', 'ignore').lower()
-        slug = re.sub(r'[^a-z0-9]+', '-', slug).strip('-')
-        slug = re.sub(r'[-]+', '-', slug)
-        return slug
