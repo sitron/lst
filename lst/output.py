@@ -252,7 +252,7 @@ class ResultPerValuePie(object):
 
 class ResultPerStoryChart(object):
     @classmethod
-    def get_chart(cls, story_ids, series):
+    def get_chart(cls, story_ids, series, results):
 
         chart = pygal.Bar(x_label_rotation=20,
                           include_x_axis=True,
@@ -264,7 +264,7 @@ class ResultPerStoryChart(object):
                           background=False,
                           disable_xml_declaration=True)
 
-        chart.x_labels = map(str, story_ids)
+        chart.x_labels = map(lambda x: '{} ({:.2f}/{:.2f})'.format(x, results[x][0], results[x][1]), story_ids)
         for key, entries in series.items():
             chart.add(key, entries)
 

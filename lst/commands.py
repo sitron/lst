@@ -147,17 +147,19 @@ class ResultPerStoryCommand(BaseCommand):
 
         # compare commited (planned) to actual result for each story
         series = ResultPerStorySeries()
+        results = {}
         for story_id in story_ids:
             hours_burnt = zebra_values.get(story_id, 0)
             series['actual'].append(hours_burnt / 8)
             planned_story_points = jira_values.get(story_id, 0)
             series['planned'].append(planned_story_points / expected_velocity)
+            results[story_id] = (series['actual'][-1], series['planned'][-1])
 
-        self._output(sprint_name, story_ids, series)
+        self._output(sprint_name, story_ids, series, results)
 
-    def _output(self, sprint_name, story_ids, series):
+    def _output(self, sprint_name, story_ids, series, results):
         # generate the graph
-        chart = ResultPerStoryChart.get_chart(story_ids, series)
+        chart = ResultPerStoryChart.get_chart(story_ids, series, results)
 
         html_generator = HtmlOutput()
         html = html_generator.get_html_structure().format(
