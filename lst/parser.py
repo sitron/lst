@@ -92,7 +92,10 @@ class ConfigParser:
         if 'force' in data['zebra']:
             sprint.forced = self.parse_forced(data['zebra']['force'])
         if 'planned' in data['zebra']:
-            sprint.planned = self.parse_planned(data['zebra']['planned'], data['zebra']['start_date'], data['zebra']['end_date'])
+            sprint.planned = self.parse_planned(
+                data['zebra']['planned'],
+                data['zebra']['start_date'], data['zebra']['end_date']
+            )
         return sprint
 
     def get_sprint(self, name=None, raw=False):
@@ -128,7 +131,7 @@ class ConfigParser:
         planned = dict()
 
         # Check for single value list (like [1,2,3])
-        if type(plan) is list and (type(plan[0]) is int or type(plan[0] is float)):
+        if type(plan) is list and (type(plan[0]) is int or type(plan[0]) is float):
             days = DateHelper.get_all_days(start_date, end_date, False)
 
             if len(plan) < len(days):
