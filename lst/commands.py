@@ -6,16 +6,16 @@ import datetime
 import dateutil
 import re
 
-from remote import ZebraRemote, JiraRemote
-from models.jiraModels import *
-from models.zebraModels import *
-from models import *
-from output import *
-from errors import *
-from helpers import *
-from parser import ConfigParser
-from managers.jiraManager import JiraManager
-from managers.zebraManager import ZebraManager
+from lst.remote import ZebraRemote, JiraRemote
+from lst.models.jiraModels import *
+from lst.models.zebraModels import *
+from lst.models import *
+from lst.output import *
+from lst.errors import *
+from lst.helpers import *
+from lst.parser import ConfigParser
+from lst.managers.jiraManager import JiraManager
+from lst.managers.zebraManager import ZebraManager
 
 
 class BaseCommand(object):
@@ -130,8 +130,6 @@ class ResultPerStoryCommand(BaseCommand):
             story_id = jira_id_only_regex.findall(entry.id)[0]
             jira_values[story_id] = entry.story_points
 
-        expected_velocity = sprint.get_expected_velocity()
-
         # retrieve zebra data
         zebra_manager = self.get_zebra_manager()
         zebra_entries = zebra_manager.get_timesheets_for_sprint(sprint)
@@ -144,6 +142,8 @@ class ResultPerStoryCommand(BaseCommand):
         jira_keys = jira_values.keys()
         zebra_keys = zebra_values.keys()
         story_ids = jira_keys + list(set(zebra_keys) - set(jira_keys))
+
+        expected_velocity = sprint.get_expected_velocity()
 
         # compare commited (planned) to actual result for each story
         series = ResultPerStorySeries()
@@ -198,6 +198,11 @@ class CheckHoursCommand(BaseCommand):
         users = InputHelper.sanitize_users(args.user)
         dates = InputHelper.sanitize_dates(args.date)
         InputHelper.ensure_max_2_dates(dates)
+
+        # print output to console
+        self._output(self._get_projects(dates, users), users)
+
+    def _get_projects(self, dates, users):
         start_date, end_date = self.get_start_and_end_date(dates)
 
         # retrieve zebra data
@@ -211,12 +216,8 @@ class CheckHoursCommand(BaseCommand):
         if len(zebra_entries) == 0:
             return
 
-        # print output to console
-        self._output(
-            self._sort_groups_alphabetically(
-                zebra_entries.group_by_project()
-            ),
-            users
+        return self._sort_groups_alphabetically(
+            zebra_entries.group_by_project()
         )
 
     def _sort_groups_alphabetically(self, projects):

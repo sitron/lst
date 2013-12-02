@@ -1,8 +1,8 @@
 import pickle
 
-from models.jiraModels import StoryCollection, Story
-from remote import JiraRemote
-from processors import CloseDateProcessor
+from lst.models.jiraModels import StoryCollection, Story
+from lst.remote import JiraRemote
+from lst.processors import CloseDateProcessor
 
 
 class JiraManager:

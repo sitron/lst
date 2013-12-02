@@ -1,6 +1,11 @@
-import datetime, unittest
-from ..helpers import *
+import datetime
+import unittest
 import mock
+
+from lst.helpers import (
+    InputHelper, DateHelper, ArgParseHelper, FileHelper, JiraHelper, MathHelper, UrlHelper, ZebraHelper
+)
+from lst.errors import InputParametersError
 
 
 class InputHelperTest(unittest.TestCase):
@@ -66,47 +71,6 @@ class DateHelperTest(unittest.TestCase):
 class ZebraHelperTest(unittest.TestCase):
     """Unit test for ZebraHelper in helpers.py"""
 
-    def testGetZebraUrlForActivitiesWithDefaultArgs(self):
-        """returns correct url with default arguments"""
-        wanted_url = 'timesheet/report/.json?option_selector=&users[]=*&activities[]=*&projects[]=*&start=2013-04-28&end=2013-04-28'
-        start_date = datetime.datetime.strptime('20130428', "%Y%m%d").date()
-        self.assertEquals(wanted_url, ZebraHelper.get_zebra_url_for_activities(start_date))
-
-    def testGetZebraUrlForActivitiesWithOneUser(self):
-        """returns correct url when specifying 1 user"""
-        wanted_url = 'timesheet/report/.json?option_selector=&users[]=101&activities[]=*&projects[]=*&start=2013-04-28&end=2013-04-28'
-        start_date = datetime.datetime.strptime('20130428', "%Y%m%d").date()
-        users = 101
-        self.assertEquals(wanted_url, ZebraHelper.get_zebra_url_for_activities(start_date, users=users))
-
-    def testGetZebraUrlForActivitiesWithMultipleUsers(self):
-        """returns correct url when specifying multiple users"""
-        wanted_url = 'timesheet/report/.json?option_selector=&users[]=101&users[]=102&activities[]=*&projects[]=*&start=2013-04-28&end=2013-04-28'
-        start_date = datetime.datetime.strptime('20130428', "%Y%m%d").date()
-        users = [101, 102]
-        self.assertEquals(wanted_url, ZebraHelper.get_zebra_url_for_activities(start_date, users=users))
-
-    def testGetZebraUrlForActivitiesWithOneUserAsString(self):
-        """returns correct url when specifying one user as string"""
-        wanted_url = 'timesheet/report/.json?option_selector=&users[]=101&activities[]=*&projects[]=*&start=2013-04-28&end=2013-04-28'
-        start_date = datetime.datetime.strptime('20130428', "%Y%m%d").date()
-        users = '101'
-        self.assertEquals(wanted_url, ZebraHelper.get_zebra_url_for_activities(start_date, users=users))
-
-    def testGetZebraUrlForActivitiesWithOneActivity(self):
-        """returns correct url when specifying one activity"""
-        wanted_url = 'timesheet/report/.json?option_selector=&users[]=*&activities[]=101&projects[]=*&start=2013-04-28&end=2013-04-28'
-        start_date = datetime.datetime.strptime('20130428', "%Y%m%d").date()
-        activities = '101'
-        self.assertEquals(wanted_url, ZebraHelper.get_zebra_url_for_activities(start_date, activities=activities))
-
-    def testGetZebraUrlForActivitiesWithMultipleActivities(self):
-        """returns correct url when specifying multiple activities"""
-        wanted_url = 'timesheet/report/.json?option_selector=&users[]=*&activities[]=101&activities[]=102&projects[]=*&start=2013-04-28&end=2013-04-28'
-        start_date = datetime.datetime.strptime('20130428', "%Y%m%d").date()
-        activities = [101, 102]
-        self.assertEquals(wanted_url, ZebraHelper.get_zebra_url_for_activities(start_date, activities=activities))
-
     def testZebraDate(self):
         """date format is correct"""
         date = datetime.datetime.strptime('20130428', "%Y%m%d").date()
@@ -118,13 +82,6 @@ class ZebraHelperTest(unittest.TestCase):
 
 class JiraHelperTest(unittest.TestCase):
     """Unit test for JiraHelper in helpers.py"""
-
-    def testGetUrlForProjectLookupByStoryId(self):
-        wanted_url = "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml" \
-                     "?jqlQuery=key+%3D+'xx-112'" \
-                     "&tempMax=1000"
-        story_id = 'xx-112'
-        self.assertEquals(wanted_url, JiraHelper.get_url_for_project_lookup_by_story_id(story_id))
 
     def testSanitizeSprintName(self):
         self.assertEquals(

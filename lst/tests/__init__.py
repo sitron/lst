@@ -1,6 +1,5 @@
-from .parsertest import *
-from .basecommandtest import *
-from .helperstest import *
+from commands_test import CheckHoursTest, BaseCommandTest
+from helpers_test import InputHelperTest, DateHelperTest, ZebraHelperTest, JiraHelperTest
 
 if __name__ == "__main__":
     unittest.main()

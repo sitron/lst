@@ -3,9 +3,10 @@ import datetime
 import dateutil
 import os
 
-from models import Sprint, AppContainer
-from errors import FileNotFoundError, SyntaxError
-from helpers import DateHelper
+from lst.models import Sprint, AppContainer
+from lst.errors import FileNotFoundError, SyntaxError
+from lst.helpers import DateHelper
+
 
 class SecretParser:
     def __init__(self):

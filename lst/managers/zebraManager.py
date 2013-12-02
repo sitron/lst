@@ -1,9 +1,9 @@
 import dateutil.parser
 import pickle
 
-from remote import ZebraRemote
-from helpers import ZebraHelper
-from models.zebraModels import TimeSheetCollection, TimeSheet
+from lst.remote import ZebraRemote
+from lst.helpers import ZebraHelper
+from lst.models.zebraModels import TimeSheetCollection, TimeSheet
 
 
 class ZebraManager:

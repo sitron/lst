@@ -6,8 +6,8 @@ import io
 from pygal.style import LightColorizedStyle
 from bs4 import BeautifulSoup
 
-from models import AppContainer
-from helpers import UrlHelper
+from lst.models import AppContainer
+from lst.helpers import UrlHelper
 
 
 class HtmlOutput(object):

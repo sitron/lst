@@ -1,10 +1,11 @@
 import argparse
 import os
 
-from parser import ConfigParser, SecretParser
-from models import AppContainer
-import commands
-from errors import NotFoundError
+from lst.parser import ConfigParser, SecretParser
+from lst.models import AppContainer
+from lst.errors import NotFoundError
+from lst.commands import *
+
 
 class Lst(object):
     """LST, helps keeping your sprint commitment safe"""
@@ -29,17 +30,17 @@ available commands:
         SECRET_PATH = os.path.expanduser('~/.lst-secret.yml')
 
         available_actions = {
-            'sprint-burnup': commands.SprintBurnUpCommand,
-            'test-install' : commands.TestInstallCommand,
-            'get-user-id' : commands.RetrieveUserIdCommand,
-            'ls' : commands.ListCommand,
-            'edit': commands.EditCommand,
-            'jira-config-helper': commands.RetrieveJiraInformationForConfigCommand,
-            'add-sprint': commands.AddSprintCommand,
-            'check-hours': commands.CheckHoursCommand,
-            'get-last-zebra-day': commands.GetLastZebraDayCommand,
-            'result-per-story': commands.ResultPerStoryCommand,
-            'dump-sprint-config': commands.DumpSprintConfigCommand,
+            'sprint-burnup': SprintBurnUpCommand,
+            'test-install': TestInstallCommand,
+            'get-user-id': RetrieveUserIdCommand,
+            'ls': ListCommand,
+            'edit': EditCommand,
+            'jira-config-helper': RetrieveJiraInformationForConfigCommand,
+            'add-sprint': AddSprintCommand,
+            'check-hours': CheckHoursCommand,
+            'get-last-zebra-day': GetLastZebraDayCommand,
+            'result-per-story': ResultPerStoryCommand,
+            'dump-sprint-config': DumpSprintConfigCommand,
         }
 
         # define arguments and options
@@ -51,7 +52,7 @@ available commands:
 
         # add arguments for all commands
         subparsers = parser.add_subparsers(dest='command')
-        for name,command in available_actions.items():
+        for name, command in available_actions.items():
             action = command()
             # add specific args
             subparser = action.add_command_arguments(subparsers)

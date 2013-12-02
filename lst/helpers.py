@@ -6,7 +6,7 @@ import subprocess
 import unicodedata
 import re
 
-from errors import *
+from lst.errors import *
 
 
 class InputHelper(object):
