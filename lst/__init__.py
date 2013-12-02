@@ -5,6 +5,9 @@ from lst.parser import ConfigParser, SecretParser
 from lst.models import AppContainer
 from lst.errors import NotFoundError
 from lst.commands import *
+from lst.commands.result_per_story import ResultPerStoryCommand
+from lst.commands.check_hours import CheckHoursCommand
+from lst.commands.add_sprint import AddSprintCommand
 
 
 class Lst(object):
