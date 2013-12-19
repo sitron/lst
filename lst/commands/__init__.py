@@ -254,7 +254,7 @@ class SprintBurnUpCommand(BaseCommand):
         serie_collection.get('bv').ideal_value = stories.get_commited('bv')
 
         # loop through all sprint days and gather values
-        days = DateHelper.get_all_days(sprint.get_zebra_data('start_date'), sprint.get_zebra_data('end_date'))
+        days = DateHelper.get_all_days(sprint.get_zebra_data('start_date'), sprint.get_zebra_data('end_date'), True)
         for date in days:
             time_without_forced = 0
 
