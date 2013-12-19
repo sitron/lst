@@ -1,8 +1,9 @@
-from ..parser import SecretParser
-from ..parser import ConfigParser
-from ..errors import FileNotFoundError, SyntaxError
 import unittest
 from datetime import date
+
+from lst.parser import SecretParser, ConfigParser
+from lst.errors import FileNotFoundError, SyntaxError
+
 
 class ParserTest(unittest.TestCase):
     """Unit tests for parser.py"""
@@ -44,3 +45,12 @@ class ParserTest(unittest.TestCase):
         with self.assertRaises(SyntaxError):
             parser.parse_planned([1,2,3,4,5], date(2005, 1, 5), date(2005, 1, 10))
 
+
+def suite():
+    loader = unittest.TestLoader()
+    suite = unittest.TestSuite()
+    suite.addTest(loader.loadTestsFromTestCase(ParserTest))
+    return suite
+
+if __name__ == '__main__':
+    unittest.TextTestRunner(verbosity=2).run(suite())

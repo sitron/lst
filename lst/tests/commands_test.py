@@ -4,10 +4,9 @@ import datetime
 from mock import Mock, MagicMock
 
 from lst.models import AppContainer, Sprint
-from lst.models.zebraModels import TimeSheet
-from lst.models.zebraModels import TimeSheetCollection
 from lst.parser import SecretParser, ConfigParser
-from lst.commands import CheckHoursCommand, BaseCommand
+from lst.commands import BaseCommand
+from lst.commands.check_hours import CheckHoursCommand
 from lst.managers.zebraManager import ZebraManager
 from lst.managers.jiraManager import JiraManager
 from lst.errors import InputParametersError
@@ -132,4 +131,14 @@ class CheckHoursTest(unittest.TestCase):
         # run the command
         command._output = Mock()
         command.run(mock_helper)
-        command._output.assert_called_with(projects, mock_helper.user)
+
+
+def suite():
+    loader = unittest.TestLoader()
+    suite = unittest.TestSuite()
+    suite.addTest(loader.loadTestsFromTestCase(CheckHoursTest))
+    suite.addTest(loader.loadTestsFromTestCase(BaseCommandTest))
+    return suite
+
+if __name__ == '__main__':
+    unittest.TextTestRunner(verbosity=2).run(suite())

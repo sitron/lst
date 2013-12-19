@@ -1,5 +1,13 @@
-from commands_test import CheckHoursTest, BaseCommandTest
-from helpers_test import InputHelperTest, DateHelperTest, ZebraHelperTest, JiraHelperTest
+from lst.tests import commands_test, helpers_test, parser_test
 
-if __name__ == "__main__":
-    unittest.main()
+
+def suite():
+    import unittest
+    suite = unittest.TestSuite()
+    suite.addTests(commands_test.suite())
+    suite.addTests(helpers_test.suite())
+    suite.addTests(parser_test.suite())
+    return suite
+
+if __name__ == '__main__':
+    unittest.TextTestRunner(verbosity=2).run(suite())

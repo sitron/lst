@@ -92,3 +92,16 @@ class JiraHelperTest(unittest.TestCase):
             'MySprintName',
             JiraHelper.sanitize_sprint_name('MySprintName')
         )
+
+
+def suite():
+    loader = unittest.TestLoader()
+    suite = unittest.TestSuite()
+    suite.addTest(loader.loadTestsFromTestCase(InputHelperTest))
+    suite.addTest(loader.loadTestsFromTestCase(DateHelperTest))
+    suite.addTest(loader.loadTestsFromTestCase(JiraHelperTest))
+    suite.addTest(loader.loadTestsFromTestCase(ZebraHelperTest))
+    return suite
+
+if __name__ == '__main__':
+    unittest.TextTestRunner(verbosity=2).run(suite())
