@@ -10,6 +10,9 @@ from lst.commands.check_hours import CheckHoursCommand
 from lst.commands.add_sprint import AddSprintCommand
 
 
+__version__ = '1.4'
+
+
 class Lst(object):
     """LST, helps keeping your sprint commitment safe"""
 

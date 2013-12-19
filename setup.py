@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
+from lst import __version__
 
 setup(
     name='lst',
-    version='1.3.0',
+    version=__version__,
     packages=find_packages(),
     description='Liip Scrum Toolbox',
     author='sitron',
