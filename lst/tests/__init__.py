@@ -1,9 +1,15 @@
-from lst.tests import commands_test, helpers_test, parser_test
+from lst.tests import (
+    commands_test,
+    helpers_test,
+    parser_test,
+    retrieve_jira_information_for_config_test,
+)
 
 
 def suite():
     import unittest
     suite = unittest.TestSuite()
+    suite.addTests(retrieve_jira_information_for_config_test.suite())
     suite.addTests(commands_test.suite())
     suite.addTests(helpers_test.suite())
     suite.addTests(parser_test.suite())
