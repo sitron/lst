@@ -56,6 +56,9 @@ available commands:
             usage=usage
         )
 
+        # add version argument
+        parser.add_argument('-v', '--version', action='version', version=__version__)
+
         # add arguments for all commands
         subparsers = parser.add_subparsers(dest='command')
         for name, command in available_actions.items():
