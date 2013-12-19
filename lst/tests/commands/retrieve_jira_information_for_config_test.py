@@ -1,7 +1,8 @@
 import unittest
 from mock import Mock, MagicMock
 
-from lst.tests.commands_test import MockHelper
+from lst.tests.mock_helper import MockHelper
+
 from lst.models.jiraModels import Story
 from lst.commands.retrieve_jira_information_for_config import RetrieveJiraInformationForConfigCommand
 
