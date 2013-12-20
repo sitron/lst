@@ -8,6 +8,8 @@ from lst.commands import *
 from lst.commands.result_per_story import ResultPerStoryCommand
 from lst.commands.check_hours import CheckHoursCommand
 from lst.commands.add_sprint import AddSprintCommand
+from lst.commands.list import ListCommand
+from lst.commands.retrieve_user_id import RetrieveUserIdCommand
 from lst.commands.retrieve_jira_information_for_config import RetrieveJiraInformationForConfigCommand
 
 

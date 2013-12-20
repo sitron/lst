@@ -6,6 +6,7 @@ from lst.tests.commands import (
     retrieve_jira_information_for_config_test,
     base_command_test,
     check_hours_test,
+    retrieve_user_id_test,
 )
 
 
@@ -14,6 +15,7 @@ def suite():
     suite = unittest.TestSuite()
     suite.addTests(retrieve_jira_information_for_config_test.suite())
     suite.addTests(base_command_test.suite())
+    suite.addTests(retrieve_user_id_test.suite())
     suite.addTests(check_hours_test.suite())
     suite.addTests(helpers_test.suite())
     suite.addTests(parser_test.suite())
