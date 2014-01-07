@@ -248,7 +248,7 @@ class SprintBurnUpCommand(BaseCommand):
                 result_charts[name] = ResultPerValuePie.get_chart((serie.get_max_value(), serie.get_commited_value()))
 
         # collect all needed values for graph output
-        args = list()
+        args = []
         args.append('{} ({})'.format(sprint.get_jira_data('sprint_name').replace('+', ' '), sprint.name))
         args.append(
             'Velocity: actual: {:.2f} expected: {:.2f}'.format(
