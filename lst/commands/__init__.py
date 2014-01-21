@@ -1,21 +1,10 @@
-import yaml
-import os
-import sys
-import distutils.sysconfig
-import datetime
 import dateutil
-import re
 
-from lst.remote import ZebraRemote, JiraRemote
-from lst.models.jiraModels import *
-from lst.models.zebraModels import *
-from lst.models import *
-from lst.output import *
-from lst.errors import *
-from lst.helpers import *
-from lst.parser import ConfigParser
-from lst.managers.jiraManager import JiraManager
+from lst.errors import DevelopmentError, InputParametersError
+from lst.models import AppContainer
+from lst.helpers import DateHelper, ZebraHelper
 from lst.managers.zebraManager import ZebraManager
+from lst.managers.jiraManager import JiraManager
 
 
 class BaseCommand(object):
@@ -68,9 +57,11 @@ class BaseCommand(object):
         """
         sprint = self.config.get_sprint(sprint_name)
         if sprint is None:
-            raise InputParametersError("Sprint %s not found. Make sure it's defined in your settings file" % (sprint_name))
+            raise InputParametersError(
+                "Sprint {} not found. Make sure it's defined in your settings file".format(sprint_name)
+            )
 
-        print "Sprint %s found in config" % (sprint.name)
+        print "Sprint {} found in config".format(sprint_name)
 
         return sprint
 
