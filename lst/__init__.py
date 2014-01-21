@@ -15,6 +15,7 @@ from lst.commands.edit import EditCommand
 from lst.commands.dump import DumpSprintConfigCommand
 from lst.commands.test_install import TestInstallCommand
 from lst.commands.sprint_burnup import SprintBurnUpCommand
+from lst.commands.get_last_zebra_day import GetLastZebraDayCommand
 
 
 __version__ = '1.4'
