@@ -17,8 +17,6 @@ class RetrieveUserIdCommand(BaseCommand):
 
         zebra_manager = self.get_zebra_manager()
         all_users = zebra_manager.get_all_users()
-        from pprint import pprint
-        pprint(all_users)
         if len(all_users) == 0:
             raise IOError(
                 "No user found at all! (check that you are connected to internet)"
