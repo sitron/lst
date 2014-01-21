@@ -149,5 +149,4 @@ _current: my_project_sprint_2 # specify default sprint to use
 ```
 
 ## Power tips
-* create a _current entry at root level specifying the name of your current sprint `_current: my_sprint_name (<- this
-value should be in the `sprints` list) and call `lst sprint-burnup` (without specifying a sprint name)
+* create a `_current` entry at root level specifying the name of your current sprint `_current: my_sprint_name` and call `lst sprint-burnup` (without specifying a sprint name)
