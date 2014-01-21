@@ -14,6 +14,7 @@ from lst.commands.retrieve_jira_information_for_config import RetrieveJiraInform
 from lst.commands.edit import EditCommand
 from lst.commands.dump import DumpSprintConfigCommand
 from lst.commands.test_install import TestInstallCommand
+from lst.commands.sprint_burnup import SprintBurnUpCommand
 
 
 __version__ = '1.4'
