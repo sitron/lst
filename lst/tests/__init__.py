@@ -1,6 +1,25 @@
-from .parsertest import *
-from .basecommandtest import *
-from .helperstest import *
+from lst.tests import (
+    helpers_test,
+    parser_test,
+)
+from lst.tests.commands import (
+    retrieve_jira_information_for_config_test,
+    base_command_test,
+    check_hours_test,
+    retrieve_user_id_test,
+)
 
-if __name__ == "__main__":
-    unittest.main()
+
+def suite():
+    import unittest
+    suite = unittest.TestSuite()
+    suite.addTests(retrieve_jira_information_for_config_test.suite())
+    suite.addTests(base_command_test.suite())
+    suite.addTests(retrieve_user_id_test.suite())
+    suite.addTests(check_hours_test.suite())
+    suite.addTests(helpers_test.suite())
+    suite.addTests(parser_test.suite())
+    return suite
+
+if __name__ == '__main__':
+    unittest.TextTestRunner(verbosity=2).run(suite())

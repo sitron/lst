@@ -1,0 +1,72 @@
+body {
+    text-align: center;
+    font-family: "courier new";
+}
+
+.content {
+    text-align: center;
+}
+
+.main-graph .graph .background {
+    fill: white;
+}
+
+figure {
+    margin: 0;
+}
+
+.top-graphs {
+    display: inline-block;
+}
+
+.top-graphs figure {
+    float: left;
+}
+
+.top-graphs figure.md .color-0,
+.top-graphs figure.sp .color-0,
+.top-graphs figure.bv .color-0 {
+    stroke: black;
+}
+
+.top-graphs figure.md .color-1,
+.top-graphs figure.sp .color-1,
+.top-graphs figure.bv .color-1 {
+    fill: white;
+    stroke: black;
+}
+
+.top-graphs figure.md .color-0 {
+    fill: black;
+}
+
+.top-graphs figure.sp .color-0 {
+    fill: blue;
+}
+
+.top-graphs figure.bv .color-0 {
+    fill: red;
+}
+
+.top-graphs figcaption {
+    text-align: center;
+}
+
+.top-graphs {
+    overflow: hidden;
+}
+
+.main-graph figure .color-0 {
+    fill: black;
+    stroke: black;
+}
+
+.main-graph figure .color-1 {
+    fill: blue;
+    stroke: blue;
+}
+
+.main-graph figure .color-2 {
+    fill: red;
+    stroke: red;
+}

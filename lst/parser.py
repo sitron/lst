@@ -3,8 +3,10 @@ import datetime
 import dateutil
 import os
 
-from models import Sprint, AppContainer
-from errors import FileNotFoundError, SyntaxError
+from lst.models import Sprint, AppContainer
+from lst.errors import FileNotFoundError, SyntaxError
+from lst.helpers import DateHelper
+
 
 class SecretParser:
     def __init__(self):
@@ -90,7 +92,10 @@ class ConfigParser:
         if 'force' in data['zebra']:
             sprint.forced = self.parse_forced(data['zebra']['force'])
         if 'planned' in data['zebra']:
-            sprint.planned = self.parse_planned(data['zebra']['planned'], data['zebra']['start_date'], data['zebra']['end_date'])
+            sprint.planned = self.parse_planned(
+                data['zebra']['planned'],
+                data['zebra']['start_date'], data['zebra']['end_date']
+            )
         return sprint
 
     def get_sprint(self, name=None, raw=False):
@@ -123,32 +128,34 @@ class ConfigParser:
         return forced
 
     def parse_planned(self, plan, start_date, end_date):
-        dates = dict()
         planned = dict()
 
         # Check for single value list (like [1,2,3])
-        if type(plan[0]) is int:
-            d = start_date
-            position = 0
-            businessDayCount = 0
-            while d <= end_date:
-                if d.isoweekday() <> 6 and d.isoweekday() <> 7:
-                    businessDayCount += 1
-                    if position >= len(plan):
-                        raise SyntaxError( "The planned list must contain one value per business days (" + `businessDayCount` + "), there is not enough values("+`len(plan)`+")")
-                    planned[d.strftime("%Y-%m-%d")] = plan[position]
-                    position += 1
-                d += datetime.timedelta(days=1)
-            if position < len(plan):
-                raise SyntaxError( "The planned list must contain one value per business days (" + `businessDayCount` + "), there is too much values ("+`len(plan)`+")")
-            return planned
+        if type(plan) is list and (type(plan[0]) is int or type(plan[0]) is float):
+            days = DateHelper.get_all_days(start_date, end_date, False)
+
+            if len(plan) < len(days):
+                raise SyntaxError(
+                    "The planned list must contain one value per business days ({}), "
+                    "there are not enough values({})".format(len(plan), len(days))
+                )
+            if len(plan) > len(days):
+                raise SyntaxError(
+                    "The planned list must contain one value per business days ({}), "
+                    "there are too many values ({})".format(len(plan), len(days))
+                )
+
+            for index, date in enumerate(days):
+                planned[date.strftime("%Y-%m-%d")] = plan[index]
 
         # Check for date list
-        for f in plan:
-            dates = self.parse_date(f['date'])
-            time = f['time']
-            for d in dates:
-                planned[d.strftime("%Y-%m-%d")] = time
+        else:
+            for f in plan:
+                dates = self.parse_date(f['date'])
+                time = f['time']
+                for d in dates:
+                    planned[d.strftime("%Y-%m-%d")] = time
+
         return planned
 
     def parse_date(self, date):

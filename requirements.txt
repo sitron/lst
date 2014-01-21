@@ -2,3 +2,5 @@ PyYAML>=3.10
 argparse>=1.2.1
 python-dateutil>=2.1
 six>=1.2.0
+pygal>=1.1.0
+beautifulsoup4>=4.3.2
