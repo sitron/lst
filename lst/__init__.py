@@ -11,6 +11,7 @@ from lst.commands.add_sprint import AddSprintCommand
 from lst.commands.list import ListCommand
 from lst.commands.retrieve_user_id import RetrieveUserIdCommand
 from lst.commands.retrieve_jira_information_for_config import RetrieveJiraInformationForConfigCommand
+from lst.commands.edit import EditCommand
 
 
 __version__ = '1.4'

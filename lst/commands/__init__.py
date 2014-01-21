@@ -309,37 +309,6 @@ class GetLastZebraDayCommand(BaseCommand):
         print 'last date for sprint {}: {}'.format(sprint_name, last_entry.readable_date())
 
 
-class EditCommand(BaseCommand):
-
-    def add_command_arguments(self, subparsers):
-        parser = subparsers.add_parser('edit')
-        return parser
-
-    def run(self, args):
-
-        # Open the config file
-        FileHelper.open_for_edit(AppContainer.SETTINGS_PATH)
-
-        # Validate it
-        print "Start validation"
-        parser = ConfigParser()
-        parser.load_config(AppContainer.SETTINGS_PATH)
-        sprints = self.config.get_sprints()
-        error = False
-        if len(sprints) == 0:
-            print 'No sprints defined'
-            error = True
-        else:
-            for name, data in sprints.items():
-                try:
-                    parser.parse_sprint(name, data)
-                except Exception as e:
-                    print "Error in sprint [{}] definition: ".format(name), e
-                    error = True
-        if error is False:
-            print 'Well done, no error detected!'
-
-
 class DumpSprintConfigCommand(BaseCommand):
     """
     Command to easily dump a sprint config (ie. to share with someone/wiki)
