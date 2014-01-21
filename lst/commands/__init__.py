@@ -95,22 +95,6 @@ class BaseCommand(object):
         return ZebraManager(AppContainer)
 
 
-class TestInstallCommand(BaseCommand):
-    """
-    Usage:  test-install
-            will test the access to static files (html templates)
-
-    """
-    def add_command_arguments(self, subparsers):
-        parser = subparsers.add_parser('test-install')
-        return parser
-
-    def run(self, args):
-        print 'Will dump some useful variable to debug'
-        print 'My sys.prefix is %s' % sys.prefix
-        print 'My modules are installed in %s' % (distutils.sysconfig.get_python_lib())
-
-
 class SprintBurnUpCommand(BaseCommand):
     """
     Usage:  sprint-burnup [sprint_name]

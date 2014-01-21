@@ -13,6 +13,7 @@ from lst.commands.retrieve_user_id import RetrieveUserIdCommand
 from lst.commands.retrieve_jira_information_for_config import RetrieveJiraInformationForConfigCommand
 from lst.commands.edit import EditCommand
 from lst.commands.dump import DumpSprintConfigCommand
+from lst.commands.test_install import TestInstallCommand
 
 
 __version__ = '1.4'
