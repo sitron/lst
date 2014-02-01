@@ -62,7 +62,7 @@ class ZebraManager:
             print 'Will now parse %d entries found in Zebra' % len(entries)
         except:
             print 'No entries found in Zebra'
-            return zebra_entries
+            return TimeSheetCollection(zebra_entries)
 
         for entry in entries:
             # zebra last entries are totals, and dont have a tid

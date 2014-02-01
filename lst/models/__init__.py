@@ -142,7 +142,10 @@ class Sprint:
         return self.story_collection.get_commited_story_points() / float(self.commited_man_days)
 
     def get_actual_velocity(self):
-        return self.get_serie('sp').get_max_value() / self.get_serie('md').get_max_value()
+        try:
+            return self.get_serie('sp').get_max_value() / self.get_serie('md').get_max_value()
+        except ZeroDivisionError:
+            return 0
 
     def get_closed_statuses(self):
         statuses = self.get_jira_data('closed_statuses')

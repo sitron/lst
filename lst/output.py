@@ -123,7 +123,10 @@ class SprintBurnUpChart(object):
     def get_chart(cls, dates, series):
         biggest_y_value = 100
         for values in series.values():
-            biggest_y_value = max(biggest_y_value, values[-1])
+            if len(values):
+                biggest_y_value = max(biggest_y_value, values[-1])
+            else:
+                biggest_y_value = 0
 
         chart = pygal.Line(x_label_rotation=20,
                            include_x_axis=True,

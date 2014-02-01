@@ -127,7 +127,7 @@ class SprintBurnUpCommand(BaseCommand):
             percent_series[name] = serie.get_values_as_percent()
 
         # add future days (up to graph_end_date) so that the graph looks more realistic
-        if sprint.get_zebra_data('end_date') > dates[-1]:
+        if len(dates) and sprint.get_zebra_data('end_date') > dates[-1]:
             today = datetime.date.today()
             future_dates = DateHelper.get_future_days(sprint.get_zebra_data('end_date'), dates[-1] != today, False)
 
