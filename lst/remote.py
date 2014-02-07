@@ -9,7 +9,7 @@ class Remote(object):
         self.base_url = base_url
 
     def _get_request(self, url, body = None, headers = {}):
-        return urllib2.Request('%s/%s' % (self.base_url, url), body, headers)
+        return urllib2.Request('%s/%s' % (self.base_url, url.encode('utf-8')), body, headers)
 
     def _request(self, url, body = None, headers = {}):
         request = self._get_request(url, body, headers)
@@ -22,6 +22,15 @@ class Remote(object):
 
     def get_data(self, url):
         pass
+
+    def _encode_parameters(self, parameters):
+        """Encodes parameters to use them in a request"""
+        for key, value in parameters.iteritems():
+            if isinstance(value, unicode):
+                parameters[key] = value.encode('utf-8')
+
+        return urllib.urlencode(parameters)
+
 
 class JiraRemote(Remote):
     def __init__(self, base_url, username, password):
@@ -125,10 +134,12 @@ class ZebraRemote(Remote):
             return
 
         login_url = '/login/user/%s.json' % self.username
-        parameters = urllib.urlencode({
+        parameters_dict = {
             'username': self.username,
             'password': self.password,
-        })
+        }
+
+        parameters = self._encode_parameters(parameters_dict)
 
         response = self._request(login_url, parameters)
         response_body = response.read()
