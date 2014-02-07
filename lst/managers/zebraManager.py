@@ -3,7 +3,7 @@ import pickle
 
 from lst.remote import ZebraRemote
 from lst.helpers import ZebraHelper
-from lst.models.zebraModels import TimeSheetCollection, TimeSheet
+from lst.models.zebraModels import TimeSheetCollection, TimeSheet, ZebraUser
 
 
 class ZebraManager:
@@ -45,8 +45,12 @@ class ZebraManager:
 
     def _parse_users(self, response_json):
         users = response_json['command']['users']['user']
+        parsed_users = []
 
-        return users
+        for user in users:
+            parsed_users.append(ZebraUser(user))
+
+        return parsed_users
 
     def _parse_timesheets(self, response_json):
         """

@@ -5,15 +5,16 @@ from lst.tests.mock_helper import MockHelper
 
 from lst.commands.retrieve_user_id import RetrieveUserIdCommand
 from lst.errors import IOError
+from lst.models.zebraModels import ZebraUser
 
 
 class RetrieveUserIdTest(unittest.TestCase):
     """Unit tests for get-user-id command"""
 
     mock_users = [
-        {'employee_lastname': 'prodon', 'employee_firstname': 'laurent', 'id': 1},
-        {'employee_lastname': 'mao', 'employee_firstname': 'rolf', 'id': 2},
-        {'employee_lastname': 'tsetung', 'employee_firstname': 'mao', 'id': 3},
+        ZebraUser({'employee_lastname': 'prodon', 'employee_firstname': 'laurent', 'id': 1}),
+        ZebraUser({'employee_lastname': 'mao', 'employee_firstname': 'rolf', 'id': 2}),
+        ZebraUser({'employee_lastname': 'tsetung', 'employee_firstname': 'mao', 'id': 3}),
     ]
 
     def testSingleUser(self):

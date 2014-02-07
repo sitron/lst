@@ -89,3 +89,10 @@ class ZebraDay:
                 except KeyError:
                     self.entries_per_user[entry.username] = entry.time
         return self.entries_per_user
+
+
+class ZebraUser:
+    def __init__(self, zebra_data={}):
+        self.first_name = zebra_data.get('employee_firstname', None).encode('utf-8')
+        self.last_name = zebra_data.get('employee_lastname', None).encode('utf-8')
+        self.id = zebra_data.get('id', None)

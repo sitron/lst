@@ -24,7 +24,7 @@ class RetrieveUserIdCommand(BaseCommand):
 
         users = []
         for user in all_users:
-            if user['employee_lastname'].lower() in names:
+            if user.last_name.lower() in names:
                 users.append(user)
 
         self._output(users, names)
@@ -36,7 +36,7 @@ class RetrieveUserIdCommand(BaseCommand):
 
         for user in users:
             print 'found {} ({}) with id {}'.format(
-                user['employee_lastname'],
-                user['employee_firstname'],
-                user['id']
+                user.last_name,
+                user.first_name,
+                user.id,
             )
