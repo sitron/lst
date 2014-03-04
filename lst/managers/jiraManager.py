@@ -1,4 +1,5 @@
 import pickle
+import urllib
 
 from lst.models.jiraModels import StoryCollection, Story
 from lst.remote import JiraRemote
@@ -165,4 +166,11 @@ class JiraManager:
         )
 
     def _get_url_for_sprint_burnup(self, sprint):
-        return "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=project+%3D+'" + str(sprint.get_jira_data('project_id')) + "'+and+fixVersion+%3D+'" + sprint.get_jira_data('sprint_name') + "'&tempMax=1000"
+        project_id = urllib.quote_plus(str(sprint.get_jira_data('project_id')), '+')
+        sprint_id = urllib.quote_plus(str(sprint.get_jira_data('sprint_name')), '+')
+        url = "/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=project+%3D+'{project_id}'" \
+              "+and+fixVersion+%3D+'{sprint_id}'&tempMax=1000".format(
+                  project_id=project_id,
+                  sprint_id=sprint_id,
+              )
+        return url
