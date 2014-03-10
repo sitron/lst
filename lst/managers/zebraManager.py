@@ -4,6 +4,7 @@ import pickle
 from lst.remote import ZebraRemote
 from lst.helpers import ZebraHelper
 from lst.models.zebraModels import TimeSheetCollection, TimeSheet, ZebraUser
+from lst.errors import DevelopmentError
 
 
 class ZebraManager:
@@ -134,6 +135,9 @@ class ZebraManager:
         :return: string Zebra url
         """
         report_url = 'timesheet/report/.json?option_selector='
+
+        if start_date is None:
+            raise DevelopmentError('A start date must be specified when calling _get_zebra_url_for_activities')
 
         if end_date is None:
             end_date = start_date

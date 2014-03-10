@@ -1,6 +1,7 @@
 from lst.tests import (
     helpers_test,
     parser_test,
+    zebra_manager_test,
 )
 from lst.tests.commands import (
     retrieve_jira_information_for_config_test,
@@ -19,6 +20,7 @@ def suite():
     suite.addTests(check_hours_test.suite())
     suite.addTests(helpers_test.suite())
     suite.addTests(parser_test.suite())
+    suite.addTests(zebra_manager_test.suite())
     return suite
 
 if __name__ == '__main__':
